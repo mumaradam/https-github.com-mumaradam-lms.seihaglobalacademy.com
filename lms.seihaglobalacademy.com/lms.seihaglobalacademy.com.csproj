@@ -188,7 +188,7 @@
     <Content Include="assets\images\icon\sga.ico" />
     <Content Include="assets\images\reception.jpg" />
     <Content Include="assets\images\sgalogo.png" />
-    <Content Include="assets\js\main.js" />
+    <Content Include="assets\js\Site.js" />
     <Content Include="Calendar.aspx" />
     <Content Include="Contact.aspx" />
     <Content Include="Content\bootstrap.css" />
