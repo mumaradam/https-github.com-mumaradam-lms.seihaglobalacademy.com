@@ -11,34 +11,52 @@ namespace lms.seihaglobalacademy.com
 {
 
 
-    public partial class SiteMaster
+    public partial class Calendar
     {
 
         /// <summary>
-        /// HeadContent control.
+        /// btnToday control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.ContentPlaceHolder HeadContent;
+        protected global::System.Web.UI.WebControls.Button btnToday;
 
         /// <summary>
-        /// mainRenderForm control.
+        /// btnPrevMonth control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlForm mainRenderForm;
+        protected global::System.Web.UI.WebControls.LinkButton btnPrevMonth;
 
         /// <summary>
-        /// MainContent control.
+        /// btnNextMonth control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.ContentPlaceHolder MainContent;
+        protected global::System.Web.UI.WebControls.LinkButton btnNextMonth;
+
+        /// <summary>
+        /// lblMonthYearTitle control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblMonthYearTitle;
+
+        /// <summary>
+        /// rptCalendarCells control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Repeater rptCalendarCells;
     }
 }

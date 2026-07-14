@@ -1,86 +1,399 @@
 ﻿<%@ Master Language="C#" AutoEventWireup="true" CodeBehind="Site.master.cs" Inherits="lms.seihaglobalacademy.com.SiteMaster" %>
 
 <!DOCTYPE html>
-
 <html lang="en">
 <head runat="server">
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title><%: Page.Title %> - My ASP.NET Application</title>
-
-   <%-- <asp:PlaceHolder runat="server">
-        <%: Scripts.Render("~/bundles/modernizr") %>
-    </asp:PlaceHolder>
-    <webopt:bundlereference runat="server" path="~/Content/css" />--%>
+    <title><%: Page.Title %> - SGA LMS</title>
+    
+    <!-- Material Icons for the Sidebar -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
+    <style>
+        :root {
+            --bg-dark: #2d3135;
+            --sidebar-bg: #10171e;
+            --text-light: #f5f5f5;
+            --text-muted: #9aa0a6;
+            --accent-blue: #03a9f4;
+            --border-color: #3f4448;
+            --drawer-bg: #1e2226;
+        }
+
+        /* ==========================================================================
+           COMPREHENSIVE GLOBAL LIGHT MODE COLOR OVERRIDES
+           ========================================================================== */
+        body.light-mode {
+            --bg-dark: #f4f5f7;
+            --sidebar-bg: #ffffff;
+            --text-light: #2d3135;
+            --text-muted: #626970;
+            --border-color: #d1d5db;
+            --drawer-bg: #ffffff;
+        }
+
+        /* 1. Container Color Dynamic Swaps */
+        body.light-mode .course-display-card,
+        body.light-mode .course-card-text-workspace,
+        body.light-mode .course-card-action-tray,
+        body.light-mode .calendar-grid-container,
+        body.light-mode .cal-day-cell,
+        body.light-mode .inbox-workspace-layout,
+        body.light-mode .inbox-threads-sidebar,
+        body.light-mode .inbox-chat-viewport,
+        body.light-mode .chat-viewport-header,
+        body.light-mode .chat-messages-container,
+        body.light-mode .chat-input-footer-tray,
+        body.light-mode .activity-log-card,
+        body.light-mode .help-main-card,
+        body.light-mode .lms-slide-drawer,
+        body.light-mode .course-card,
+        body.light-mode .card-body,
+        body.light-mode .help-drawer-card {
+            background-color: #ffffff !important;
+            color: #2d3135 !important;
+            border-color: #d1d5db !important;
+        }
+
+        /* 2. Unified Base Text Element Corrections (Calendar Header Fixed Here) */
+        body.light-mode .course-card-fullname,
+        body.light-mode .course-card-term-label,
+        body.light-mode .empty-title,
+        body.light-mode .studio-title-text,
+        body.light-mode .threads-sidebar-header h2,
+        body.light-mode .chat-header-subject,
+        body.light-mode .chat-header-participants,
+        body.light-mode .activity-action-title,
+        body.light-mode .help-title-link,
+        body.light-mode .dashboard-header-strip h1,
+        body.light-mode .empty-state-title,
+        body.light-mode .sort-label,
+        body.light-mode .drawer-header h2,
+        body.light-mode .thread-sender-name,
+        body.light-mode .thread-subject-line,
+        body.light-mode .thread-snippet-preview,
+        body.light-mode .help-card-title,
+        body.light-mode .help-card-desc,
+        body.light-mode .cal-header-title,
+        body.light-mode .cal-header-title span,
+        body.light-mode [id*="lblMonthYearTitle"] {
+            color: #2d3135 !important;
+        }
+
+        /* 3. Dropdowns & Calendar Selector Elements (Studio & Calendar Fixed Here) */
+        body.light-mode .course-filter-select,
+        body.light-mode .studio-sort-dropdown,
+        body.light-mode .studio-sort-dropdown option,
+        body.light-mode .course-filter-select option {
+            background-color: #ffffff !important;
+            color: #2d3135 !important;
+            border: 1px solid #d1d5db !important;
+        }
+        body.light-mode .course-action-icon-link {
+            color: #626970 !important;
+        }
+        body.light-mode .course-action-icon-link:hover {
+            color: var(--accent-blue) !important;
+        }
+        body.light-mode .cal-view-toggle-group {
+            background-color: #ffffff !important;
+            border: 1px solid #d1d5db !important;
+        }
+        body.light-mode .cal-view-toggle-group .toggle-btn {
+            color: #626970 !important;
+            background-color: transparent !important;
+        }
+        body.light-mode .cal-view-toggle-group .toggle-btn.active-view {
+            background-color: #e5e7eb !important;
+            color: #2d3135 !important;
+            font-weight: 500;
+        }
+        body.light-mode .cal-action-btn, 
+        body.light-mode .cal-action-btn input[type="submit"] {
+            background-color: #ffffff !important;
+            color: #2d3135 !important;
+            border: 1px solid #d1d5db !important;
+        }
+
+        /* 4. Inbox Page Components */
+        body.light-mode .chat-bubble-row.incoming-msg .chat-bubble-text {
+            background-color: #f1f3f4 !important;
+            color: #2d3135 !important;
+            border-color: #d1d5db !important;
+        }
+        body.light-mode .chat-bubble-time {
+            color: #626970 !important;
+        }
+        body.light-mode .chat-reply-textarea {
+            background-color: #ffffff !important;
+            color: #2d3135 !important;
+            border-color: #d1d5db !important;
+        }
+        body.light-mode .chat-reply-textarea::placeholder {
+            color: #9aa0a6 !important;
+        }
+
+        /* 5. Hardcoded Slide Panels Text and Inline Style Fixes */
+        body.light-mode .lms-slide-drawer div,
+        body.light-mode .lms-slide-drawer h2,
+        body.light-mode .lms-slide-drawer p,
+        body.light-mode .lms-slide-drawer span,
+        body.light-mode .lms-slide-drawer div[style*="color: #fff"],
+        body.light-mode .lms-slide-drawer div[style*="color:#fff"] {
+            color: #2d3135 !important;
+        }
+
+        body.light-mode .cal-day-cell.outside-month {
+            background-color: #f9fafb !important;
+        }
+
+        body.light-mode .studio-menu-item.active-menu {
+            background-color: rgba(3, 169, 244, 0.1) !important;
+            color: var(--accent-blue) !important;
+        }
+
+        /* ==========================================================================
+           CORE STRUCTURAL LAYOUT FRAMEWORK
+           ========================================================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-light); height: 100vh; display: flex; overflow: hidden; position: relative; }
+        
+        #mainRenderForm { display: flex; width: 100%; height: 100%; margin: 0; padding: 0; }
+
+        /* Left Side Navigation Bar */
+        .lms-sidebar {
+            width: 85px;
+            background-color: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding-top: 15px;
+            border-right: 1px solid var(--border-color);
+            z-index: 200;
+        }
+
+        /* Sidebar Brand Logo Wrapper styling */
+        .sidebar-logo-container {
+            width: 100%;
+            padding: 5px 10px 15px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            margin-bottom: 10px;
+        }
+        body.light-mode .sidebar-logo-container {
+            border-bottom-color: var(--border-color);
+        }
+        .sidebar-brand-img {
+            max-width: 55px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .nav-item {
+            width: 100%;
+            text-align: center;
+            padding: 12px 0;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 11px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+        .nav-item i { font-size: 26px; }
+        .nav-item:hover, .nav-item.active { color: var(--text-light); background-color: rgba(255, 255, 255, 0.05); }
+        .nav-item.active { border-left: 3px solid var(--accent-blue); }
+        .sidebar-footer { margin-top: auto; padding-bottom: 20px; width: 100%; }
+
+        /* Slide-Out Pop-Up Drawer Framework */
+        .lms-slide-drawer {
+            position: absolute;
+            top: 0;
+            left: -235px;
+            width: 320px;
+            height: 100%;
+            background-color: var(--drawer-bg);
+            border-right: 1px solid var(--border-color);
+            z-index: 150;
+            padding: 25px 25px 25px 105px;
+            transition: left 0.3s ease-in-out;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+        }
+        .lms-slide-drawer.open { left: 0 !important; }
+
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        .drawer-header h2 { font-size: 20px; font-weight: 400; color: #fff; }
+        .close-drawer-btn { color: var(--text-muted); cursor: pointer; background: none; border: none; }
+        .close-drawer-btn:hover { color: #fff; }
+
+        .help-drawer-links-box { display: flex; flex-direction: column; gap: 12px; margin-top: 15px; }
+        .help-drawer-card { background-color: #26292c; border: 1px solid var(--border-color); padding: 14px; border-radius: 6px; cursor: pointer; transition: background-color 0.15s; }
+        .help-drawer-card:hover { background-color: #32373c; }
+        .help-card-title { font-size: 13px; font-weight: 500; color: var(--accent-blue); margin-bottom: 4px; }
+        .help-card-desc { font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+        .drawer-footer-link {
+            margin-top: auto;
+            padding-top: 20px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+        }
+        .drawer-footer-link a { color: var(--accent-blue); text-decoration: none; font-size: 13px; font-weight: 500; }
+        .drawer-footer-link a:hover { text-decoration: underline; }
+
+        /* Main Workspace Viewport Screen Frame */
+        .main-workspace { flex: 1; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
+        .content-body { flex: 1; padding: 40px; min-height: calc(100vh - 50px); }
+
+        .lms-footer {
+            height: 50px; border-top: 1px solid var(--border-color); display: flex;
+            justify-content: space-between; align-items: center; padding: 0 40px;
+            font-size: 12px; color: var(--text-muted); background-color: var(--bg-dark);
+        }
+    </style>
+    <asp:ContentPlaceHolder ID="HeadContent" runat="server"></asp:ContentPlaceHolder>
 </head>
 <body>
-    <form runat="server">
-        <asp:ScriptManager runat="server">
-            <Scripts>
-                <%--To learn more about bundling scripts in ScriptManager see http://go.microsoft.com/fwlink/?LinkID=301884 --%>
-                <%--Framework Scripts--%>
-                <%--<asp:ScriptReference Name="MsAjaxBundle" />
-                <asp:ScriptReference Name="jquery" />
-                <asp:ScriptReference Name="bootstrap" />
-                <asp:ScriptReference Name="respond" />
-                <asp:ScriptReference Name="WebForms.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebForms.js" />
-                <asp:ScriptReference Name="WebUIValidation.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebUIValidation.js" />
-                <asp:ScriptReference Name="MenuStandards.js" Assembly="System.Web" Path="~/Scripts/WebForms/MenuStandards.js" />
-                <asp:ScriptReference Name="GridView.js" Assembly="System.Web" Path="~/Scripts/WebForms/GridView.js" />
-                <asp:ScriptReference Name="DetailsView.js" Assembly="System.Web" Path="~/Scripts/WebForms/DetailsView.js" />
-                <asp:ScriptReference Name="TreeView.js" Assembly="System.Web" Path="~/Scripts/WebForms/TreeView.js" />
-                <asp:ScriptReference Name="WebParts.js" Assembly="System.Web" Path="~/Scripts/WebForms/WebParts.js" />
-                <asp:ScriptReference Name="Focus.js" Assembly="System.Web" Path="~/Scripts/WebForms/Focus.js" />
-                <asp:ScriptReference Name="WebFormsBundle" />--%>
-                <%--Site Scripts--%>
-            </Scripts>
-        </asp:ScriptManager>
+    <script type="text/javascript">
+        if (localStorage.getItem("lms-theme") === "light") {
+            document.body.classList.add("light-mode");
+        }
+    </script>
 
-        <div class="navbar navbar-inverse navbar-fixed-top">
-            <div class="container">
-                <%--<div class="navbar-header">
-                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                        <span class="icon-bar"></span>
-                    </button>
-                    <a class="navbar-brand" runat="server" href="~/">Application name</a>
-                </div>
-                <div class="navbar-collapse collapse">
-                    <ul class="nav navbar-nav">
-                        <li><a runat="server" href="~/">Home</a></li>
-                        <li><a runat="server" href="~/About">About</a></li>
-                        <li><a runat="server" href="~/Contact">Contact</a></li>
-                    </ul>
-                    <asp:LoginView runat="server" ViewStateMode="Disabled">
-                        <AnonymousTemplate>
-                            <ul class="nav navbar-nav navbar-right">
-                                <li><a runat="server" href="~/Account/Register">Register</a></li>
-                                <li><a runat="server" href="~/Account/Login">Log in</a></li>
-                            </ul>
-                        </AnonymousTemplate>
-                        <LoggedInTemplate>
-                            <ul class="nav navbar-nav navbar-right">
-                                <li><a runat="server" href="~/Account/Manage" title="Manage your account">Hello, <%: Context.User.Identity.GetUserName()  %> !</a></li>
-                                <li>
-                                    <asp:LoginStatus runat="server" LogoutAction="Redirect" LogoutText="Log off" LogoutPageUrl="~/" OnLoggingOut="Unnamed_LoggingOut" />
-                                </li>
-                            </ul>
-                        </LoggedInTemplate>
-                    </asp:LoginView>
-                </div>--%>
+    <form id="mainRenderForm" runat="server">
+        <asp:ScriptManager runat="server"></asp:ScriptManager>
+
+        <!-- Sidebar Navigation Shell UI -->
+        <nav class="lms-sidebar">
+            <div class="sidebar-logo-container">
+                <img src="assets/images/sgalogo.png" class="sidebar-brand-img" alt="SGA Logo" />
+            </div>
+
+            <a class="nav-item" href="#"><i class="material-icons-outlined">account_circle</i>Account</a>
+            <a class="nav-item" href="Dashboard.aspx"><i class="material-icons-outlined">dashboard</i>Dashboard</a>
+            <a class="nav-item" href="Courses.aspx"><i class="material-icons-outlined">class</i>Courses</a>
+            <a class="nav-item" href="Calendar.aspx"><i class="material-icons-outlined">calendar_month</i>Calendar</a>
+            <a class="nav-item" href="Inbox.aspx"><i class="material-icons-outlined">mail</i>Inbox</a>
+            
+            <a class="nav-item" href="javascript:void(0);" onclick="toggleDrawer('historyDrawerPanel', this);">
+                <i class="material-icons-outlined">history</i>History
+            </a>
+            
+            <a class="nav-item" href="Studio.aspx"><i class="material-icons-outlined">video_library</i>Studio</a>
+            
+            <div class="sidebar-footer">
+                <a class="nav-item" href="javascript:void(0);" onclick="toggleDrawer('helpDrawerPanel', this);">
+                    <i class="material-icons-outlined">help_outline</i>Help
+                </a>
+                <a class="nav-item" href="Default.aspx"><i class="material-icons-outlined">arrow_back</i></a>
+            </div>
+        </nav>
+
+        <!-- Pop-Up History Drawer Content Panel -->
+        <div class="lms-slide-drawer" id="historyDrawerPanel">
+            <div class="drawer-header">
+                <h2>Recent History</h2>
+                <button type="button" class="close-drawer-btn" onclick="closeAllDrawers();"><i class="material-icons-outlined">close</i></button>
+            </div>
+            <div style="text-align: center; margin-top: 40px; padding: 0 10px;">
+                <div class="material-icons-outlined" style="font-size: 56px; color: var(--text-muted); margin-bottom: 15px; opacity: 0.6;">history</div>
+                <div style="font-size: 16px; font-weight: 500; margin-bottom: 10px; color: #fff;">Nothing in the last 30 days</div>
+            </div>
+            <div class="drawer-footer-link">
+                <a href="History.aspx">View Complete History Page</a>
             </div>
         </div>
-        <div class="container body-content">
-            <asp:ContentPlaceHolder ID="MainContent" runat="server">
-            </asp:ContentPlaceHolder>
-            <hr />
-            <footer>
-                <p>&copy; <%: DateTime.Now.Year %> - My ASP.NET Application</p>
-            </footer>
+
+        <!-- Pop-Up Help Drawer Content Panel -->
+        <div class="lms-slide-drawer" id="helpDrawerPanel">
+            <div class="drawer-header">
+                <h2>LMS Help Desk</h2>
+                <button type="button" class="close-drawer-btn" onclick="closeAllDrawers();"><i class="material-icons-outlined">close</i></button>
+            </div>
+            <div class="help-drawer-links-box">
+                <div class="help-drawer-card">
+                    <div class="help-card-title">Search the Guides</div>
+                    <div class="help-card-desc">Find answers in the formal documentation guidelines.</div>
+                </div>
+                <div class="help-drawer-card">
+                    <div class="help-card-title">Report a Problem</div>
+                    <div class="help-card-desc">Submit a ticket directly to technical administrators.</div>
+                </div>
+            </div>
+            <div class="drawer-footer-link">
+                <a href="Help.aspx">Open Dedicated Help Page</a>
+            </div>
         </div>
+
+        <!-- Main Content Area -->
+        <main class="main-workspace">
+            <div class="content-body">
+                <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>
+            </div>
+            <footer class="lms-footer">
+                <div>Seiha LMS | Powered by Seiha Technology</div>
+                <div>&copy; <%: DateTime.Now.Year %> - Seiha Global Academy</div>
+            </footer>
+        </main>
     </form>
+
+    <script type="text/javascript">
+        var currentPath = window.location.pathname.toLowerCase();
+
+        function highlightNavbar() {
+            document.querySelectorAll('.lms-sidebar .nav-item').forEach(function (link) {
+                var hrefAttribute = link.getAttribute('href');
+                var onclickAttribute = link.getAttribute('onclick');
+                link.classList.remove('active');
+
+                if (hrefAttribute) {
+                    var cleanHref = hrefAttribute.toLowerCase().replace('.aspx', '');
+                    if (currentPath.endsWith(cleanHref) || (cleanHref !== "" && currentPath.includes('/' + cleanHref))) {
+                        link.classList.add('active');
+                    }
+                }
+                if (currentPath.includes('/history') && onclickAttribute && onclickAttribute.includes('historyDrawerPanel')) {
+                    link.classList.add('active');
+                }
+                if (currentPath.includes('/help') && onclickAttribute && onclickAttribute.includes('helpDrawerPanel')) {
+                    link.classList.add('active');
+                }
+            });
+        }
+
+        function toggleDrawer(drawerId, triggerElement) {
+            var targetDrawer = document.getElementById(drawerId);
+            var isOpen = targetDrawer.classList.contains('open');
+            closeAllDrawers();
+            if (!isOpen) {
+                targetDrawer.classList.add('open');
+                document.querySelectorAll('.lms-sidebar .nav-item').forEach(el => el.classList.remove('active'));
+                triggerElement.classList.add('active');
+            } else {
+                highlightNavbar();
+            }
+        }
+
+        function closeAllDrawers() {
+            document.querySelectorAll('.lms-slide-drawer').forEach(drawer => drawer.classList.remove('open'));
+            highlightNavbar();
+        }
+
+        highlightNavbar();
+    </script>
 </body>
 </html>
