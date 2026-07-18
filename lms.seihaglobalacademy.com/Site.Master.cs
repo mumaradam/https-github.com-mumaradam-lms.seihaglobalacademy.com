@@ -75,6 +75,23 @@ namespace lms.seihaglobalacademy.com
         {
             Context.GetOwinContext().Authentication.SignOut();
         }
-    }
 
+        // ADDED: Handles the logout request trigger from the Account sliding drawer panel
+        protected void lnkLogout_Click(object sender, EventArgs e)
+        {
+            // Clear current authentication context and session parameters
+            Session.Clear();
+            Session.Abandon();
+            FormsAuthentication.SignOut();
+
+            // Clear OWIN context identity parameters if utilized
+            if (Context.GetOwinContext() != null && Context.GetOwinContext().Authentication != null)
+            {
+                Context.GetOwinContext().Authentication.SignOut();
+            }
+
+            // Redirect safely to entry point index landing layout
+            Response.Redirect("~/Default.aspx");
+        }
+    }
 }
