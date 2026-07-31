@@ -520,7 +520,8 @@ input, textarea, select {
 /* ==========================================================================
    2. ISOLATED MAIN LMS WORKSPACE THEME (NAMESPACED TO .lms-master-body)
    ========================================================================== */
-.lms-master-body {
+html,
+body.lms-master-body {
     --bg-dark: #2d3135;
     --sidebar-bg: #10171e;
     --text-light: #f5f5f5;
@@ -530,751 +531,776 @@ input, textarea, select {
     --drawer-bg: #1e2226;
     background-color: var(--bg-dark) !important;
     color: var(--text-light) !important;
-    height: 100vh !important;
-    display: flex !important;
-    overflow: hidden !important;
-    position: relative !important;
+    min-height: 100vh !important;
+    width: 100% !important;
     margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
 }
 
-    /* Base resets across components inside master template boundaries */
-    .lms-master-body * {
-        box-sizing: border-box !important;
-        margin: 0;
-        padding: 0;
-    }
+/* Base resets across components inside master template boundaries */
+.lms-master-body * {
+    box-sizing: border-box !important;
+    margin: 0;
+    padding: 0;
+}
 
-    /* FIXED ICON SYSTEM PROTECTION: Exclude material ligatures from standard font override namespaces */
-    .lms-master-body :not(.material-icons-outlined) {
-        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
-    }
+/* FIXED ICON SYSTEM PROTECTION: Exclude material ligatures from standard font override namespaces */
+.lms-master-body :not(.material-icons-outlined) {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+}
 
-    /* Ensure the form acts as the flex container for the sidebar and main content */
-    .lms-master-body #mainRenderForm {
-        display: flex !important;
-        width: 100% !important;
-        height: 100% !important;
-        margin: 0 !important;
-        padding: 0 !important;
-    }
+/* Ensure the form acts as the flex container for the sidebar and main content */
+.lms-master-body #mainRenderForm {
+    display: flex !important;
+    width: 100% !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    position: relative !important;
+}
 
-    /* Light Mode Swaps strictly bound to dashboard runtime body class */
-    .lms-master-body.light-mode {
-        --bg-dark: #f4f5f7;
-        --sidebar-bg: #ffffff;
-        --text-light: #2d3135;
-        --text-muted: #626970;
-        --border-color: #d1d5db;
-        --drawer-bg: #ffffff;
-    }
+/* Light Mode Swaps strictly bound to dashboard runtime body class */
+.lms-master-body.light-mode {
+    --bg-dark: #f4f5f7;
+    --sidebar-bg: #ffffff;
+    --text-light: #2d3135;
+    --text-muted: #626970;
+    --border-color: #d1d5db;
+    --drawer-bg: #ffffff;
+}
 
-    .lms-master-body input,
-    .lms-master-body textarea,
-    .lms-master-body select {
-        font-size: 14px !important;
-        border-radius: 4px !important;
-        border: 1px solid var(--border-color) !important;
-        padding: 8px 12px !important;
-        background-color: #383c40 !important;
-        color: var(--text-light) !important;
-    }
+.lms-master-body input,
+.lms-master-body textarea,
+.lms-master-body select {
+    font-size: 14px !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--border-color) !important;
+    padding: 8px 12px !important;
+    background-color: #383c40 !important;
+    color: var(--text-light) !important;
+}
 
-    /* LMS Layout Containers color swaps */
-    .lms-master-body.light-mode .course-display-card,
-    .lms-master-body.light-mode .course-card-text-workspace,
-    .lms-master-body.light-mode .course-card-action-tray,
-    .lms-master-body.light-mode .calendar-grid-container,
-    .lms-master-body.light-mode .cal-day-cell,
-    .lms-master-body.light-mode .inbox-workspace-layout,
-    .lms-master-body.light-mode .inbox-threads-sidebar,
-    .lms-master-body.light-mode .inbox-chat-viewport,
-    .lms-master-body.light-mode .chat-viewport-header,
-    .lms-master-body.light-mode .chat-messages-container,
-    .lms-master-body.light-mode .chat-input-footer-tray,
-    .lms-master-body.light-mode .activity-log-card,
-    .lms-master-body.light-mode .help-main-card,
-    .lms-master-body.light-mode .lms-slide-drawer,
-    .lms-master-body.light-mode .course-card,
-    .lms-master-body.light-mode .card-body,
-    .lms-master-body.light-mode .help-drawer-card {
-        background-color: #ffffff !important;
-        color: #2d3135 !important;
-        border-color: #d1d5db !important;
-    }
+/* LMS Layout Containers color swaps */
+.lms-master-body.light-mode .course-display-card,
+.lms-master-body.light-mode .course-card-text-workspace,
+.lms-master-body.light-mode .course-card-action-tray,
+.lms-master-body.light-mode .calendar-grid-container,
+.lms-master-body.light-mode .cal-day-cell,
+.lms-master-body.light-mode .inbox-workspace-layout,
+.lms-master-body.light-mode .inbox-threads-sidebar,
+.lms-master-body.light-mode .inbox-chat-viewport,
+.lms-master-body.light-mode .chat-viewport-header,
+.lms-master-body.light-mode .chat-messages-container,
+.lms-master-body.light-mode .chat-input-footer-tray,
+.lms-master-body.light-mode .activity-log-card,
+.lms-master-body.light-mode .help-main-card,
+.lms-master-body.light-mode .lms-slide-drawer,
+.lms-master-body.light-mode .course-card,
+.lms-master-body.light-mode .card-body,
+.lms-master-body.light-mode .help-drawer-card {
+    background-color: #ffffff !important;
+    color: #2d3135 !important;
+    border-color: #d1d5db !important;
+}
 
-    /* LMS light text corrections */
-    .lms-master-body.light-mode .course-card-fullname,
-    .lms-master-body.light-mode .course-card-term-label,
-    .lms-master-body.light-mode .empty-title,
-    .lms-master-body.light-mode .studio-title-text,
-    .lms-master-body.light-mode .threads-sidebar-header h2,
-    .lms-master-body.light-mode .chat-header-subject,
-    .lms-master-body.light-mode .chat-header-participants,
-    .lms-master-body.light-mode .activity-action-title,
-    .lms-master-body.light-mode .help-title-link,
-    .lms-master-body.light-mode .dashboard-header-strip h1,
-    .lms-master-body.light-mode .empty-state-title,
-    .lms-master-body.light-mode .sort-label,
-    .lms-master-body.light-mode .drawer-header h2,
-    .lms-master-body.light-mode .thread-sender-name,
-    .lms-master-body.light-mode .thread-subject-line,
-    .lms-master-body.light-mode .thread-snippet-preview,
-    .lms-master-body.light-mode .help-card-title,
-    .lms-master-body.light-mode .help-card-desc,
-    .lms-master-body.light-mode .cal-header-title,
-    .lms-master-body.light-mode .cal-header-title span,
-    .lms-master-body.light-mode [id*="lblMonthYearTitle"] {
-        color: #2d3135 !important;
-    }
+/* LMS light text corrections */
+.lms-master-body.light-mode .course-card-fullname,
+.lms-master-body.light-mode .course-card-term-label,
+.lms-master-body.light-mode .empty-title,
+.lms-master-body.light-mode .studio-title-text,
+.lms-master-body.light-mode .threads-sidebar-header h2,
+.lms-master-body.light-mode .chat-header-subject,
+.lms-master-body.light-mode .chat-header-participants,
+.lms-master-body.light-mode .activity-action-title,
+.lms-master-body.light-mode .help-title-link,
+.lms-master-body.light-mode .dashboard-header-strip h1,
+.lms-master-body.light-mode .empty-state-title,
+.lms-master-body.light-mode .sort-label,
+.lms-master-body.light-mode .drawer-header h2,
+.lms-master-body.light-mode .thread-sender-name,
+.lms-master-body.light-mode .thread-subject-line,
+.lms-master-body.light-mode .thread-snippet-preview,
+.lms-master-body.light-mode .help-card-title,
+.lms-master-body.light-mode .help-card-desc,
+.lms-master-body.light-mode .cal-header-title,
+.lms-master-body.light-mode .cal-header-title span,
+.lms-master-body.light-mode [id*="lblMonthYearTitle"] {
+    color: #2d3135 !important;
+}
 
-    /* LMS form control overrides in light-mode */
-    .lms-master-body.light-mode .course-filter-select,
-    .lms-master-body.light-mode .studio-sort-dropdown,
-    .lms-master-body.light-mode .studio-sort-dropdown option,
-    .lms-master-body.light-mode .course-filter-select option,
-    .lms-master-body.light-mode input,
-    .lms-master-body.light-mode textarea,
-    .lms-master-body.light-mode select {
-        background-color: #ffffff !important;
-        color: #2d3135 !important;
-        border: 1px solid #d1d5db !important;
-    }
+/* LMS form control overrides in light-mode */
+.lms-master-body.light-mode .course-filter-select,
+.lms-master-body.light-mode .studio-sort-dropdown,
+.lms-master-body.light-mode .studio-sort-dropdown option,
+.lms-master-body.light-mode .course-filter-select option,
+.lms-master-body.light-mode input,
+.lms-master-body.light-mode textarea,
+.lms-master-body.light-mode select {
+    background-color: #ffffff !important;
+    color: #2d3135 !important;
+    border: 1px solid #d1d5db !important;
+}
 
-    .lms-master-body.light-mode .course-action-icon-link {
-        color: #626970 !important;
-    }
+.lms-master-body.light-mode .course-action-icon-link {
+    color: #626970 !important;
+}
 
-        .lms-master-body.light-mode .course-action-icon-link:hover {
-            color: var(--accent-blue) !important;
-        }
-
-    .lms-master-body.light-mode .cal-view-toggle-group {
-        background-color: #ffffff !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-        .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn {
-            color: #626970 !important;
-            background-color: transparent !important;
-        }
-
-            .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn.active-view {
-                background-color: #e5e7eb !important;
-                color: #2d3135 !important;
-                font-weight: 500;
-            }
-
-    .lms-master-body.light-mode .cal-action-btn,
-    .lms-master-body.light-mode .cal-action-btn input[type="submit"] {
-        background-color: #ffffff !important;
-        color: #2d3135 !important;
-        border: 1px solid #d1d5db !important;
-    }
-
-    .lms-master-body.light-mode .chat-bubble-row.incoming-msg .chat-bubble-text {
-        background-color: #f1f3f4 !important;
-        color: #2d3135 !important;
-        border-color: #d1d5db !important;
-    }
-
-    .lms-master-body.light-mode .chat-bubble-time {
-        color: #626970 !important;
-    }
-
-    .lms-master-body.light-mode .chat-reply-textarea {
-        background-color: #ffffff !important;
-        color: #2d3135 !important;
-        border-color: #d1d5db !important;
-    }
-
-        .lms-master-body.light-mode .chat-reply-textarea::placeholder {
-            color: #9aa0a6 !important;
-        }
-
-    /* LMS Drawers */
-    .lms-master-body.light-mode .lms-slide-drawer div,
-    .lms-master-body.light-mode .lms-slide-drawer h2,
-    .lms-master-body.light-mode .lms-slide-drawer p,
-    .lms-master-body.light-mode .lms-slide-drawer span,
-    .lms-master-body.light-mode .lms-slide-drawer div[style*="color: #fff"],
-    .lms-master-body.light-mode .lms-slide-drawer div[style*="color:#fff"] {
-        color: #2d3135 !important;
-    }
-
-    .lms-master-body.light-mode .cal-day-cell.outside-month {
-        background-color: #f9fafb !important;
-    }
-
-    .lms-master-body.light-mode .studio-menu-item.active-menu {
-        background-color: rgba(3, 169, 244, 0.1) !important;
+    .lms-master-body.light-mode .course-action-icon-link:hover {
         color: var(--accent-blue) !important;
     }
 
-    /* ==========================================================================
-   3. WORKSPACE STRUCTURE STYLES (BOUND TO .lms-master-body)
-   ========================================================================== */
-    .lms-master-body .lms-sidebar {
-        width: 85px;
-        background-color: var(--sidebar-bg);
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding-top: 15px;
-        border-right: 1px solid var(--border-color);
-        z-index: 200;
+.lms-master-body.light-mode .cal-view-toggle-group {
+    background-color: #ffffff !important;
+    border: 1px solid #d1d5db !important;
+}
+
+    .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn {
+        color: #626970 !important;
+        background-color: transparent !important;
     }
 
-    .lms-master-body .sidebar-logo-container {
-        width: 100%;
-        padding: 5px 10px 15px 10px;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        margin-bottom: 10px;
-    }
-
-    .lms-master-body.light-mode .sidebar-logo-container {
-        border-bottom-color: var(--border-color);
-    }
-
-    .lms-master-body .sidebar-brand-img {
-        max-width: 55px;
-        height: auto;
-        object-fit: contain;
-    }
-
-    .lms-master-body .nav-item {
-        width: 100%;
-        text-align: center;
-        padding: 12px 0;
-        color: var(--text-muted);
-        text-decoration: none;
-        font-size: 11px;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 4px;
-    }
-
-        .lms-master-body .nav-item i {
-            font-size: 26px;
-        }
-
-        .lms-master-body .nav-item:hover,
-        .lms-master-body .nav-item.active {
-            color: var(--text-light);
-            background-color: rgba(255, 255, 255, 0.05);
-        }
-
-        .lms-master-body .nav-item.active {
-            border-left: 3px solid var(--accent-blue) !important;
-        }
-
-    .lms-master-body .sidebar-footer {
-        margin-top: auto;
-        padding-bottom: 20px;
-        width: 100%;
-    }
-
-    .lms-master-body .lms-slide-drawer {
-        position: absolute;
-        top: 0;
-        left: -235px;
-        width: 320px;
-        height: 100%;
-        background-color: var(--drawer-bg);
-        border-right: 1px solid var(--border-color);
-        z-index: 150;
-        padding: 25px 25px 25px 105px;
-        transition: left 0.3s ease-in-out;
-        box-shadow: 5px 0 15px rgba(0,0,0,0.3);
-        display: flex;
-        flex-direction: column;
-    }
-
-        .lms-master-body .lms-slide-drawer.open {
-            left: 0 !important;
-        }
-
-    .lms-master-body .drawer-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 25px;
-    }
-
-        .lms-master-body .drawer-header h2 {
-            font-size: 20px;
-            font-weight: 400;
-            color: #fff;
-        }
-
-    .lms-master-body .close-drawer-btn {
-        color: var(--text-muted);
-        cursor: pointer;
-        background: none;
-        border: none;
-    }
-
-        .lms-master-body .close-drawer-btn:hover {
-            color: #fff;
-        }
-
-    .lms-master-body .help-drawer-links-box {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        margin-top: 15px;
-    }
-
-    .lms-master-body .help-drawer-card {
-        background-color: #26292c;
-        border: 1px solid var(--border-color);
-        padding: 14px;
-        border-radius: 6px;
-        cursor: pointer;
-        transition: background-color 0.15s;
-    }
-
-        .lms-master-body .help-drawer-card:hover {
-            background-color: #32373c;
-        }
-
-    .lms-master-body .help-card-title {
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--accent-blue);
-        margin-bottom: 4px;
-    }
-
-    .lms-master-body .help-card-desc {
-        font-size: 11px;
-        color: var(--text-muted);
-        line-height: 1.4;
-    }
-
-    .lms-master-body .drawer-footer-link {
-        margin-top: auto;
-        padding-top: 20px;
-        text-align: center;
-        border-top: 1px solid var(--border-color);
-    }
-
-        .lms-master-body .drawer-footer-link a {
-            color: var(--accent-blue);
-            text-decoration: none;
-            font-size: 13px;
+        .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn.active-view {
+            background-color: #e5e7eb !important;
+            color: #2d3135 !important;
             font-weight: 500;
         }
 
-            .lms-master-body .drawer-footer-link a:hover {
-                text-decoration: underline;
-            }
+.lms-master-body.light-mode .cal-action-btn,
+.lms-master-body.light-mode .cal-action-btn input[type="submit"] {
+    background-color: #ffffff !important;
+    color: #2d3135 !important;
+    border: 1px solid #d1d5db !important;
+}
 
-    .lms-master-body .main-workspace {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow-y: auto;
-        position: relative;
+.lms-master-body.light-mode .chat-bubble-row.incoming-msg .chat-bubble-text {
+    background-color: #f1f3f4 !important;
+    color: #2d3135 !important;
+    border-color: #d1d5db !important;
+}
+
+.lms-master-body.light-mode .chat-bubble-time {
+    color: #626970 !important;
+}
+
+.lms-master-body.light-mode .chat-reply-textarea {
+    background-color: #ffffff !important;
+    color: #2d3135 !important;
+    border-color: #d1d5db !important;
+}
+
+    .lms-master-body.light-mode .chat-reply-textarea::placeholder {
+        color: #9aa0a6 !important;
     }
 
-    .lms-master-body .content-body {
-        flex: 1;
-        padding: 40px;
-        min-height: calc(100vh - 50px);
-    }
+/* LMS Drawers */
+.lms-master-body.light-mode .lms-slide-drawer div,
+.lms-master-body.light-mode .lms-slide-drawer h2,
+.lms-master-body.light-mode .lms-slide-drawer p,
+.lms-master-body.light-mode .lms-slide-drawer span,
+.lms-master-body.light-mode .lms-slide-drawer div[style*="color: #fff"],
+.lms-master-body.light-mode .lms-slide-drawer div[style*="color:#fff"] {
+    color: #2d3135 !important;
+}
 
-    .lms-master-body .lms-footer {
-        height: 50px;
-        border-top: 1px solid var(--border-color);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 40px;
-        font-size: 12px;
-        color: var(--text-muted);
-        background-color: var(--bg-dark);
-    }
+.lms-master-body.light-mode .cal-day-cell.outside-month {
+    background-color: #f9fafb !important;
+}
 
-    /* ==========================================================================
-   4. ACCOUNT COMPONENT SLIDE-OUT DRAWER STYLES (BOUND TO .lms-master-body)
+.lms-master-body.light-mode .studio-menu-item.active-menu {
+    background-color: rgba(3, 169, 244, 0.1) !important;
+    color: var(--accent-blue) !important;
+}
+
+/* ==========================================================================
+   3. WORKSPACE STRUCTURE STYLES (BOUND TO .lms-master-body)
    ========================================================================== */
-    .lms-master-body .account-profile-section {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin-bottom: 25px;
-        padding-bottom: 15px;
-        border-bottom: 1px solid var(--border-color);
+.lms-master-body .lms-sidebar {
+    width: 85px !important;
+    background-color: var(--sidebar-bg) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    padding-top: 15px !important;
+    border-right: 1px solid var(--border-color) !important;
+    z-index: 200 !important;
+    position: fixed !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    height: 100vh !important;
+}
+
+.lms-master-body .sidebar-logo-container {
+    width: 100%;
+    padding: 5px 10px 15px 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    margin-bottom: 10px;
+}
+
+.lms-master-body.light-mode .sidebar-logo-container {
+    border-bottom-color: var(--border-color);
+}
+
+.lms-master-body .sidebar-brand-img {
+    max-width: 55px;
+    height: auto;
+    object-fit: contain;
+}
+
+.lms-master-body .nav-item {
+    width: 100%;
+    text-align: center;
+    padding: 12px 0;
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 11px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+    .lms-master-body .nav-item i {
+        font-size: 26px;
     }
 
-    .lms-master-body .avatar-badge {
-        width: 60px;
-        height: 60px;
-        background-color: #3e4449;
-        border-radius: 50%;
+    .lms-master-body .nav-item:hover,
+    .lms-master-body .nav-item.active {
         color: var(--text-light);
-        font-size: 18px;
-        font-weight: 600;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 12px;
-        border: 2px solid var(--border-color);
-        letter-spacing: 0.5px;
+        background-color: rgba(255, 255, 255, 0.05);
     }
 
-    .lms-master-body .user-display-name {
-        font-size: 15px;
-        font-weight: 600;
-        color: var(--text-light);
-        margin-bottom: 6px;
-        letter-spacing: 0.5px;
+    .lms-master-body .nav-item.active {
+        border-left: 3px solid var(--accent-blue) !important;
     }
 
-    .lms-master-body .account-logout-btn {
-        font-size: 12px;
-        color: var(--text-muted);
+.lms-master-body .sidebar-footer {
+    margin-top: auto;
+    padding-bottom: 20px;
+    width: 100%;
+}
+
+.lms-master-body .lms-slide-drawer {
+    position: fixed;
+    top: 0;
+    left: -235px;
+    width: 320px;
+    height: 100%;
+    background-color: var(--drawer-bg);
+    border-right: 1px solid var(--border-color);
+    z-index: 150;
+    padding: 25px 25px 25px 105px;
+    transition: left 0.3s ease-in-out;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+    .lms-master-body .lms-slide-drawer.open {
+        left: 0 !important;
+    }
+
+.lms-master-body .drawer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+}
+
+    .lms-master-body .drawer-header h2 {
+        font-size: 20px;
+        font-weight: 400;
+        color: #fff;
+    }
+
+.lms-master-body .close-drawer-btn {
+    color: var(--text-muted);
+    cursor: pointer;
+    background: none;
+    border: none;
+}
+
+    .lms-master-body .close-drawer-btn:hover {
+        color: #fff;
+    }
+
+.lms-master-body .help-drawer-links-box {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.lms-master-body .help-drawer-card {
+    background-color: #26292c;
+    border: 1px solid var(--border-color);
+    padding: 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+    .lms-master-body .help-drawer-card:hover {
+        background-color: #32373c;
+    }
+
+.lms-master-body .help-card-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent-blue);
+    margin-bottom: 4px;
+}
+
+.lms-master-body .help-card-desc {
+    font-size: 11px;
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+
+.lms-master-body .drawer-footer-link {
+    margin-top: auto;
+    padding-top: 20px;
+    text-align: center;
+    border-top: 1px solid var(--border-color);
+}
+
+    .lms-master-body .drawer-footer-link a {
+        color: var(--accent-blue);
         text-decoration: none;
-        transition: color 0.15s ease-in-out;
+        font-size: 13px;
+        font-weight: 500;
     }
 
-        .lms-master-body .account-logout-btn:hover {
-            color: #ff5252 !important;
+        .lms-master-body .drawer-footer-link a:hover {
             text-decoration: underline;
         }
 
-    .lms-master-body.light-mode .avatar-badge {
-        background-color: #e5e7eb !important;
-        color: #2d3135 !important;
+/* Main Content Workspace Full Viewport Expansion */
+.lms-master-body .main-workspace {
+    flex: 1 1 auto !important;
+    width: calc(100% - 85px) !important;
+    margin-left: 85px !important;
+    min-height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-sizing: border-box !important;
+    background-color: var(--bg-dark) !important;
+    position: relative !important;
+}
+
+.lms-master-body .content-body {
+    flex: 1 0 auto !important;
+    padding: 30px 40px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Seamless Theme Matching Footer */
+.lms-master-body .lms-footer {
+    position: static !important;
+    bottom: auto !important;
+    top: auto !important;
+    flex-shrink: 0 !important;
+    width: 100% !important;
+    padding: 20px 40px !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background-color: var(--bg-dark) !important;
+    border-top: 1px solid var(--border-color) !important;
+    font-size: 12px !important;
+    color: var(--text-muted) !important;
+    margin-top: 40px !important;
+    box-sizing: border-box !important;
+    z-index: 1 !important;
+}
+
+/* ==========================================================================
+   4. ACCOUNT COMPONENT SLIDE-OUT DRAWER STYLES (BOUND TO .lms-master-body)
+   ========================================================================== */
+.lms-master-body .account-profile-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lms-master-body .avatar-badge {
+    width: 60px;
+    height: 60px;
+    background-color: #3e4449;
+    border-radius: 50%;
+    color: var(--text-light);
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 12px;
+    border: 2px solid var(--border-color);
+    letter-spacing: 0.5px;
+}
+
+.lms-master-body .user-display-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+}
+
+.lms-master-body .account-logout-btn {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: color 0.15s ease-in-out;
+}
+
+    .lms-master-body .account-logout-btn:hover {
+        color: #ff5252 !important;
+        text-decoration: underline;
     }
 
-    .lms-master-body .account-menu-list {
-        list-style: none;
-        padding: 0;
-        margin: 0 0 30px 0;
-        display: flex;
-        flex-direction: column;
-        gap: 14px;
+.lms-master-body.light-mode .avatar-badge {
+    background-color: #e5e7eb !important;
+    color: #2d3135 !important;
+}
+
+.lms-master-body .account-menu-list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 30px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+    .lms-master-body .account-menu-list li a {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--accent-blue);
+        text-decoration: none;
+        transition: color 0.15s ease;
+        display: inline-block;
     }
 
-        .lms-master-body .account-menu-list li a {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--accent-blue);
-            text-decoration: none;
-            transition: color 0.15s ease;
-            display: inline-block;
+        .lms-master-body .account-menu-list li a:hover {
+            color: var(--text-light) !important;
+            text-decoration: underline;
         }
 
-            .lms-master-body .account-menu-list li a:hover {
-                color: var(--text-light) !important;
-                text-decoration: underline;
-            }
+.lms-master-body.light-mode .account-menu-list li a:hover {
+    color: #2d3135 !important;
+}
 
-    .lms-master-body.light-mode .account-menu-list li a:hover {
-        color: #2d3135 !important;
+.lms-master-body .accessibility-settings-container {
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+    .lms-master-body .accessibility-settings-container h4 {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-light);
+        margin-bottom: 15px;
+        letter-spacing: 0.3px;
     }
 
-    .lms-master-body .accessibility-settings-container {
-        padding-top: 20px;
-        border-top: 1px solid var(--border-color);
-    }
+.lms-master-body.light-mode .accessibility-settings-container h4 {
+    color: #2d3135 !important;
+}
 
-        .lms-master-body .accessibility-settings-container h4 {
-            font-size: 13px;
-            font-weight: 600;
-            color: var(--text-light);
-            margin-bottom: 15px;
-            letter-spacing: 0.3px;
-        }
+.lms-master-body .accessibility-option-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
+}
 
-    .lms-master-body.light-mode .accessibility-settings-container h4 {
-        color: #2d3135 !important;
-    }
-
-    .lms-master-body .accessibility-option-row {
+    .lms-master-body .accessibility-option-row .toggle-icon {
         display: flex;
         align-items: center;
-        gap: 10px;
-        margin-bottom: 14px;
-    }
-
-        .lms-master-body .accessibility-option-row .toggle-icon {
-            display: flex;
-            align-items: center;
-            font-size: 18px;
-            cursor: pointer;
-            user-select: none;
-        }
-
-            .lms-master-body .accessibility-option-row .toggle-icon.checked i {
-                color: #4caf50 !important;
-            }
-
-            .lms-master-body .accessibility-option-row .toggle-icon.unchecked i {
-                color: var(--text-muted) !important;
-                opacity: 0.6;
-            }
-
-        .lms-master-body .accessibility-option-row .option-label-text {
-            font-size: 12px;
-            color: var(--text-muted);
-            font-weight: 500;
-            flex-grow: 1;
-        }
-
-    .lms-master-body.light-mode .accessibility-option-row .option-label-text {
-        color: #626970 !important;
-    }
-
-    .lms-master-body .accessibility-option-row .info-help-icon {
-        display: flex;
-        align-items: center;
-        color: var(--text-muted);
-        opacity: 0.5;
+        font-size: 18px;
         cursor: pointer;
+        user-select: none;
     }
 
-        .lms-master-body .accessibility-option-row .info-help-icon i {
-            font-size: 14px !important;
+        .lms-master-body .accessibility-option-row .toggle-icon.checked i {
+            color: #4caf50 !important;
         }
 
-        .lms-master-body .accessibility-option-row .info-help-icon:hover {
-            opacity: 0.9;
+        .lms-master-body .accessibility-option-row .toggle-icon.unchecked i {
+            color: var(--text-muted) !important;
+            opacity: 0.6;
         }
 
-    /* ==========================================================================
+    .lms-master-body .accessibility-option-row .option-label-text {
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 500;
+        flex-grow: 1;
+    }
+
+.lms-master-body.light-mode .accessibility-option-row .option-label-text {
+    color: #626970 !important;
+}
+
+.lms-master-body .accessibility-option-row .info-help-icon {
+    display: flex;
+    align-items: center;
+    color: var(--text-muted);
+    opacity: 0.5;
+    cursor: pointer;
+}
+
+    .lms-master-body .accessibility-option-row .info-help-icon i {
+        font-size: 14px !important;
+    }
+
+    .lms-master-body .accessibility-option-row .info-help-icon:hover {
+        opacity: 0.9;
+    }
+
+/* ==========================================================================
    5. PROFILE COMPONENT LAYOUT STYLES (BOUND TO .lms-master-body)
    ========================================================================== */
 
-    /* 1. Top Bar Action Layout */
-    .lms-master-body .profile-top-bar {
-        display: flex;
-        align-items: center;
-        gap: 15px;
-        padding-bottom: 20px;
-        margin-bottom: 20px;
-        border-bottom: 1px solid var(--border-color);
+/* 1. Top Bar Action Layout */
+.lms-master-body .profile-top-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+    width: 100% !important;
+}
+
+.lms-master-body .profile-menu-burger-btn {
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .lms-master-body .profile-menu-burger-btn i {
+        font-size: 24px !important;
     }
 
-    .lms-master-body .profile-menu-burger-btn {
-        background: none;
-        border: none;
-        color: var(--text-light);
-        cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
+.lms-master-body .profile-breadcrumbs {
+    font-size: 16px;
+    font-weight: 500;
+    color: var(--text-light);
+}
 
-        .lms-master-body .profile-menu-burger-btn i {
-            font-size: 24px !important;
-        }
+/* 2. Workspace Content Grid Layout */
+.lms-master-body .profile-workspace-layout {
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 40px;
+    align-items: start;
+    width: 100% !important;
+}
 
-    .lms-master-body .profile-breadcrumbs {
-        font-size: 16px;
-        font-weight: 500;
-        color: var(--text-light);
-    }
+/* 3. Left Side Navigation List */
+.lms-master-body .profile-side-menu {
+    border-right: 1px solid var(--border-color);
+    padding-right: 20px;
+    height: 100%;
+}
 
-    /* 2. Workspace Content Grid Layout */
-    .lms-master-body .profile-workspace-layout {
-        display: grid;
-        grid-template-columns: 200px 1fr;
-        gap: 40px;
-        align-items: start;
-    }
+.lms-master-body .profile-menu-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
 
-    /* 3. Left Side Navigation List */
-    .lms-master-body .profile-side-menu {
-        border-right: 1px solid var(--border-color);
-        padding-right: 20px;
-        height: 100%;
-    }
-
-    .lms-master-body .profile-menu-links {
-        list-style: none;
-        padding: 0;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-
-        .lms-master-body .profile-menu-links li a {
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--accent-blue);
-            text-decoration: none;
-            transition: color 0.15s ease;
-            display: block;
-        }
-
-            .lms-master-body .profile-menu-links li a:hover,
-            .lms-master-body .profile-menu-links li a.active-link {
-                color: var(--text-light) !important;
-                text-decoration: underline;
-            }
-
-    .lms-master-body.light-mode .profile-menu-links li a:hover,
-    .lms-master-body.light-mode .profile-menu-links li a.active-link {
-        color: #2d3135 !important;
-    }
-
-    /* 4. Profile Dashboard Container Details */
-    .lms-master-body .profile-card-container {
-        display: flex;
-        flex-direction: column;
-    }
-
-    .lms-master-body .profile-main-title {
-        font-size: 22px;
-        font-weight: 400;
-        color: var(--text-light);
-        margin-bottom: 30px;
-    }
-
-    .lms-master-body .profile-grid {
-        display: grid;
-        grid-template-columns: 140px 1fr;
-        gap: 40px;
-        align-items: start;
-    }
-
-    /* 5. Avatar Frame Structure */
-    .lms-master-body .profile-avatar-column {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 15px;
-        text-align: center;
-    }
-
-    .lms-master-body .profile-placeholder-avatar {
-        width: 110px;
-        height: 110px;
-        background-color: rgba(255, 255, 255, 0.05);
-        border: 1px dashed var(--border-color);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .lms-master-body.light-mode .profile-placeholder-avatar {
-        background-color: #f3f4f6;
-    }
-
-    .lms-master-body .profile-placeholder-avatar i {
-        font-size: 70px !important;
-        color: var(--text-muted);
-        opacity: 0.4;
-    }
-
-    .lms-master-body .edit-avatar-action-link {
-        font-size: 11px;
-        color: var(--accent-blue);
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        font-weight: 500;
-    }
-
-        .lms-master-body .edit-avatar-action-link i {
-            font-size: 12px !important;
-        }
-
-        .lms-master-body .edit-avatar-action-link:hover {
-            text-decoration: underline;
-        }
-
-    /* 6. Profile Details Elements & Section Styling */
-    .lms-master-body .profile-details-column {
-        display: flex;
-        flex-direction: column;
-        gap: 25px;
-    }
-
-    .lms-master-body .profile-title-row {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding-bottom: 15px;
-        border-bottom: 1px solid var(--border-color);
-    }
-
-    .lms-master-body .profile-display-fullname {
-        font-size: 24px;
-        font-weight: 500;
-        color: var(--text-light);
-    }
-
-    .lms-master-body .edit-profile-btn {
-        font-size: 11px;
-        color: var(--text-muted);
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid var(--border-color);
-        padding: 6px 12px;
-        border-radius: 4px;
-        text-decoration: none;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        transition: background 0.15s, color 0.15s;
-    }
-
-    .lms-master-body.light-mode .edit-profile-btn {
-        background: #f9fafb;
-    }
-
-    .lms-master-body .edit-profile-btn i {
-        font-size: 13px !important;
-    }
-
-    .lms-master-body .edit-profile-btn:hover {
-        background: rgba(255, 255, 255, 0.15);
-        color: var(--text-light);
-    }
-
-    .lms-master-body.light-mode .edit-profile-btn:hover {
-        background: #e5e7eb;
-    }
-
-    .lms-master-body .profile-details-section {
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-    }
-
-        .lms-master-body .profile-details-section h3 {
-            font-size: 14px;
-            font-weight: 600;
-            color: var(--text-light);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-    .lms-master-body .empty-section-notice {
+    .lms-master-body .profile-menu-links li a {
         font-size: 13px;
-        color: var(--text-muted);
-        line-height: 1.5;
-    }
-
-    .lms-master-body .settings-inline-link {
+        font-weight: 500;
         color: var(--accent-blue);
         text-decoration: none;
+        transition: color 0.15s ease;
+        display: block;
     }
 
-        .lms-master-body .settings-inline-link:hover {
+        .lms-master-body .profile-menu-links li a:hover,
+        .lms-master-body .profile-menu-links li a.active-link {
+            color: var(--text-light) !important;
             text-decoration: underline;
         }
+
+.lms-master-body.light-mode .profile-menu-links li a:hover,
+.lms-master-body.light-mode .profile-menu-links li a.active-link {
+    color: #2d3135 !important;
+}
+
+/* 4. Profile Dashboard Container Details */
+.lms-master-body .profile-card-container {
+    display: flex;
+    flex-direction: column;
+    width: 100% !important;
+}
+
+.lms-master-body .profile-main-title {
+    font-size: 22px;
+    font-weight: 400;
+    color: var(--text-light);
+    margin-bottom: 30px;
+}
+
+.lms-master-body .profile-grid {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+/* 5. Avatar Frame Structure */
+.lms-master-body .profile-avatar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+}
+
+.lms-master-body .profile-placeholder-avatar {
+    width: 110px;
+    height: 110px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px dashed var(--border-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.lms-master-body.light-mode .profile-placeholder-avatar {
+    background-color: #f3f4f6;
+}
+
+.lms-master-body .profile-placeholder-avatar i {
+    font-size: 70px !important;
+    color: var(--text-muted);
+    opacity: 0.4;
+}
+
+.lms-master-body .edit-avatar-action-link {
+    font-size: 11px;
+    color: var(--accent-blue);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 500;
+}
+
+    .lms-master-body .edit-avatar-action-link i {
+        font-size: 12px !important;
+    }
+
+    .lms-master-body .edit-avatar-action-link:hover {
+        text-decoration: underline;
+    }
+
+/* 6. Profile Details Elements & Section Styling */
+.lms-master-body .profile-details-column {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.lms-master-body .profile-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.lms-master-body .profile-display-fullname {
+    font-size: 24px;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.lms-master-body .edit-profile-btn {
+    font-size: 11px;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    padding: 6px 12px;
+    border-radius: 4px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.15s, color 0.15s;
+}
+
+.lms-master-body.light-mode .edit-profile-btn {
+    background: #f9fafb;
+}
+
+.lms-master-body .edit-profile-btn i {
+    font-size: 13px !important;
+}
+
+.lms-master-body .edit-profile-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: var(--text-light);
+}
+
+.lms-master-body.light-mode .edit-profile-btn:hover {
+    background: #e5e7eb;
+}
+
+.lms-master-body .profile-details-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+    .lms-master-body .profile-details-section h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-light);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+.lms-master-body .empty-section-notice {
+    font-size: 13px;
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+.lms-master-body .settings-inline-link {
+    color: var(--accent-blue);
+    text-decoration: none;
+}
+
+    .lms-master-body .settings-inline-link:hover {
+        text-decoration: underline;
+    }
 
 /* Responsive adjustment if screen shrinks */
 @media (max-width: 768px) {
@@ -1283,7 +1309,7 @@ input, textarea, select {
     }
 
     .lms-master-body .profile-side-menu {
-        display: none; /* Hide secondary side menu bar on tablet/mobile views */
+        display: none;
     }
 }
 
@@ -1321,7 +1347,6 @@ input, textarea, select {
         background-color: #f9fafb;
     }
 
-/* Critical announcement marker style */
 .lms-master-body .announcement-card.critical {
     border-left: 4px solid #ff5252 !important;
 }
@@ -1387,7 +1412,6 @@ input, textarea, select {
         font-size: 16px !important;
     }
 
-/* Empty State Styling */
 .lms-master-body .announcements-empty-state {
     text-align: center;
     padding: 60px 20px;
@@ -1421,7 +1445,7 @@ input, textarea, select {
 }
 
     .lms-master-body.high-contrast .announcement-card.critical {
-        border-left: 6px solid #ffff00 !important; /* Glow yellow border in high-contrast */
+        border-left: 6px solid #ffff00 !important;
     }
 
 .lms-master-body.high-contrast .announcement-meta-badge {
@@ -1433,17 +1457,6 @@ input, textarea, select {
 /* ==========================================================================
    7. PORTFOLIO PAGE COMPONENT SYSTEM (BOUND TO .lms-master-body)
    ========================================================================== */
-
-/* Top bar flex updates */
-.lms-master-body .profile-top-bar {
-    display: flex !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    width: 100% !important;
-    padding-bottom: 20px;
-    margin-bottom: 30px;
-    border-bottom: 1px solid var(--border-color);
-}
 
 .lms-master-body .profile-top-bar-left {
     display: flex !important;
@@ -1480,7 +1493,6 @@ input, textarea, select {
     color: #c9d1d9 !important;
 }
 
-/* Header section */
 .lms-master-body .portfolio-main-header {
     display: flex !important;
     justify-content: space-between !important;
@@ -1501,7 +1513,6 @@ input, textarea, select {
     color: #8b949e !important;
 }
 
-/* Perfect button matching sample color */
 .lms-master-body .create-portfolio-blue-btn {
     background-color: #1f6feb !important;
     color: #ffffff !important;
@@ -1525,7 +1536,6 @@ input, textarea, select {
         font-size: 16px !important;
     }
 
-/* Tabs */
 .lms-master-body .portfolio-tab-strip {
     display: flex !important;
     gap: 24px !important;
@@ -1559,7 +1569,6 @@ input, textarea, select {
             background-color: #1f6feb !important;
         }
 
-/* Filter bar layout */
 .lms-master-body .portfolio-filter-utility-bar {
     display: flex !important;
     justify-content: space-between !important;
@@ -1593,7 +1602,6 @@ input, textarea, select {
     outline: none !important;
 }
 
-/* Empty State Styling */
 .lms-master-body .portfolio-rocket-empty-state {
     display: flex !important;
     flex-direction: column !important;
@@ -1671,7 +1679,6 @@ input, textarea, select {
     line-height: 1;
 }
 
-/* Dropdown scope container row */
 .lms-master-body .notification-scope-selector-row {
     display: flex;
     align-items: center;
@@ -1694,7 +1701,6 @@ input, textarea, select {
     border-radius: 6px !important;
 }
 
-/* Matrix Table Styling overrides */
 .lms-master-body .notification-matrix-container {
     width: 100%;
     overflow-x: auto;
@@ -1743,7 +1749,6 @@ input, textarea, select {
     margin-top: 2px;
 }
 
-/* Row separation variations */
 .lms-master-body .row-category-divider td {
     font-size: 15px !important;
     font-weight: 600 !important;
@@ -1761,7 +1766,6 @@ input, textarea, select {
     padding-left: 24px !important;
 }
 
-/* Center status parameters */
 .lms-master-body .cell-status {
     text-align: center;
     width: 180px;
@@ -1772,7 +1776,6 @@ input, textarea, select {
         user-select: none;
     }
 
-/* Individual state color hooks */
 .lms-master-body .icon-active {
     color: #2ea44f !important;
 }
@@ -1790,7 +1793,6 @@ input, textarea, select {
     opacity: 0.4;
 }
 
-/* Grading warning box layout rules */
 .lms-master-body .grading-warning-box {
     display: flex;
     align-items: center;
@@ -1823,9 +1825,9 @@ input, textarea, select {
    9. FILE MANAGER COMPONENT SPECIFICATIONS (BOUND TO .lms-master-body)
    ========================================================================== */
 
-/* Full layout expansion specifically for the three-tier split layout */
 .lms-master-body .files-page-layout {
     grid-template-columns: 200px 1fr !important;
+    width: 100% !important;
 }
 
 .lms-master-body .file-manager-card {
@@ -1835,7 +1837,6 @@ input, textarea, select {
     width: 100% !important;
 }
 
-/* 1. Utility File Toolbar Styling */
 .lms-master-body .files-utility-toolbar {
     display: flex !important;
     justify-content: space-between !important;
@@ -1924,7 +1925,6 @@ input, textarea, select {
         background-color: #388bfd !important;
     }
 
-/* 2. File Explorer Columns Split Grid */
 .lms-master-body .file-explorer-grid {
     display: grid !important;
     grid-template-columns: 240px 1fr !important;
@@ -1933,7 +1933,6 @@ input, textarea, select {
     align-items: start !important;
 }
 
-/* 3. Left Hand Directory Navigation Tree */
 .lms-master-body .file-directory-tree-panel {
     border-right: 1px solid var(--border-color);
     padding-right: 10px;
@@ -1986,9 +1985,9 @@ input, textarea, select {
         color: #1f6feb !important;
     }
 
-/* 4. Right Hand Directory Roster Data Table */
 .lms-master-body .file-roster-table-panel {
     overflow-x: auto;
+    width: 100%;
 }
 
 .lms-master-body .file-roster-table {
@@ -2040,7 +2039,7 @@ input, textarea, select {
     }
 
     .lms-master-body .file-row-icon.image-type {
-        color: #4af626 !important; /* Soft green theme for image rows */
+        color: #4af626 !important;
     }
 
 .lms-master-body .modified-by-link {
@@ -2065,7 +2064,6 @@ input, textarea, select {
         color: #1f6feb !important;
     }
 
-/* High Contrast Adjustments */
 .lms-master-body.high-contrast .files-upload-blue-btn,
 .lms-master-body.high-contrast .search-input-field {
     border: 2px solid #ffffff !important;
@@ -2078,6 +2076,7 @@ input, textarea, select {
 
 .lms-master-body .settings-page-layout {
     grid-template-columns: 200px 1fr !important;
+    width: 100% !important;
 }
 
 .lms-master-body .settings-split-grid {
@@ -2088,7 +2087,6 @@ input, textarea, select {
     width: 100% !important;
 }
 
-/* 1. Left Core Details Component Style Controls */
 .lms-master-body .settings-user-header {
     display: flex !important;
     align-items: center !important;
@@ -2150,7 +2148,6 @@ input, textarea, select {
     line-height: 1.5;
 }
 
-/* 2. Divider Segment Content Frameworks */
 .lms-master-body .settings-section-divider {
     border-top: 1px solid var(--border-color);
     padding-top: 25px;
@@ -2226,7 +2223,6 @@ input, textarea, select {
         text-decoration: underline;
     }
 
-/* 3. Integrations Roster Grid Tables */
 .lms-master-body .integrations-matrix-table {
     width: 100%;
     border-collapse: collapse;
@@ -2300,7 +2296,6 @@ input, textarea, select {
         background-color: rgba(255, 255, 255, 0.15) !important;
     }
 
-/* 4. Right Side Contact Action Column Panels */
 .lms-master-body .settings-sidebar-controls-panel {
     border-left: 1px solid var(--border-color);
     padding-left: 24px;
@@ -2387,7 +2382,6 @@ input, textarea, select {
     padding: 6px 0;
 }
 
-/* Sidebar action execution buttons stack layout rules */
 .lms-master-body .settings-action-button-stack {
     display: flex;
     flex-direction: column;
@@ -2417,7 +2411,6 @@ input, textarea, select {
         background-color: rgba(255, 255, 255, 0.1) !important;
     }
 
-/* Responsive breakpoint overrides if tablet size constraints trigger */
 @media (max-width: 992px) {
     .lms-master-body .settings-split-grid {
         grid-template-columns: 1fr !important;

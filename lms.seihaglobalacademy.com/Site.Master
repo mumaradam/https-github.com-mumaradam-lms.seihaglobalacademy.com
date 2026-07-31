@@ -11,8 +11,8 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
-    <!-- CACHE-BUSTING LINK: The ?v=3 forces the browser to load the new Account Drawer and Accessibility styling -->
-    <link href="/assets/css/Site.css?v=3" rel="stylesheet" type="text/css" />
+   
+    <link href="/assets/css/Site.css?v=19" rel="stylesheet" type="text/css" />
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server"></asp:ContentPlaceHolder>
 </head>
@@ -142,7 +142,7 @@
             </div>
         </div>
 
-        <!-- Main Content Area -->
+        <!-- Main Content Workspace Container -->
         <main class="main-workspace">
             <div class="content-body">
                 <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>
@@ -200,9 +200,7 @@
             highlightNavbar();
         }
 
-        /* ==========================================================================
-           ACCESSIBILITY CONTROLLER SYSTEM (CLIENT-SIDE PERSISTENCE)
-           ========================================================================== */
+    
         function initAccessibilityToggles() {
             var hcIconWrapper = document.getElementById("highContrastToggleIcon");
             if (!hcIconWrapper) return;
