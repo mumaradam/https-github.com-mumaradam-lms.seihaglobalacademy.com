@@ -2,7 +2,6 @@
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
     <style>
-        /* Top Navigation Header Styling */
         .courses-header-strip {
             display: flex;
             justify-content: space-between;
@@ -28,14 +27,12 @@
             cursor: pointer;
         }
 
-        /* Course Matrix Dashboard Grid Layout */
         .courses-grid-matrix {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 30px;
         }
 
-        /* Card Structural Base Container */
         .course-display-card {
             background-color: #383c40;
             border-radius: 8px;
@@ -45,38 +42,54 @@
             transition: transform 0.2s, box-shadow 0.2s;
             display: flex;
             flex-direction: column;
+            position: relative;
         }
         .course-display-card:hover {
             transform: translateY(-4px);
             box-shadow: 0 6px 15px rgba(0,0,0,0.3);
         }
 
-        /* Top Accent Banner Block */
         .course-card-color-banner {
             height: 130px;
             position: relative;
             cursor: pointer;
         }
-        .course-card-settings-trigger {
-            position: absolute;
-            top: 12px;
-            right: 12px;
-            color: #fff;
-            opacity: 0.8;
-            cursor: pointer;
-            background: rgba(0,0,0,0.2);
-            border-radius: 50%;
-            padding: 4px;
-            transition: opacity 0.2s;
-        }
-        .course-card-settings-trigger:hover { opacity: 1; }
 
-        /* Mid-Section Content Text Layout */
+        .course-card-teacher-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 8px;
+            border-radius: 20px;
+            backdrop-filter: blur(4px);
+        }
+
+        .course-action-btn {
+            background: none;
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0.85;
+            transition: opacity 0.2s, color 0.2s;
+            padding: 2px;
+        }
+        .course-action-btn:hover { opacity: 1; }
+        .course-action-btn.edit:hover { color: #60a5fa; }
+        .course-action-btn.delete:hover { color: #f87171; }
+
         .course-card-text-workspace {
             padding: 20px;
             background-color: #212427;
             flex: 1;
             cursor: pointer;
+            text-decoration: none;
+            display: block;
         }
         .course-card-code-tag {
             font-size: 13px;
@@ -97,7 +110,6 @@
             margin-top: 8px;
         }
 
-        /* Lower Activity Link Icon Bar */
         .course-card-action-tray {
             background-color: #1e2226;
             border-top: 1px solid var(--border-color);
@@ -113,9 +125,7 @@
             justify-content: center;
             transition: color 0.2s;
         }
-        .course-action-icon-link:hover {
-            color: var(--accent-blue);
-        }
+        .course-action-icon-link:hover { color: var(--accent-blue); }
         .course-action-icon-link i { font-size: 22px; }
     </style>
 </asp:Content>
@@ -133,36 +143,83 @@
     </div>
 
     <div class="courses-grid-matrix">
-        <asp:Repeater ID="rptAllCoursesList" runat="server">
+        <asp:Repeater ID="rptAllCoursesList" runat="server" OnItemCommand="rptAllCoursesList_ItemCommand" OnItemDataBound="rptAllCoursesList_ItemDataBound">
             <ItemTemplate>
                 <div class="course-display-card">
-                    <div class="course-card-color-banner" style="background-color: <%# Eval("ColorHex") %>;">
-                        <i class="material-icons-outlined course-card-settings-trigger">more_vert</i>
-                    </div>
                     
-                    <div class="course-card-text-workspace">
+                    <!-- Color Banner (Navigates to Course Details) -->
+                    <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' class="course-card-color-banner" style="background-color: <%# Eval("ColorHex") %>;"></a>
+
+                    <!-- Teacher Edit/Delete Controls -->
+                    <asp:PlaceHolder ID="phTeacherCourseActions" runat="server">
+                        <div class="course-card-teacher-actions">
+                            <asp:LinkButton ID="btnEditCourse" runat="server" CommandName="EditCourse" CommandArgument='<%# Eval("CourseID") %>' CssClass="course-action-btn edit" ToolTip="Edit Course">
+                                <i class="material-icons-outlined" style="font-size: 18px;">edit</i>
+                            </asp:LinkButton>
+                            <asp:LinkButton ID="btnDeleteCourse" runat="server" CommandName="DeleteCourse" CommandArgument='<%# Eval("CourseID") %>' CssClass="course-action-btn delete" ToolTip="Delete Course" OnClientClick="return confirm('Are you sure you want to delete this course?');">
+                                <i class="material-icons-outlined" style="font-size: 18px;">delete</i>
+                            </asp:LinkButton>
+                        </div>
+                    </asp:PlaceHolder>
+
+                    <!-- Card Body Clickable Link -->
+                    <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' class="course-card-text-workspace">
                         <div class="course-card-code-tag" style="color: <%# Eval("ColorHex") %>;"><%# Eval("CourseCode") %></div>
                         <div class="course-card-fullname"><%# Eval("CourseName") %></div>
                         <div class="course-card-term-label"><%# Eval("Term") %></div>
-                    </div>
+                    </a>
 
+                    <!-- Action Quick Links -->
                     <div class="course-card-action-tray">
-                        <a href="#" class="course-action-icon-link" title="Announcements">
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' class="course-action-icon-link" title="Announcements">
                             <i class="material-icons-outlined">campaign</i>
                         </a>
-                        <a href="#" class="course-action-icon-link" title="Assignments">
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' class="course-action-icon-link" title="Assignments">
                             <i class="material-icons-outlined">assignment</i>
                         </a>
-                        <a href="#" class="course-action-icon-link" title="Discussions">
-                            <i class="material-icons-outlined">forum</i>
-                        </a>
-                        <a href="#" class="course-action-icon-link" title="Files">
-                            <i class="material-icons-outlined">folder</i>
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' class="course-action-icon-link" title="Quizzes">
+                            <i class="material-icons-outlined">assignment_turned_in</i>
                         </a>
                     </div>
+
                 </div>
             </ItemTemplate>
         </asp:Repeater>
     </div>
 
+    <!-- EDIT COURSE MODAL -->
+    <div id="editCourseModal" class="lms-modal-overlay">
+        <div class="lms-modal-card">
+            <div class="lms-modal-header">
+                <h3>Edit Course</h3>
+                <button type="button" class="modal-close-btn" onclick="closeModal('editCourseModal');">&times;</button>
+            </div>
+            <div class="lms-modal-body">
+                <asp:HiddenField ID="hfEditCourseID" runat="server" />
+                <div class="form-group">
+                    <label>Course Title <span class="required-star">*</span></label>
+                    <asp:TextBox ID="txtEditCourseName" runat="server" CssClass="form-control"></asp:TextBox>
+                </div>
+                <div class="form-group">
+                    <label>Description</label>
+                    <asp:TextBox ID="txtEditCourseDescription" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control"></asp:TextBox>
+                </div>
+            </div>
+            <div class="lms-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('editCourseModal');">Cancel</button>
+                <asp:Button ID="btnUpdateCourse" runat="server" Text="Update Course" CssClass="btn-submit" OnClick="btnUpdateCourse_Click" />
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+function openModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.add("show");
+}
+function closeModal(id) {
+    var modal = document.getElementById(id);
+    if (modal) modal.classList.remove("show");
+        }
+    </script>
 </asp:Content>

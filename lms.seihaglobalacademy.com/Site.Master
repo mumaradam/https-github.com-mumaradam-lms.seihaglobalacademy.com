@@ -11,8 +11,7 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
 
-   
-    <link href="/assets/css/Site.css?v=19" rel="stylesheet" type="text/css" />
+    <link href="/assets/css/Site.css?v=105" rel="stylesheet" type="text/css" />
 
     <asp:ContentPlaceHolder ID="HeadContent" runat="server"></asp:ContentPlaceHolder>
 </head>
@@ -55,7 +54,12 @@
                 <a class="nav-item" href="javascript:void(0);" onclick="toggleDrawer('helpDrawerPanel', this);">
                     <i class="material-icons-outlined">help_outline</i>Help
                 </a>
-                <a class="nav-item" href="Default.aspx"><i class="material-icons-outlined">arrow_back</i></a>
+                
+                <!-- Native Vertical Sidebar Logout Item -->
+                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="nav-item logout-nav-item" OnClick="lnkLogout_Click">
+                    <i class="material-icons-outlined" style="color: #ff5252;">logout</i>
+                    <span style="color: #ff5252; font-weight: 600;">Logout</span>
+                </asp:LinkButton>
             </div>
         </nav>
 
@@ -72,7 +76,6 @@
             <div class="account-profile-section">
                 <div class="avatar-badge">TA</div>
                 <h3 class="user-display-name">TROWA ADRIAN</h3>
-                <asp:LinkButton ID="lnkLogout" runat="server" CssClass="account-logout-btn" OnClick="lnkLogout_Click">Logout</asp:LinkButton>
             </div>
 
             <!-- Quick Access Navigation List -->
@@ -89,7 +92,19 @@
             <div class="accessibility-settings-container">
                 <h4>Accessibility Settings</h4>
                 
-                <!-- Use High Contrast UI: Attached Click event, ID wrapper and pointer cursors -->
+                <!-- Sun & Moon Theme Switch Control -->
+                <div class="accessibility-option-row" style="margin-bottom: 18px; display: flex; align-items: center; gap: 10px;">
+                    <label class="theme-switch">
+                        <input type="checkbox" id="chkThemeToggle" onchange="toggleSiteTheme(this.checked);" />
+                        <span class="slider"></span>
+                    </label>
+                    <span class="option-label-text" style="cursor: pointer; margin-left: 4px;" onclick="document.getElementById('chkThemeToggle').click();">
+                        Use Light Mode
+                    </span>
+                    <span class="info-help-icon"><i class="material-icons-outlined">help_outline</i></span>
+                </div>
+
+                <!-- Use High Contrast UI -->
                 <div class="accessibility-option-row" onclick="toggleHighContrast();" style="cursor: pointer;">
                     <span class="toggle-icon" id="highContrastToggleIcon">
                         <i class="material-icons-outlined">cancel</i>
@@ -144,6 +159,14 @@
 
         <!-- Main Content Workspace Container -->
         <main class="main-workspace">
+            <!-- Student Preview Mode Notification Banner Bar -->
+            <asp:Panel ID="pnlStudentPreviewBanner" runat="server" CssClass="student-preview-bar" Style="display: none;">
+                <span>You are previewing this course as a student</span>
+                <asp:LinkButton ID="btnExitStudentPreview" runat="server" CssClass="exit-preview-link" OnClick="btnExitStudentPreview_Click">
+                    Return to teacher view
+                </asp:LinkButton>
+            </asp:Panel>
+
             <div class="content-body">
                 <asp:ContentPlaceHolder ID="MainContent" runat="server"></asp:ContentPlaceHolder>
             </div>
@@ -200,17 +223,33 @@
             highlightNavbar();
         }
 
-    
-        function initAccessibilityToggles() {
-            var hcIconWrapper = document.getElementById("highContrastToggleIcon");
-            if (!hcIconWrapper) return;
-
-            if (document.body.classList.contains("high-contrast")) {
-                hcIconWrapper.className = "toggle-icon checked";
-                hcIconWrapper.innerHTML = '<i class="material-icons-outlined">check_circle</i>';
+        function toggleSiteTheme(isLightMode) {
+            if (isLightMode) {
+                document.body.classList.add("light-mode");
+                localStorage.setItem("lms-theme", "light");
             } else {
-                hcIconWrapper.className = "toggle-icon unchecked";
-                hcIconWrapper.innerHTML = '<i class="material-icons-outlined">cancel</i>';
+                document.body.classList.remove("light-mode");
+                localStorage.setItem("lms-theme", "dark");
+            }
+        }
+
+        function initAccessibilityToggles() {
+            // Sync theme toggle switch position
+            var themeToggle = document.getElementById("chkThemeToggle");
+            if (themeToggle) {
+                themeToggle.checked = document.body.classList.contains("light-mode");
+            }
+
+            // Sync High Contrast toggle icon state
+            var hcIconWrapper = document.getElementById("highContrastToggleIcon");
+            if (hcIconWrapper) {
+                if (document.body.classList.contains("high-contrast")) {
+                    hcIconWrapper.className = "toggle-icon checked";
+                    hcIconWrapper.innerHTML = '<i class="material-icons-outlined">check_circle</i>';
+                } else {
+                    hcIconWrapper.className = "toggle-icon unchecked";
+                    hcIconWrapper.innerHTML = '<i class="material-icons-outlined">cancel</i>';
+                }
             }
         }
 
@@ -223,7 +262,7 @@
                 localStorage.removeItem("lms-high-contrast");
             }
 
-            // Re-render the visual checkbox icons inside the drawer
+            // Re-render visual state
             initAccessibilityToggles();
         }
 

@@ -195,6 +195,7 @@
     <Content Include="Content\bootstrap.css" />
     <Content Include="Content\bootstrap.min.css" />
     <Content Include="Content\Site.css" />
+    <Content Include="CourseDetails.aspx" />
     <Content Include="Courses.aspx" />
     <Content Include="Dashboard.aspx" />
     <Content Include="Files.aspx" />
@@ -328,6 +329,13 @@
     <Compile Include="Contact.aspx.designer.cs">
       <DependentUpon>Contact.aspx</DependentUpon>
     </Compile>
+    <Compile Include="CourseDetails.aspx.cs">
+      <DependentUpon>CourseDetails.aspx</DependentUpon>
+      <SubType>ASPXCodeBehind</SubType>
+    </Compile>
+    <Compile Include="CourseDetails.aspx.designer.cs">
+      <DependentUpon>CourseDetails.aspx</DependentUpon>
+    </Compile>
     <Compile Include="Courses.aspx.cs">
       <DependentUpon>Courses.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
@@ -380,6 +388,7 @@
     <Compile Include="Inbox.aspx.designer.cs">
       <DependentUpon>Inbox.aspx</DependentUpon>
     </Compile>
+    <Compile Include="Models.cs" />
     <Compile Include="Models\IdentityModels.cs" />
     <Compile Include="Notifications.aspx.cs">
       <DependentUpon>Notifications.aspx</DependentUpon>
