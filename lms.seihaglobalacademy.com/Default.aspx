@@ -11,9 +11,9 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
         <meta name="author" content="Mumar Adam Villariasa"/>
         <!--===============================================================================================-->	
-	    <link rel="icon" type="image/png" href="assets/images/icon/sga.ico"/>
-        <link rel="shortcut icon" type="image/x-icon" href="assets/images/icon/sga.ico" />
-        <link rel="icon" type="image/ico" href="assest/images/icon/sga.ico"/>
+	    <link rel="icon" type="image/png" href="~/assets/images/icon/sga.ico"/>
+        <link rel="shortcut icon" type="image/x-icon" href="~/assets/images/icon/sga.ico" />
+        <link rel="icon" type="image/ico" href="~/assest/images/icon/sga.ico"/>
 
         <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@600&amp;display=swap" rel="stylesheet"/>
         <!--===============================================================================================-->

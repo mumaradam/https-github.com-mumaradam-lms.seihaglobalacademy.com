@@ -9,7 +9,10 @@
     
     <!-- Material Icons for the Sidebar -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
-    <link href="~/favicon.ico" rel="shortcut icon" type="image/x-icon" />
+     <!--===============================================================================================-->	
+    <link rel="icon" type="image/png" href="~/assets/images/icon/sga.ico"/>
+    <link rel="shortcut icon" type="image/x-icon" href="~/assets/images/icon/sga.ico" />
+    <link rel="icon" type="image/ico" href="~/assest/images/icon/sga.ico"/>
 
     <link href="/assets/css/Site.css?v=105" rel="stylesheet" type="text/css" />
 
