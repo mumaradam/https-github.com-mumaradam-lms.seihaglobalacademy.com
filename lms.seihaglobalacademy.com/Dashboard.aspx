@@ -1,7 +1,6 @@
 ﻿<%@ Page Title="Dashboard" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Dashboard.aspx.cs" Inherits="lms.seihaglobalacademy.com.Dashboard" %>
 
-<asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
-</asp:Content>
+<asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server"></asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     
@@ -51,12 +50,12 @@
                         <th><span style="text-decoration: underline;">End Date And Time &#9650;</span></th>
                         <th>Manual Grading &#9650;</th>
                         <th>Completed</th>
-                        <th>Attempts Allowed</th>
                         <th style="text-align: right;">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <asp:Repeater ID="rptAssignments" runat="server">
+                    <!-- FIXED: ID changed to rptAssignments to match code-behind -->
+                    <asp:Repeater ID="rptAssignments" runat="server" OnItemCommand="rptAssignments_ItemCommand">
                         <ItemTemplate>
                             <tr>
                                 <td><%# Eval("AssignmentName") %></td>
@@ -64,16 +63,21 @@
                                 <td><%# Eval("EndDateTime") %></td>
                                 <td><%# Eval("ManualGrading") %></td>
                                 <td><%# Eval("Completed") %></td>
-                                <td><%# Eval("AttemptsAllowed") %></td>
-                                <td style="text-align: right;">
-                                    <asp:LinkButton ID="btnAction" runat="server" CommandName="View" CommandArgument='<%# Eval("AssignmentID") %>'>View</asp:LinkButton>
+                                <td>
+                                    <!-- Redirects directly with courseId and assignmentId parameters -->
+                                    <asp:LinkButton ID="btnViewAssignment" runat="server" 
+                                        CommandName="ViewAssignment" 
+                                        CommandArgument='<%# Eval("CourseID") + "|" + Eval("AssignmentID") %>' 
+                                        CssClass="btn-link">
+                                        View
+                                    </asp:LinkButton>
                                 </td>
                             </tr>
                         </ItemTemplate>
                     </asp:Repeater>
                     <asp:PlaceHolder ID="phNoAssignments" runat="server" Visible="true">
                         <tr>
-                            <td colspan="7" class="no-records-row">No records available</td>
+                            <td colspan="6" class="no-records-row">No records available</td>
                         </tr>
                     </asp:PlaceHolder>
                 </tbody>
@@ -87,8 +91,8 @@
         <div class="dashboard-grid">
             <asp:Repeater ID="rptDashboardCourses" runat="server">
                 <ItemTemplate>
-                    <!-- Clickable card wrapper leading to CourseDetails page -->
-                    <a href='CourseDetails.aspx?courseId=<%# Container.ItemIndex %>' class="course-card-link" style="text-decoration: none; color: inherit;">
+                    <!-- FIXED: Uses actual CourseID from database instead of ItemIndex -->
+                    <a href='CourseDetails.aspx?courseId=<%# Eval("CourseID") %>' class="course-card-link" style="text-decoration: none; color: inherit;">
                         <div class="course-card">
                             <div class="card-banner">
                                 <i class="material-icons-outlined card-menu-trigger">more_vert</i>
@@ -103,9 +107,7 @@
         </div>
     </div>
 
-    <!-- ==========================================================================
-         ADD COURSE MODAL DIALOG OVERLAY
-         ========================================================================== -->
+    <!-- ADD COURSE MODAL DIALOG OVERLAY -->
     <div id="addCourseModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -156,7 +158,6 @@
             }
         }
 
-        // Dismiss modal if user clicks outside the modal box
         window.addEventListener("click", function (event) {
             var modal = document.getElementById("addCourseModal");
             if (event.target === modal) {

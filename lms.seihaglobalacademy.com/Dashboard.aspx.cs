@@ -78,14 +78,11 @@ namespace lms.seihaglobalacademy.com
                         cmd.ExecuteNonQuery();
                     }
 
-                    // Reset form inputs inside modal
                     txtCourseName.Text = string.Empty;
                     txtClassKey.Text = string.Empty;
 
-                    // Rebind UI components instantly from database
                     BindCourseGrid();
 
-                    // Close modal via JavaScript
                     ScriptManager.RegisterStartupScript(this, GetType(), "CloseAddModal", "closeModal('addCourseModal');", true);
                 }
                 catch (Exception ex)
@@ -97,23 +94,29 @@ namespace lms.seihaglobalacademy.com
         }
 
         // ==========================================
-        // 2. ASSIGNMENTS (FETCH FROM SQL SERVER)
+        // 2. ASSIGNMENTS (FETCH & ITEM COMMAND REDIRECT)
         // ==========================================
         private void BindAssignmentTable()
         {
-            var assignments = new List<AssignmentModel>();
+            var assignments = new List<DashboardAssignmentModel>();
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string sql = "SELECT AssignmentID, AssignmentName, CourseName, EndDateTime, ManualGrading, Completed FROM dbo.Assignments ORDER BY AssignmentID DESC";
+                string sql = @"SELECT a.AssignmentID, a.AssignmentName, a.CourseName, a.EndDateTime, a.ManualGrading, a.Completed,
+                                      ISNULL(c.CourseID, 0) AS CourseID
+                               FROM dbo.Assignments a
+                               LEFT JOIN dbo.Courses c ON a.CourseName = c.CourseName
+                               ORDER BY a.AssignmentID DESC";
+
                 SqlCommand cmd = new SqlCommand(sql, conn);
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
                 {
-                    assignments.Add(new AssignmentModel
+                    assignments.Add(new DashboardAssignmentModel
                     {
                         AssignmentID = Convert.ToInt32(dr["AssignmentID"]),
+                        CourseID = Convert.ToInt32(dr["CourseID"]),
                         AssignmentName = dr["AssignmentName"].ToString(),
                         CourseName = dr["CourseName"].ToString(),
                         EndDateTime = dr["EndDateTime"].ToString(),
@@ -137,6 +140,21 @@ namespace lms.seihaglobalacademy.com
             }
         }
 
+        protected void rptAssignments_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (e.CommandName == "ViewAssignment")
+            {
+                string[] args = e.CommandArgument.ToString().Split('|');
+                if (args.Length == 2)
+                {
+                    string courseId = args[0];
+                    string assignmentId = args[1];
+
+                    Response.Redirect($"~/CourseDetails.aspx?courseId={courseId}&tab=Assignments&assignmentId={assignmentId}");
+                }
+            }
+        }
+
         protected void btnCreateCourse_Click(object sender, EventArgs e)
         {
             ScriptManager.RegisterStartupScript(this, this.GetType(), "PopModal", "openAddCourseModal();", true);
@@ -149,11 +167,22 @@ namespace lms.seihaglobalacademy.com
         }
     }
 
-    // Renamed model to avoid global namespace conflicts
     public class DashboardCourseModel
     {
         public int CourseID { get; set; }
         public string CourseName { get; set; }
         public string Description { get; set; }
+    }
+
+    // Local model specific to Dashboard to avoid global namespace conflicts
+    public class DashboardAssignmentModel
+    {
+        public int AssignmentID { get; set; }
+        public int CourseID { get; set; }
+        public string AssignmentName { get; set; }
+        public string CourseName { get; set; }
+        public string EndDateTime { get; set; }
+        public string ManualGrading { get; set; }
+        public string Completed { get; set; }
     }
 }

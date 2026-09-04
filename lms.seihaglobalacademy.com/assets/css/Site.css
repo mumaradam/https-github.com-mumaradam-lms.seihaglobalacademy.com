@@ -3154,21 +3154,22 @@ body.student-preview-active .teacher-only-control {
 
 
 /* ==========================================================================
-   COURSE DETAILS WORKSPACE LAYOUT & SUB-NAVIGATION
+   COURSE DETAILS WORKSPACE LAYOUT & SUB-NAVIGATION (HARMONIZED)
    ========================================================================== */
 .course-layout-wrapper {
     display: flex !important;
     gap: 24px !important;
     margin-top: 10px !important;
     align-items: flex-start !important;
+    width: 100% !important;
 }
 
 .course-nav-panel {
-    width: 220px !important;
+    width: 230px !important;
     flex-shrink: 0 !important;
-    background: var(--card-bg, #ffffff) !important;
+    background: #ffffff !important;
     border-radius: 8px !important;
-    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border: 1px solid #e5e7eb !important;
     padding: 16px 0 !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
 }
@@ -3182,8 +3183,8 @@ body:not(.light-mode) .course-nav-panel {
     padding: 0 16px 12px 16px !important;
     font-size: 15px !important;
     font-weight: 700 !important;
-    border-bottom: 1px solid var(--border-color, #e5e7eb) !important;
-    color: var(--text-light, #2d3135) !important;
+    border-bottom: 1px solid #e5e7eb !important;
+    color: #2d3135 !important;
 }
 
 body:not(.light-mode) .course-nav-header {
@@ -3195,11 +3196,13 @@ body:not(.light-mode) .course-nav-header {
     list-style: none !important;
     padding: 10px 0 0 0 !important;
     margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 
     .course-menu-list li {
         margin: 0 !important;
-        padding: 0 !important;
+        padding: 0 8px !important;
         list-style-type: none !important;
     }
 
@@ -3209,15 +3212,15 @@ body:not(.light-mode) .course-nav-header {
             display: flex !important;
             align-items: center !important;
             gap: 12px !important;
-            padding: 10px 20px !important;
+            padding: 10px 14px !important;
             font-size: 13.5px !important;
-            color: var(--text-muted, #6c757d) !important;
+            color: #6c757d !important;
             text-decoration: none !important;
             font-weight: 500 !important;
             width: 100% !important;
             box-sizing: border-box !important;
+            border-radius: 6px !important;
             transition: background 0.15s ease, color 0.15s ease !important;
-            border-left: 3px solid transparent !important;
         }
 
 body:not(.light-mode) .course-menu-list li a {
@@ -3226,15 +3229,23 @@ body:not(.light-mode) .course-menu-list li a {
 
 .course-menu-list li a:hover {
     color: #2563eb !important;
-    background: rgba(37, 99, 235, 0.05) !important;
+    background: rgba(37, 99, 235, 0.08) !important;
+}
+
+body:not(.light-mode) .course-menu-list li a:hover {
+    color: #38bdf8 !important;
+    background: rgba(56, 189, 248, 0.1) !important;
 }
 
 .course-menu-list li.active a {
-    background: rgba(37, 99, 235, 0.1) !important;
-    color: #2563eb !important;
+    background: #2563eb !important;
+    color: #ffffff !important;
     font-weight: 600 !important;
-    border-left-color: #2563eb !important;
 }
+
+    .course-menu-list li.active a i {
+        color: #ffffff !important;
+    }
 
 .course-menu-list li a i {
     font-size: 20px !important;
@@ -3245,9 +3256,9 @@ body:not(.light-mode) .course-menu-list li a {
 
 .course-content-panel {
     flex: 1 !important;
-    background: var(--card-bg, #ffffff) !important;
+    background: #ffffff !important;
     border-radius: 8px !important;
-    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border: 1px solid #e5e7eb !important;
     padding: 24px !important;
     box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
 }
@@ -3263,7 +3274,7 @@ body:not(.light-mode) .course-content-panel {
     align-items: center !important;
     margin-bottom: 20px !important;
     padding-bottom: 12px !important;
-    border-bottom: 1px solid var(--border-color, #e5e7eb) !important;
+    border-bottom: 1px solid #e5e7eb !important;
 }
 
 body:not(.light-mode) .workspace-header {
@@ -3273,7 +3284,7 @@ body:not(.light-mode) .workspace-header {
 .workspace-title {
     font-size: 20px !important;
     font-weight: 700 !important;
-    color: var(--text-light, #2d3135) !important;
+    color: #2d3135 !important;
 }
 
 body:not(.light-mode) .workspace-title {
@@ -3300,7 +3311,7 @@ body:not(.light-mode) .workspace-title {
     }
 
 .feed-card {
-    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border: 1px solid #e5e7eb !important;
     border-radius: 6px !important;
     padding: 16px !important;
     margin-bottom: 16px !important;
@@ -3315,7 +3326,7 @@ body:not(.light-mode) .feed-card {
 .feed-card-title {
     font-size: 15px !important;
     font-weight: 600 !important;
-    color: var(--text-light, #2d3135) !important;
+    color: #2d3135 !important;
     margin-bottom: 4px !important;
 }
 
@@ -3334,7 +3345,7 @@ body:not(.light-mode) .feed-card-title {
     justify-content: space-between !important;
     align-items: center !important;
     padding: 14px 16px !important;
-    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border: 1px solid #e5e7eb !important;
     border-radius: 6px !important;
     margin-bottom: 12px !important;
     background: #ffffff !important;
@@ -3348,7 +3359,7 @@ body:not(.light-mode) .quiz-item-row {
 .quiz-info-title {
     font-weight: 600 !important;
     font-size: 14px !important;
-    color: var(--text-light, #2d3135) !important;
+    color: #2d3135 !important;
 }
 
 body:not(.light-mode) .quiz-info-title {
@@ -3377,7 +3388,7 @@ body:not(.light-mode) .quiz-info-title {
 }
 
 .unit-card {
-    border: 1px solid var(--border-color, #e5e7eb) !important;
+    border: 1px solid #e5e7eb !important;
     border-radius: 8px !important;
     overflow: hidden !important;
     background: #ffffff !important;
@@ -3414,7 +3425,7 @@ body:not(.light-mode) .unit-card {
     .lms-table th, .lms-table td {
         padding: 12px 14px !important;
         text-align: left !important;
-        border-bottom: 1px solid var(--border-color, #e5e7eb) !important;
+        border-bottom: 1px solid #e5e7eb !important;
     }
 
 body:not(.light-mode) .lms-table th,
@@ -3422,3 +3433,30 @@ body:not(.light-mode) .lms-table td {
     border-bottom-color: #3f444e !important;
 }
 
+/* RESPONSIVE TABLET & MOBILE BREAKPOINTS */
+@media (max-width: 992px) {
+    .course-layout-wrapper {
+        flex-direction: column !important;
+        gap: 16px !important;
+    }
+
+    .course-nav-panel {
+        width: 100% !important;
+        padding: 10px !important;
+    }
+
+    .course-menu-list {
+        flex-direction: row !important;
+        overflow-x: auto !important;
+        white-space: nowrap !important;
+        padding: 0 !important;
+    }
+
+        .course-menu-list li {
+            flex: 0 0 auto !important;
+        }
+
+            .course-menu-list li a {
+                padding: 8px 12px !important;
+            }
+}
