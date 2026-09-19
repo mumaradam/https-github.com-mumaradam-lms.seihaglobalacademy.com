@@ -1,168 +1,168 @@
 ﻿<%@ Page Title="Courses" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Courses.aspx.cs" Inherits="lms.seihaglobalacademy.com.Courses" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
+    <!-- Google Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <style>
-        /* Top Navigation Header Styling */
-        .courses-header-strip {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 35px;
-        }
-        .courses-header-strip h1 { font-weight: 400; font-size: 32px; color: var(--text-light); }
-        
-        .courses-toolbar-controls {
-            display: flex;
-            gap: 12px;
-        }
-        .course-filter-select {
-            background-color: #383c40;
-            color: var(--text-light);
-            border: 1px solid var(--border-color);
-            padding: 8px 14px;
-            border-radius: 4px;
-            font-size: 13px;
-            outline: none;
-            cursor: pointer;
-        }
-
-        /* Course Matrix Dashboard Grid Layout */
-        .courses-grid-matrix {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 30px;
-        }
-
-        /* Card Structural Base Container */
-        .course-display-card {
-            background-color: #383c40;
-            border-radius: 8px;
-            overflow: hidden;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            transition: transform 0.2s, box-shadow 0.2s;
-            display: flex;
-            flex-direction: column;
-        }
-        .course-display-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
-        }
-
-        /* Top Accent Banner Block */
-        .course-card-color-banner {
-            height: 130px;
+        .course-card-banner {
+            height: 125px;
+            border-radius: 12px 12px 0 0;
             position: relative;
-            cursor: pointer;
+            background-color: #059669;
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
         }
-        .course-card-settings-trigger {
+        .card-actions {
             position: absolute;
-            top: 12px;
-            right: 12px;
-            color: #fff;
-            opacity: 0.8;
-            cursor: pointer;
-            background: rgba(0,0,0,0.2);
-            border-radius: 50%;
-            padding: 4px;
-            transition: opacity 0.2s;
-        }
-        .course-card-settings-trigger:hover { opacity: 1; }
-
-        /* Mid-Section Content Text Layout */
-        .course-card-text-workspace {
-            padding: 20px;
-            background-color: #212427;
-            flex: 1;
-            cursor: pointer;
-        }
-        .course-card-code-tag {
-            font-size: 13px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 4px;
-        }
-        .course-card-fullname {
-            font-size: 16px;
-            font-weight: 400;
-            color: var(--text-light);
-            line-height: 1.4;
-        }
-        .course-card-term-label {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 8px;
-        }
-
-        /* Lower Activity Link Icon Bar */
-        .course-card-action-tray {
-            background-color: #1e2226;
-            border-top: 1px solid var(--border-color);
-            padding: 12px 20px;
+            top: 10px;
+            right: 10px;
             display: flex;
-            gap: 18px;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 10;
         }
-        .course-action-icon-link {
-            color: var(--text-muted);
+        .card-actions a {
+            color: #ffffff !important;
             text-decoration: none;
-            display: flex;
+            display: inline-flex;
             align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
+            cursor: pointer;
         }
-        .course-action-icon-link:hover {
-            color: var(--accent-blue);
+        .course-card {
+            width: 270px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
-        .course-action-icon-link i { font-size: 22px; }
+        .course-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
     </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
-    
-    <div class="courses-header-strip">
-        <h1>All Courses</h1>
-        <div class="courses-toolbar-controls">
-            <select class="course-filter-select">
-                <option>All Terms</option>
-                <option>First Semester 2026</option>
-            </select>
-        </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
+        <h2>All Courses</h2>
+        <button type="button" class="btn-submit" onclick="resetCourseModal(); openModal('courseModal');" style="padding: 8px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            Create New Course
+        </button>
     </div>
 
-    <div class="courses-grid-matrix">
-        <asp:Repeater ID="rptAllCoursesList" runat="server">
+    <!-- Course Cards Grid Repeater -->
+    <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+        <asp:Repeater ID="rptCourses" runat="server" OnItemCommand="rptCourses_ItemCommand">
             <ItemTemplate>
-                <div class="course-display-card">
-                    <div class="course-card-color-banner" style="background-color: <%# Eval("ColorHex") %>;">
-                        <i class="material-icons-outlined course-card-settings-trigger">more_vert</i>
-                    </div>
+                <div class="course-card">
                     
-                    <div class="course-card-text-workspace">
-                        <div class="course-card-code-tag" style="color: <%# Eval("ColorHex") %>;"><%# Eval("CourseCode") %></div>
-                        <div class="course-card-fullname"><%# Eval("CourseName") %></div>
-                        <div class="course-card-term-label"><%# Eval("Term") %></div>
+                    <!-- Floating Edit / Delete Actions -->
+                    <div class="card-actions">
+                        <asp:LinkButton ID="btnEdit" runat="server" CommandName="EditCourse" CommandArgument='<%# Eval("CourseID") %>' ToolTip="Edit Course">
+                            <i class="material-icons-outlined" style="font-size: 18px;">edit</i>
+                        </asp:LinkButton>
+                        <asp:LinkButton ID="btnDelete" runat="server" CommandName="DeleteCourse" CommandArgument='<%# Eval("CourseID") %>' OnClientClick="return confirm('Delete this course?');" ToolTip="Delete Course">
+                            <i class="material-icons-outlined" style="font-size: 18px;">delete</i>
+                        </asp:LinkButton>
                     </div>
 
-                    <div class="course-card-action-tray">
-                        <a href="#" class="course-action-icon-link" title="Announcements">
-                            <i class="material-icons-outlined">campaign</i>
+                    <!-- Main Card Click Area -->
+                    <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") %>' style="text-decoration: none; color: inherit; display: block;">
+                        <!-- Banner Container -->
+                        <div class="course-card-banner" 
+                             style='<%# string.IsNullOrEmpty(Eval("CourseImage") as string) 
+                                        ? "background-color: #059669;" 
+                                        : "background-image: url(" + ResolveUrl(Eval("CourseImage").ToString()) + ");" %>'>
+                        </div>
+
+                        <!-- Content Area -->
+                        <div style="padding: 14px 16px 16px 16px;">
+                            <div style="color: #059669; font-weight: 600; font-size: 11.5px; letter-spacing: 0.5px;"><%# Eval("CourseCode") %></div>
+                            <div style="font-size: 15px; font-weight: 700; margin-top: 2px; color: #111827;"><%# Eval("CourseName") %></div>
+                        </div>
+                    </a>
+
+                    <!-- Quick Links Footer -->
+                    <div style="border-top: 1px solid #f3f4f6; padding: 8px 16px; display: flex; gap: 14px; color: #6b7280; background: #fafafa;">
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") + "&tab=Announcements" %>' title="Announcements" style="color: #6b7280; text-decoration: none;">
+                            <i class="material-icons-outlined" style="font-size: 19px;">campaign</i>
                         </a>
-                        <a href="#" class="course-action-icon-link" title="Assignments">
-                            <i class="material-icons-outlined">assignment</i>
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") + "&tab=Assignments" %>' title="Assignments" style="color: #6b7280; text-decoration: none;">
+                            <i class="material-icons-outlined" style="font-size: 19px;">assignment</i>
                         </a>
-                        <a href="#" class="course-action-icon-link" title="Discussions">
-                            <i class="material-icons-outlined">forum</i>
-                        </a>
-                        <a href="#" class="course-action-icon-link" title="Files">
-                            <i class="material-icons-outlined">folder</i>
+                        <a href='<%# "CourseDetails.aspx?courseId=" + Eval("CourseID") + "&tab=Quizzes" %>' title="Tests & Quizzes" style="color: #6b7280; text-decoration: none;">
+                            <i class="material-icons-outlined" style="font-size: 19px;">assignment_turned_in</i>
                         </a>
                     </div>
+
                 </div>
             </ItemTemplate>
         </asp:Repeater>
     </div>
+
+    <!-- Create / Edit Course Modal -->
+    <div id="courseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
+        <div style="background: #ffffff; padding: 24px; border-radius: 8px; width: 400px; margin: 80px auto; position: relative;">
+            <asp:HiddenField ID="hfEditCourseID" runat="server" ClientIDMode="Static" />
+            
+            <div style="margin-bottom: 16px;">
+                <h3 style="margin: 0;" id="modalTitle">Create New Course</h3>
+            </div>
+            
+            <div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Code</label>
+                    <asp:TextBox ID="txtCourseCode" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Name</label>
+                    <asp:TextBox ID="txtCourseName" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Type</label>
+                    <asp:TextBox ID="txtCourseType" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                </div>
+                <div style="margin-bottom: 12px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Term</label>
+                    <asp:TextBox ID="txtTerm" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                </div>
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Banner Image (Optional)</label>
+                    <asp:FileUpload ID="fileCourseBanner" runat="server" accept="image/*" Style="width: 100%; box-sizing: border-box;" />
+                </div>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
+                <button type="button" onclick="closeModal('courseModal');" style="padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <asp:Button ID="btnSaveCourse" runat="server" Text="Save Course" OnClick="btnSaveCourse_Click" Style="padding: 8px 16px; background: #059669; color: white; border: none; border-radius: 4px; cursor: pointer;" />
+            </div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        function openModal(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'block';
+        }
+        function closeModal(id) {
+            var el = document.getElementById(id);
+            if (el) el.style.display = 'none';
+        }
+        function resetCourseModal() {
+            document.getElementById('hfEditCourseID').value = '';
+            document.getElementById('txtCourseCode').value = '';
+            document.getElementById('txtCourseName').value = '';
+            document.getElementById('txtCourseType').value = '';
+            document.getElementById('txtTerm').value = '';
+            document.getElementById('modalTitle').innerText = 'Create New Course';
+        }
+    </script>
 
 </asp:Content>

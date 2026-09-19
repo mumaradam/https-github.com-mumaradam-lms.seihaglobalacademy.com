@@ -7,6 +7,7 @@ using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.WebControls;
 
+
 namespace lms.seihaglobalacademy.com
 {
     public partial class SiteMaster : MasterPage
@@ -14,6 +15,9 @@ namespace lms.seihaglobalacademy.com
         private const string AntiXsrfTokenKey = "__AntiXsrfToken";
         private const string AntiXsrfUserNameKey = "__AntiXsrfUserName";
         private string _antiXsrfTokenValue;
+
+        // Session key for National Geographic-style Student Preview Mode
+        public const string StudentPreviewSessionKey = "LMS_StudentPreviewMode";
 
         protected void Page_Init(object sender, EventArgs e)
         {
@@ -68,7 +72,31 @@ namespace lms.seihaglobalacademy.com
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            if (!IsPostBack)
+            {
+                CheckStudentPreviewState();
+            }
+        }
 
+        public void CheckStudentPreviewState()
+        {
+            bool isStudentMode = Session[StudentPreviewSessionKey] != null && (bool)Session[StudentPreviewSessionKey];
+            
+            if (pnlStudentPreviewBanner != null)
+            {
+                pnlStudentPreviewBanner.Style["display"] = isStudentMode ? "flex" : "none";
+            }
+
+            if (isStudentMode)
+            {
+                Page.ClientScript.RegisterStartupScript(this.GetType(), "SetStudentClass", "document.body.classList.add('student-preview-active');", true);
+            }
+        }
+
+        protected void btnExitStudentPreview_Click(object sender, EventArgs e)
+        {
+            Session[StudentPreviewSessionKey] = false;
+            Response.Redirect(Request.RawUrl);
         }
 
         protected void Unnamed_LoggingOut(object sender, LoginCancelEventArgs e)
@@ -76,7 +104,7 @@ namespace lms.seihaglobalacademy.com
             Context.GetOwinContext().Authentication.SignOut();
         }
 
-        // ADDED: Handles the logout request trigger from the Account sliding drawer panel
+        // Handles the logout request trigger from the navigation shell
         protected void lnkLogout_Click(object sender, EventArgs e)
         {
             // Clear current authentication context and session parameters
