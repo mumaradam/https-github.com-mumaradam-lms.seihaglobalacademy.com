@@ -381,6 +381,7 @@
       <DependentUpon>Inbox.aspx</DependentUpon>
     </Compile>
     <Compile Include="Models\IdentityModels.cs" />
+    <Compile Include="ModGlobal.cs" />
     <Compile Include="Notifications.aspx.cs">
       <DependentUpon>Notifications.aspx</DependentUpon>
       <SubType>ASPXCodeBehind</SubType>
