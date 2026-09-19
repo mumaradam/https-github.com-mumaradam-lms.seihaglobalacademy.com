@@ -69,8 +69,6 @@
                                                         <div class="siw-main-footer">
                                                             <div class="auth-footer">
                                                                 <a data-se="unlock" href="#" class="link js-unlock">Unlock account?</a>
-                                                                <a data-se="help" href="https://www.unimelb.edu.au/cybersecurity/mfa" target="_blank" rel="noopener noreferrer" class="link js-help">Help</a>
-                                                                <a data-se="custom" href="https://www.unimelb.edu.au/cybersecurity/privacy" class="link js-custom">Privacy collection notice</a>
                                                             </div>
                                                         </div>
                                                     </div>
