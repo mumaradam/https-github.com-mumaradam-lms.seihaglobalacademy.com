@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Web.Script.Serialization;
@@ -21,7 +22,6 @@ namespace lms.seihaglobalacademy.com
                 InitializeCourseContext();
                 BindAll();
 
-                // Check query string parameters passed from Dashboard redirect
                 string targetTab = Request.QueryString["tab"];
                 string targetAssignmentId = Request.QueryString["assignmentId"];
 
@@ -73,7 +73,6 @@ namespace lms.seihaglobalacademy.com
         // ==========================================
         private void SwitchTab(string target, string assignmentIdStr = null)
         {
-            // Reset all sub-navigation active states and workspace panels
             liAnnouncements.Attributes["class"] = "";
             liQuizzes.Attributes["class"] = "";
             liModules.Attributes["class"] = "";
@@ -94,7 +93,6 @@ namespace lms.seihaglobalacademy.com
                     liAssignments.Attributes["class"] = "active";
                     pnlAssignments.Visible = true;
 
-                    // Auto-open specific assignment details if assignmentId is present in URL
                     if (!string.IsNullOrEmpty(assignmentIdStr) && int.TryParse(assignmentIdStr, out int assignmentId))
                     {
                         OpenAssignmentDetailView(assignmentId);
@@ -123,11 +121,13 @@ namespace lms.seihaglobalacademy.com
                 case "Gradebook":
                     liGradebook.Attributes["class"] = "active";
                     pnlGradebook.Visible = true;
+                    BindGradebook();
                     break;
 
                 case "UserManagement":
                     liUserManagement.Attributes["class"] = "active teacher-only-control";
                     pnlUserManagement.Visible = true;
+                    BindUserManagement();
                     break;
 
                 default:
@@ -663,6 +663,23 @@ namespace lms.seihaglobalacademy.com
             lblQuizScore.Text = correctCount + " / " + totalQuestions;
             lblQuizPercentage.Text = Math.Round(pct, 1) + "%";
 
+            int studentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : 1;
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string saveQuizSubSql = @"
+                    INSERT INTO dbo.QuizSubmissions (QuizID, StudentID, Score, TotalQuestions, SubmittedDate)
+                    VALUES (@QuizID, @StudentID, @Score, @TotalQuestions, GETDATE())";
+
+                SqlCommand qCmd = new SqlCommand(saveQuizSubSql, conn);
+                qCmd.Parameters.AddWithValue("@QuizID", activeQuizId);
+                qCmd.Parameters.AddWithValue("@StudentID", studentId);
+                qCmd.Parameters.AddWithValue("@Score", correctCount);
+                qCmd.Parameters.AddWithValue("@TotalQuestions", totalQuestions);
+
+                conn.Open();
+                qCmd.ExecuteNonQuery();
+            }
+
             rptResultBreakdown.DataSource = resultList;
             rptResultBreakdown.DataBind();
 
@@ -1073,7 +1090,7 @@ namespace lms.seihaglobalacademy.com
         }
 
         // ==========================================
-        // 4. ASSIGNMENTS
+        // 4. ASSIGNMENTS & TEACHER GRADING
         // ==========================================
         private void BindAssignments()
         {
@@ -1155,6 +1172,7 @@ namespace lms.seihaglobalacademy.com
         private void OpenAssignmentDetailView(int assignmentId)
         {
             hfActiveAssignmentID.Value = assignmentId.ToString();
+            bool isClosed = false;
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -1170,6 +1188,15 @@ namespace lms.seihaglobalacademy.com
                     lblDetailDueDate.Text = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]).ToString("MMM dd, yyyy hh:mm tt") : "N/A";
                     lblDetailMaxPoints.Text = dr["MaxPoints"].ToString();
                     lblDetailInstructions.Text = string.IsNullOrEmpty(dr["Instructions"].ToString()) ? "No specific instructions provided." : dr["Instructions"].ToString();
+
+                    if (dr["CloseDate"] != DBNull.Value)
+                    {
+                        DateTime closeDate = Convert.ToDateTime(dr["CloseDate"]);
+                        if (DateTime.Now > closeDate)
+                        {
+                            isClosed = true;
+                        }
+                    }
                 }
             }
 
@@ -1181,6 +1208,84 @@ namespace lms.seihaglobalacademy.com
             {
                 pnlStudentSubmission.Visible = true;
                 pnlTeacherSubmissions.Visible = false;
+
+                bool hasSubmitted = false;
+                bool isGraded = false;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string studentSubSql = @"SELECT TOP 1 Grade, Feedback 
+                                             FROM dbo.AssignmentSubmissions 
+                                             WHERE AssignmentID = @AssignmentID AND StudentName = @StudentName 
+                                             ORDER BY SubmissionID DESC";
+
+                    SqlCommand subCmd = new SqlCommand(studentSubSql, conn);
+                    subCmd.Parameters.AddWithValue("@AssignmentID", assignmentId);
+                    subCmd.Parameters.AddWithValue("@StudentName", "Student User");
+
+                    conn.Open();
+                    SqlDataReader subDr = subCmd.ExecuteReader();
+
+                    if (subDr.Read())
+                    {
+                        hasSubmitted = true;
+                        object gradeVal = subDr["Grade"];
+                        object feedbackVal = subDr["Feedback"];
+
+                        if (gradeVal != DBNull.Value && !string.IsNullOrEmpty(gradeVal.ToString()))
+                        {
+                            isGraded = true;
+                            lblStudentGradeDisplay.Text = $"Grade: {gradeVal} / {lblDetailMaxPoints.Text}";
+                        }
+                        else
+                        {
+                            lblStudentGradeDisplay.Text = "Status: Pending Grading";
+                        }
+
+                        if (feedbackVal != DBNull.Value && !string.IsNullOrEmpty(feedbackVal.ToString()))
+                        {
+                            lblStudentFeedbackDisplay.Text = feedbackVal.ToString();
+                        }
+                        else
+                        {
+                            lblStudentFeedbackDisplay.Text = "No feedback provided yet.";
+                        }
+                    }
+                    else
+                    {
+                        lblStudentGradeDisplay.Text = isClosed ? "Status: Closed (No Submission)" : "Status: Not Submitted";
+                        lblStudentFeedbackDisplay.Text = isClosed
+                            ? "The deadline for this assignment has passed."
+                            : "Submit your work below to receive a grade and feedback.";
+                    }
+                }
+
+                // Lock form if assignment is closed OR already graded
+                if (isClosed || isGraded)
+                {
+                    txtSubmissionNotes.Enabled = false;
+                    fileSubmissionUpload.Enabled = false;
+                    btnSubmitAssignmentWork.Enabled = false;
+
+                    if (isGraded)
+                    {
+                        btnSubmitAssignmentWork.Text = "Assignment Graded";
+                        btnSubmitAssignmentWork.CssClass = "btn btn-secondary";
+                    }
+                    else
+                    {
+                        btnSubmitAssignmentWork.Text = "Assignment Closed";
+                        btnSubmitAssignmentWork.CssClass = "btn btn-secondary";
+                    }
+                }
+                else
+                {
+                    txtSubmissionNotes.Enabled = true;
+                    fileSubmissionUpload.Enabled = true;
+                    btnSubmitAssignmentWork.Enabled = true;
+                    btnSubmitAssignmentWork.Text = hasSubmitted ? "Resubmit Assignment" : "Submit Assignment";
+                    btnSubmitAssignmentWork.CssClass = "btn-primary-action";
+                }
             }
             else
             {
@@ -1195,7 +1300,7 @@ namespace lms.seihaglobalacademy.com
             var list = new List<dynamic>();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string sql = "SELECT StudentName, FORMAT(SubmittedDate, 'MMM dd, yyyy hh:mm tt') AS SubmittedDateFormatted, FilePath, SubmissionText, Grade FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID ORDER BY SubmissionID DESC";
+                string sql = "SELECT SubmissionID, StudentName, FORMAT(SubmittedDate, 'MMM dd, yyyy hh:mm tt') AS SubmittedDateFormatted, FilePath, SubmissionText, Grade, Feedback FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID ORDER BY SubmissionID DESC";
                 SqlCommand cmd = new SqlCommand(sql, conn);
                 cmd.Parameters.AddWithValue("@ID", assignmentId);
                 conn.Open();
@@ -1204,11 +1309,13 @@ namespace lms.seihaglobalacademy.com
                 {
                     list.Add(new
                     {
+                        SubmissionID = Convert.ToInt32(dr["SubmissionID"]),
                         StudentName = dr["StudentName"].ToString(),
                         SubmittedDate = dr["SubmittedDateFormatted"].ToString(),
                         FilePath = dr["FilePath"].ToString(),
                         SubmissionText = dr["SubmissionText"].ToString(),
-                        Grade = dr["Grade"].ToString()
+                        Grade = dr["Grade"] != DBNull.Value ? dr["Grade"].ToString() : "",
+                        Feedback = dr["Feedback"] != DBNull.Value ? dr["Feedback"].ToString() : ""
                     });
                 }
             }
@@ -1216,9 +1323,115 @@ namespace lms.seihaglobalacademy.com
             rptSubmissions.DataBind();
         }
 
+        protected void rptSubmissions_ItemCommand(object source, RepeaterCommandEventArgs e)
+        {
+            if (IsStudentView()) return;
+
+            int submissionId = Convert.ToInt32(e.CommandArgument);
+            int activeAssignmentId = Convert.ToInt32(hfActiveAssignmentID.Value);
+
+            if (e.CommandName == "GradeSubmission")
+            {
+                TextBox txtGrade = (TextBox)e.Item.FindControl("txtGrade");
+                TextBox txtFeedback = (TextBox)e.Item.FindControl("txtFeedback");
+
+                if (txtGrade != null && double.TryParse(txtGrade.Text.Trim(), out double grade))
+                {
+                    using (SqlConnection conn = new SqlConnection(connStr))
+                    {
+                        string sql = "UPDATE dbo.AssignmentSubmissions SET Grade = @Grade, Feedback = @Feedback WHERE SubmissionID = @ID";
+                        SqlCommand cmd = new SqlCommand(sql, conn);
+                        cmd.Parameters.AddWithValue("@Grade", grade);
+                        cmd.Parameters.AddWithValue("@Feedback", txtFeedback != null ? txtFeedback.Text.Trim() : "");
+                        cmd.Parameters.AddWithValue("@ID", submissionId);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+
+                    BindSubmissions(activeAssignmentId);
+                    ScriptManager.RegisterStartupScript(this, GetType(), "GradeSaved", "alert('Grade and feedback saved successfully!');", true);
+                }
+                else
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "GradeError", "alert('Please enter a valid numeric grade.');", true);
+                }
+            }
+            else if (e.CommandName == "DeleteSubmission")
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+
+                    string getFileSql = "SELECT FilePath FROM dbo.AssignmentSubmissions WHERE SubmissionID = @ID";
+                    SqlCommand getFileCmd = new SqlCommand(getFileSql, conn);
+                    getFileCmd.Parameters.AddWithValue("@ID", submissionId);
+                    object filePathObj = getFileCmd.ExecuteScalar();
+
+                    if (filePathObj != null && filePathObj != DBNull.Value)
+                    {
+                        string relativePath = filePathObj.ToString();
+                        if (!string.IsNullOrEmpty(relativePath))
+                        {
+                            string fullPath = Server.MapPath(relativePath);
+                            if (File.Exists(fullPath))
+                            {
+                                try { File.Delete(fullPath); } catch { /* Ignore file lock exceptions */ }
+                            }
+                        }
+                    }
+
+                    string delSql = "DELETE FROM dbo.AssignmentSubmissions WHERE SubmissionID = @ID";
+                    SqlCommand delCmd = new SqlCommand(delSql, conn);
+                    delCmd.Parameters.AddWithValue("@ID", submissionId);
+                    delCmd.ExecuteNonQuery();
+                }
+
+                BindSubmissions(activeAssignmentId);
+                ScriptManager.RegisterStartupScript(this, GetType(), "SubmissionDeleted", "alert('Submission deleted successfully.');", true);
+            }
+        }
+
         protected void btnSubmitAssignmentWork_Click(object sender, EventArgs e)
         {
             int assignmentId = Convert.ToInt32(hfActiveAssignmentID.Value);
+
+            // Backend Checks: Block if deadline passed or already graded
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+
+                // 1. Check CloseDate
+                string checkSql = "SELECT CloseDate FROM dbo.Assignments WHERE AssignmentID = @ID";
+                SqlCommand checkCmd = new SqlCommand(checkSql, conn);
+                checkCmd.Parameters.AddWithValue("@ID", assignmentId);
+                object closeDateObj = checkCmd.ExecuteScalar();
+
+                if (closeDateObj != null && closeDateObj != DBNull.Value)
+                {
+                    DateTime closeDate = Convert.ToDateTime(closeDateObj);
+                    if (DateTime.Now > closeDate)
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "ClosedError", "alert('This assignment is closed. Submissions are no longer accepted.');", true);
+                        OpenAssignmentDetailView(assignmentId);
+                        return;
+                    }
+                }
+
+                // 2. Check if already graded
+                string gradeCheckSql = "SELECT TOP 1 Grade FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID AND StudentName = @StudentName ORDER BY SubmissionID DESC";
+                SqlCommand gradeCmd = new SqlCommand(gradeCheckSql, conn);
+                gradeCmd.Parameters.AddWithValue("@ID", assignmentId);
+                gradeCmd.Parameters.AddWithValue("@StudentName", "Student User");
+                object gradeObj = gradeCmd.ExecuteScalar();
+
+                if (gradeObj != null && gradeObj != DBNull.Value && !string.IsNullOrEmpty(gradeObj.ToString()))
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "GradedError", "alert('This assignment has already been graded and cannot be resubmitted.');", true);
+                    OpenAssignmentDetailView(assignmentId);
+                    return;
+                }
+            }
+
             string filePath = "";
 
             if (fileSubmissionUpload.HasFile)
@@ -1245,6 +1458,7 @@ namespace lms.seihaglobalacademy.com
 
             txtSubmissionNotes.Text = "";
             ScriptManager.RegisterStartupScript(this, GetType(), "SubmitSuccess", "alert('Assignment submitted successfully!');", true);
+            OpenAssignmentDetailView(assignmentId);
         }
 
         protected void btnBackToAssignments_Click(object sender, EventArgs e)
@@ -1304,6 +1518,182 @@ namespace lms.seihaglobalacademy.com
             }
         }
 
+        // ==========================================
+        // 5. GRADEBOOK BINDING & EXPORT LOGIC
+        // ==========================================
+        private void BindGradebook()
+        {
+            var list = new List<GradebookEntryModel>();
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = @"
+                    SELECT 
+                        s.StudentID,
+                        s.StudentName,
+                        ISNULL(AVG(CAST(sub.Grade AS FLOAT) / NULLIF(a.MaxPoints, 0) * 100), 0) AS AssignmentAvg,
+                        ISNULL(AVG(CAST(qz.Score AS FLOAT) / NULLIF(qz.TotalQuestions, 0) * 100), 0) AS QuizAvg
+                    FROM dbo.Students s
+                    LEFT JOIN dbo.AssignmentSubmissions sub ON s.StudentName = sub.StudentName
+                    LEFT JOIN dbo.Assignments a ON sub.AssignmentID = a.AssignmentID
+                    LEFT JOIN dbo.QuizSubmissions qz ON s.StudentID = qz.StudentID
+                    GROUP BY s.StudentID, s.StudentName";
+
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                conn.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                while (dr.Read())
+                {
+                    double assignAvg = Convert.ToDouble(dr["AssignmentAvg"]);
+                    double quizAvg = Convert.ToDouble(dr["QuizAvg"]);
+                    double overall = Math.Round((assignAvg * 0.5) + (quizAvg * 0.5), 1);
+
+                    list.Add(new GradebookEntryModel
+                    {
+                        StudentID = Convert.ToInt32(dr["StudentID"]),
+                        StudentName = dr["StudentName"].ToString(),
+                        AssignmentAverage = Math.Round(assignAvg, 1),
+                        QuizAverage = Math.Round(quizAvg, 1),
+                        OverallGrade = overall
+                    });
+                }
+            }
+
+            gvGradebook.DataSource = list;
+            gvGradebook.DataBind();
+        }
+
+        protected void btnExportGradebook_Click(object sender, EventArgs e)
+        {
+            Response.Clear();
+            Response.Buffer = true;
+            Response.AddHeader("content-disposition", "attachment;filename=Course_Gradebook.csv");
+            Response.Charset = "";
+            Response.ContentType = "text/csv";
+
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            sb.AppendLine("Student Name,Quiz Avg (%),Assignment Avg (%),Overall Grade (%)");
+
+            foreach (GridViewRow row in gvGradebook.Rows)
+            {
+                if (row.RowType == DataControlRowType.DataRow)
+                {
+                    sb.AppendLine($"{row.Cells[0].Text},{row.Cells[1].Text},{row.Cells[2].Text},{row.Cells[3].Text}");
+                }
+            }
+
+            Response.Output.Write(sb.ToString());
+            Response.Flush();
+            Response.End();
+        }
+
+        // ==========================================
+        // 6. USER MANAGEMENT & SELF-STUDY ENROLLMENT
+        // ==========================================
+        private void BindUserManagement()
+        {
+            int currentCourseId = 0;
+            int.TryParse(Request.QueryString["courseId"], out currentCourseId);
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+
+                // 1. Pending Enrollment Requests
+                string pendingSql = @"
+                    SELECT e.EnrollmentID, s.StudentName, e.RequestedDate 
+                    FROM dbo.CourseEnrollments e
+                    INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
+                    WHERE (e.CourseID = @CourseID OR @CourseID = 0) AND e.EnrollmentStatus = 'Pending'";
+                SqlCommand pendingCmd = new SqlCommand(pendingSql, conn);
+                pendingCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                SqlDataAdapter da1 = new SqlDataAdapter(pendingCmd);
+                DataTable dtPending = new DataTable();
+                da1.Fill(dtPending);
+                gvPendingEnrollments.DataSource = dtPending;
+                gvPendingEnrollments.DataBind();
+
+                // 2. Active Enrolled Roster
+                string activeSql = @"
+                    SELECT s.StudentName, e.ApprovedDate 
+                    FROM dbo.CourseEnrollments e
+                    INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
+                    WHERE (e.CourseID = @CourseID OR @CourseID = 0) AND e.EnrollmentStatus = 'Active'";
+                SqlCommand activeCmd = new SqlCommand(activeSql, conn);
+                activeCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                SqlDataAdapter da2 = new SqlDataAdapter(activeCmd);
+                DataTable dtActive = new DataTable();
+                da2.Fill(dtActive);
+                gvActiveStudents.DataSource = dtActive;
+                gvActiveStudents.DataBind();
+
+                // 3. Dropdown for direct addition
+                string ddlSql = @"
+                    SELECT StudentID, StudentName FROM dbo.Students 
+                    WHERE StudentID NOT IN (
+                        SELECT StudentID FROM dbo.CourseEnrollments 
+                        WHERE (CourseID = @CourseID OR @CourseID = 0) AND EnrollmentStatus = 'Active'
+                    )";
+                SqlCommand ddlCmd = new SqlCommand(ddlSql, conn);
+                ddlCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                SqlDataReader dr = ddlCmd.ExecuteReader();
+                ddlAvailableStudents.DataSource = dr;
+                ddlAvailableStudents.DataTextField = "StudentName";
+                ddlAvailableStudents.DataValueField = "StudentID";
+                ddlAvailableStudents.DataBind();
+            }
+        }
+
+        protected void gvPendingEnrollments_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (IsStudentView()) return;
+
+            int enrollmentId = Convert.ToInt32(e.CommandArgument);
+            string newStatus = (e.CommandName == "ApproveStudent") ? "Active" : "Rejected";
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = "UPDATE dbo.CourseEnrollments SET EnrollmentStatus = @Status, ApprovedDate = GETDATE() WHERE EnrollmentID = @ID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@Status", newStatus);
+                cmd.Parameters.AddWithValue("@ID", enrollmentId);
+                conn.Open();
+                cmd.ExecuteNonQuery();
+            }
+
+            BindUserManagement();
+            BindGradebook();
+        }
+
+        protected void btnDirectEnroll_Click(object sender, EventArgs e)
+        {
+            if (IsStudentView()) return;
+
+            int currentCourseId = 0;
+            int.TryParse(Request.QueryString["courseId"], out currentCourseId);
+
+            if (ddlAvailableStudents.SelectedValue != null && int.TryParse(ddlAvailableStudents.SelectedValue, out int studentId))
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = @"
+                        IF EXISTS (SELECT 1 FROM dbo.CourseEnrollments WHERE CourseID = @CourseID AND StudentID = @StudentID)
+                            UPDATE dbo.CourseEnrollments SET EnrollmentStatus = 'Active', ApprovedDate = GETDATE() WHERE CourseID = @CourseID AND StudentID = @StudentID;
+                        ELSE
+                            INSERT INTO dbo.CourseEnrollments (CourseID, StudentID, EnrollmentStatus, ApprovedDate) VALUES (@CourseID, @StudentID, 'Active', GETDATE());";
+
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                    cmd.Parameters.AddWithValue("@StudentID", studentId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                BindUserManagement();
+                ScriptManager.RegisterStartupScript(this, GetType(), "CloseAddStudentModal", "closeModal('addStudentModal');", true);
+            }
+        }
+
         protected void btnCancelQuiz_Click(object sender, EventArgs e)
         {
             pnlTakeQuizForm.Visible = false;
@@ -1317,5 +1707,14 @@ namespace lms.seihaglobalacademy.com
             pnlTeacherQuizPreview.Visible = false;
             pnlQuizList.Visible = true;
         }
+    }
+
+    public class GradebookEntryModel
+    {
+        public int StudentID { get; set; }
+        public string StudentName { get; set; }
+        public double QuizAverage { get; set; }
+        public double AssignmentAverage { get; set; }
+        public double OverallGrade { get; set; }
     }
 }

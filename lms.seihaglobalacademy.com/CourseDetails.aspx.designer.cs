@@ -15,6 +15,33 @@ namespace lms.seihaglobalacademy.com
     {
 
         /// <summary>
+        /// pnlModeBanner control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlModeBanner;
+
+        /// <summary>
+        /// lblModeStatus control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblModeStatus;
+
+        /// <summary>
+        /// divMainWrapper control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl divMainWrapper;
+
+        /// <summary>
         /// lblCourseTitle control.
         /// </summary>
         /// <remarks>
@@ -555,6 +582,33 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.Panel pnlStudentSubmission;
 
         /// <summary>
+        /// pnlStudentFeedbackCard control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Panel pnlStudentFeedbackCard;
+
+        /// <summary>
+        /// lblStudentGradeDisplay control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblStudentGradeDisplay;
+
+        /// <summary>
+        /// lblStudentFeedbackDisplay control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblStudentFeedbackDisplay;
+
+        /// <summary>
         /// txtSubmissionNotes control.
         /// </summary>
         /// <remarks>
@@ -609,6 +663,24 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.Panel pnlGradebook;
 
         /// <summary>
+        /// btnExportGradebook control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnExportGradebook;
+
+        /// <summary>
+        /// gvGradebook control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvGradebook;
+
+        /// <summary>
         /// pnlUserManagement control.
         /// </summary>
         /// <remarks>
@@ -616,6 +688,51 @@ namespace lms.seihaglobalacademy.com
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Panel pnlUserManagement;
+
+        /// <summary>
+        /// btnOpenAddStudentModal control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnOpenAddStudentModal;
+
+        /// <summary>
+        /// gvPendingEnrollments control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvPendingEnrollments;
+
+        /// <summary>
+        /// gvActiveStudents control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.GridView gvActiveStudents;
+
+        /// <summary>
+        /// ddlAvailableStudents control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.DropDownList ddlAvailableStudents;
+
+        /// <summary>
+        /// btnDirectEnroll control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnDirectEnroll;
 
         /// <summary>
         /// txtAnnouncementTitle control.

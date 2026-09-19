@@ -518,15 +518,22 @@ input, textarea, select {
 }
 
 /* ==========================================================================
-   2. ISOLATED MAIN LMS WORKSPACE THEME (NAMESPACED TO .lms-master-body)
+   2. ISOLATED MAIN LMS WORKSPACE THEME (SGA VARIABLES INTEGRATED)
    ========================================================================== */
 html,
 body.lms-master-body {
+    /* Seiha Global Academy (SGA) Design Tokens */
+    --sga-blue-primary: #2563eb;
+    --sga-blue-hover: #1d4ed8;
+    --sga-green-success: #059669;
+    --sga-red-danger: #ef4444;
+    --sga-amber-warning: #d97706;
+    /* Theme Engine Variables (Default: Dark Workspace) */
     --bg-dark: #2d3135;
     --sidebar-bg: #10171e;
     --text-light: #f5f5f5;
     --text-muted: #9aa0a6;
-    --accent-blue: #03a9f4;
+    --accent-blue: var(--sga-blue-primary);
     --border-color: #3f4448;
     --drawer-bg: #1e2226;
     background-color: var(--bg-dark) !important;
@@ -548,7 +555,7 @@ body.lms-master-body {
 
 /* FIXED ICON SYSTEM PROTECTION: Exclude material ligatures from standard font override namespaces */
 .lms-master-body :not(.material-icons-outlined) {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif !important;
 }
 
 /* Ensure the form acts as the flex container for the sidebar and main content */
@@ -561,13 +568,13 @@ body.lms-master-body {
     position: relative !important;
 }
 
-/* Light Mode Swaps strictly bound to dashboard runtime body class */
+/* Light Mode Swaps (SGA Light Portal Surface Theme) */
 .lms-master-body.light-mode {
-    --bg-dark: #f4f5f7;
+    --bg-dark: #f8fafc;
     --sidebar-bg: #ffffff;
-    --text-light: #2d3135;
-    --text-muted: #626970;
-    --border-color: #d1d5db;
+    --text-light: #0f172a;
+    --text-muted: #64748b;
+    --border-color: #e5e7eb;
     --drawer-bg: #ffffff;
 }
 
@@ -575,12 +582,19 @@ body.lms-master-body {
 .lms-master-body textarea,
 .lms-master-body select {
     font-size: 14px !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
     border: 1px solid var(--border-color) !important;
     padding: 8px 12px !important;
     background-color: #383c40 !important;
     color: var(--text-light) !important;
+    transition: border-color 0.2s ease;
 }
+
+    .lms-master-body input:focus,
+    .lms-master-body textarea:focus,
+    .lms-master-body select:focus {
+        border-color: var(--sga-blue-primary) !important;
+    }
 
 /* LMS Layout Containers color swaps */
 .lms-master-body.light-mode .course-display-card,
@@ -601,8 +615,8 @@ body.lms-master-body {
 .lms-master-body.light-mode .card-body,
 .lms-master-body.light-mode .help-drawer-card {
     background-color: #ffffff !important;
-    color: #2d3135 !important;
-    border-color: #d1d5db !important;
+    color: #0f172a !important;
+    border-color: #e5e7eb !important;
 }
 
 /* LMS light text corrections */
@@ -627,7 +641,7 @@ body.lms-master-body {
 .lms-master-body.light-mode .cal-header-title,
 .lms-master-body.light-mode .cal-header-title span,
 .lms-master-body.light-mode [id*="lblMonthYearTitle"] {
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 /* LMS form control overrides in light-mode */
@@ -639,59 +653,59 @@ body.lms-master-body {
 .lms-master-body.light-mode textarea,
 .lms-master-body.light-mode select {
     background-color: #ffffff !important;
-    color: #2d3135 !important;
-    border: 1px solid #d1d5db !important;
+    color: #0f172a !important;
+    border: 1px solid #e5e7eb !important;
 }
 
 .lms-master-body.light-mode .course-action-icon-link {
-    color: #626970 !important;
+    color: #64748b !important;
 }
 
     .lms-master-body.light-mode .course-action-icon-link:hover {
-        color: var(--accent-blue) !important;
+        color: var(--sga-blue-primary) !important;
     }
 
 .lms-master-body.light-mode .cal-view-toggle-group {
     background-color: #ffffff !important;
-    border: 1px solid #d1d5db !important;
+    border: 1px solid #e5e7eb !important;
 }
 
     .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn {
-        color: #626970 !important;
+        color: #64748b !important;
         background-color: transparent !important;
     }
 
         .lms-master-body.light-mode .cal-view-toggle-group .toggle-btn.active-view {
-            background-color: #e5e7eb !important;
-            color: #2d3135 !important;
-            font-weight: 500;
+            background-color: #eff6ff !important;
+            color: var(--sga-blue-primary) !important;
+            font-weight: 600;
         }
 
 .lms-master-body.light-mode .cal-action-btn,
 .lms-master-body.light-mode .cal-action-btn input[type="submit"] {
     background-color: #ffffff !important;
-    color: #2d3135 !important;
-    border: 1px solid #d1d5db !important;
+    color: #0f172a !important;
+    border: 1px solid #e5e7eb !important;
 }
 
 .lms-master-body.light-mode .chat-bubble-row.incoming-msg .chat-bubble-text {
-    background-color: #f1f3f4 !important;
-    color: #2d3135 !important;
-    border-color: #d1d5db !important;
+    background-color: #f1f5f9 !important;
+    color: #0f172a !important;
+    border-color: #e5e7eb !important;
 }
 
 .lms-master-body.light-mode .chat-bubble-time {
-    color: #626970 !important;
+    color: #64748b !important;
 }
 
 .lms-master-body.light-mode .chat-reply-textarea {
     background-color: #ffffff !important;
-    color: #2d3135 !important;
-    border-color: #d1d5db !important;
+    color: #0f172a !important;
+    border-color: #e5e7eb !important;
 }
 
     .lms-master-body.light-mode .chat-reply-textarea::placeholder {
-        color: #9aa0a6 !important;
+        color: #94a3b8 !important;
     }
 
 /* LMS Drawers */
@@ -701,16 +715,16 @@ body.lms-master-body {
 .lms-master-body.light-mode .lms-slide-drawer span,
 .lms-master-body.light-mode .lms-slide-drawer div[style*="color: #fff"],
 .lms-master-body.light-mode .lms-slide-drawer div[style*="color:#fff"] {
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 .lms-master-body.light-mode .cal-day-cell.outside-month {
-    background-color: #f9fafb !important;
+    background-color: #f8fafc !important;
 }
 
 .lms-master-body.light-mode .studio-menu-item.active-menu {
-    background-color: rgba(3, 169, 244, 0.1) !important;
-    color: var(--accent-blue) !important;
+    background-color: #eff6ff !important;
+    color: var(--sga-blue-primary) !important;
 }
 
 /* ==========================================================================
@@ -777,9 +791,15 @@ body.lms-master-body {
         background-color: rgba(255, 255, 255, 0.05);
     }
 
-    .lms-master-body .nav-item.active {
-        border-left: 3px solid var(--accent-blue) !important;
-    }
+.lms-master-body.light-mode .nav-item:hover,
+.lms-master-body.light-mode .nav-item.active {
+    background-color: #eff6ff;
+    color: var(--sga-blue-primary);
+}
+
+.lms-master-body .nav-item.active {
+    border-left: 3px solid var(--sga-blue-primary) !important;
+}
 
 .lms-master-body .sidebar-footer {
     margin-top: auto;
@@ -842,7 +862,7 @@ body.lms-master-body {
     background-color: #26292c;
     border: 1px solid var(--border-color);
     padding: 14px;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.15s;
 }
@@ -854,7 +874,7 @@ body.lms-master-body {
 .lms-master-body .help-card-title {
     font-size: 13px;
     font-weight: 500;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     margin-bottom: 4px;
 }
 
@@ -872,7 +892,7 @@ body.lms-master-body {
 }
 
     .lms-master-body .drawer-footer-link a {
-        color: var(--accent-blue);
+        color: var(--sga-blue-primary);
         text-decoration: none;
         font-size: 13px;
         font-weight: 500;
@@ -924,7 +944,7 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   4. ACCOUNT COMPONENT SLIDE-OUT DRAWER STYLES (BOUND TO .lms-master-body)
+   4. ACCOUNT COMPONENT SLIDE-OUT DRAWER STYLES
    ========================================================================== */
 .lms-master-body .account-profile-section {
     display: flex;
@@ -973,8 +993,8 @@ body.lms-master-body {
     }
 
 .lms-master-body.light-mode .avatar-badge {
-    background-color: #e5e7eb !important;
-    color: #2d3135 !important;
+    background-color: #e2e8f0 !important;
+    color: #0f172a !important;
 }
 
 .lms-master-body .account-menu-list {
@@ -989,7 +1009,7 @@ body.lms-master-body {
     .lms-master-body .account-menu-list li a {
         font-size: 13px;
         font-weight: 500;
-        color: var(--accent-blue);
+        color: var(--sga-blue-primary);
         text-decoration: none;
         transition: color 0.15s ease;
         display: inline-block;
@@ -1001,7 +1021,7 @@ body.lms-master-body {
         }
 
 .lms-master-body.light-mode .account-menu-list li a:hover {
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 .lms-master-body .accessibility-settings-container {
@@ -1018,7 +1038,7 @@ body.lms-master-body {
     }
 
 .lms-master-body.light-mode .accessibility-settings-container h4 {
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 .lms-master-body .accessibility-option-row {
@@ -1037,7 +1057,7 @@ body.lms-master-body {
     }
 
         .lms-master-body .accessibility-option-row .toggle-icon.checked i {
-            color: #4caf50 !important;
+            color: var(--sga-green-success) !important;
         }
 
         .lms-master-body .accessibility-option-row .toggle-icon.unchecked i {
@@ -1053,7 +1073,7 @@ body.lms-master-body {
     }
 
 .lms-master-body.light-mode .accessibility-option-row .option-label-text {
-    color: #626970 !important;
+    color: #64748b !important;
 }
 
 .lms-master-body .accessibility-option-row .info-help-icon {
@@ -1073,10 +1093,8 @@ body.lms-master-body {
     }
 
 /* ==========================================================================
-   5. PROFILE COMPONENT LAYOUT STYLES (BOUND TO .lms-master-body)
+   5. PROFILE COMPONENT LAYOUT STYLES
    ========================================================================== */
-
-/* 1. Top Bar Action Layout */
 .lms-master-body .profile-top-bar {
     display: flex;
     align-items: center;
@@ -1107,7 +1125,6 @@ body.lms-master-body {
     color: var(--text-light);
 }
 
-/* 2. Workspace Content Grid Layout */
 .lms-master-body .profile-workspace-layout {
     display: grid;
     grid-template-columns: 200px 1fr;
@@ -1116,7 +1133,6 @@ body.lms-master-body {
     width: 100% !important;
 }
 
-/* 3. Left Side Navigation List */
 .lms-master-body .profile-side-menu {
     border-right: 1px solid var(--border-color);
     padding-right: 20px;
@@ -1135,7 +1151,7 @@ body.lms-master-body {
     .lms-master-body .profile-menu-links li a {
         font-size: 13px;
         font-weight: 500;
-        color: var(--accent-blue);
+        color: var(--sga-blue-primary);
         text-decoration: none;
         transition: color 0.15s ease;
         display: block;
@@ -1149,10 +1165,9 @@ body.lms-master-body {
 
 .lms-master-body.light-mode .profile-menu-links li a:hover,
 .lms-master-body.light-mode .profile-menu-links li a.active-link {
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
-/* 4. Profile Dashboard Container Details */
 .lms-master-body .profile-card-container {
     display: flex;
     flex-direction: column;
@@ -1173,7 +1188,6 @@ body.lms-master-body {
     align-items: start;
 }
 
-/* 5. Avatar Frame Structure */
 .lms-master-body .profile-avatar-column {
     display: flex;
     flex-direction: column;
@@ -1194,7 +1208,7 @@ body.lms-master-body {
 }
 
 .lms-master-body.light-mode .profile-placeholder-avatar {
-    background-color: #f3f4f6;
+    background-color: #f1f5f9;
 }
 
 .lms-master-body .profile-placeholder-avatar i {
@@ -1205,7 +1219,7 @@ body.lms-master-body {
 
 .lms-master-body .edit-avatar-action-link {
     font-size: 11px;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -1221,7 +1235,6 @@ body.lms-master-body {
         text-decoration: underline;
     }
 
-/* 6. Profile Details Elements & Section Styling */
 .lms-master-body .profile-details-column {
     display: flex;
     flex-direction: column;
@@ -1248,7 +1261,7 @@ body.lms-master-body {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-color);
     padding: 6px 12px;
-    border-radius: 4px;
+    border-radius: 6px;
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -1257,7 +1270,7 @@ body.lms-master-body {
 }
 
 .lms-master-body.light-mode .edit-profile-btn {
-    background: #f9fafb;
+    background: #f8fafc;
 }
 
 .lms-master-body .edit-profile-btn i {
@@ -1270,7 +1283,7 @@ body.lms-master-body {
 }
 
 .lms-master-body.light-mode .edit-profile-btn:hover {
-    background: #e5e7eb;
+    background: #e2e8f0;
 }
 
 .lms-master-body .profile-details-section {
@@ -1294,7 +1307,7 @@ body.lms-master-body {
 }
 
 .lms-master-body .settings-inline-link {
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: none;
 }
 
@@ -1302,7 +1315,6 @@ body.lms-master-body {
         text-decoration: underline;
     }
 
-/* Responsive adjustment if screen shrinks */
 @media (max-width: 768px) {
     .lms-master-body .profile-workspace-layout {
         grid-template-columns: 1fr;
@@ -1314,9 +1326,8 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   6. GLOBAL ANNOUNCEMENTS COMPONENT STYLES (BOUND TO .lms-master-body)
+   6. GLOBAL ANNOUNCEMENTS COMPONENT STYLES
    ========================================================================== */
-
 .lms-master-body .announcements-feed {
     display: flex;
     flex-direction: column;
@@ -1341,14 +1352,16 @@ body.lms-master-body {
 
 .lms-master-body.light-mode .announcement-card {
     background-color: #ffffff;
+    border-left: 4px solid var(--sga-blue-primary);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
     .lms-master-body.light-mode .announcement-card:hover {
-        background-color: #f9fafb;
+        background-color: #f8fafc;
     }
 
 .lms-master-body .announcement-card.critical {
-    border-left: 4px solid #ff5252 !important;
+    border-left: 4px solid var(--sga-red-danger) !important;
 }
 
 .lms-master-body .announcement-card-header {
@@ -1361,19 +1374,19 @@ body.lms-master-body {
     font-size: 11px;
     font-weight: 600;
     padding: 4px 10px;
-    border-radius: 12px;
+    border-radius: 20px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
 }
 
     .lms-master-body .announcement-meta-badge.urgent {
-        background-color: rgba(255, 82, 82, 0.15);
-        color: #ff5252;
+        background-color: rgba(239, 68, 68, 0.15);
+        color: var(--sga-red-danger);
     }
 
     .lms-master-body .announcement-meta-badge.normal {
-        background-color: rgba(3, 169, 244, 0.15);
-        color: var(--accent-blue);
+        background-color: #eff6ff;
+        color: var(--sga-blue-primary);
     }
 
 .lms-master-body .announcement-date {
@@ -1383,18 +1396,18 @@ body.lms-master-body {
 
 .lms-master-body .announcement-subject {
     font-size: 18px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--text-light);
 }
 
 .lms-master-body .announcement-body {
-    font-size: 13px;
+    font-size: 14px;
     color: var(--text-muted);
     line-height: 1.6;
 }
 
 .lms-master-body.light-mode .announcement-body {
-    color: #4b5563 !important;
+    color: #334155 !important;
 }
 
 .lms-master-body .announcement-sender {
@@ -1436,9 +1449,7 @@ body.lms-master-body {
         font-size: 13px;
     }
 
-/* ==========================================================================
-   HIGH CONTRAST MODE OVERRIDES (BOUND TO .lms-master-body)
-   ========================================================================== */
+/* High Contrast Mode Overrides */
 .lms-master-body.high-contrast .announcement-card {
     border: 2px solid #ffffff !important;
     background-color: #000000 !important;
@@ -1455,9 +1466,8 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   7. PORTFOLIO PAGE COMPONENT SYSTEM (BOUND TO .lms-master-body)
+   7. PORTFOLIO PAGE COMPONENT SYSTEM
    ========================================================================== */
-
 .lms-master-body .profile-top-bar-left {
     display: flex !important;
     align-items: center !important;
@@ -1477,7 +1487,7 @@ body.lms-master-body {
 .lms-master-body .identity-badge {
     width: 24px !important;
     height: 24px !important;
-    background-color: #1f6feb !important;
+    background-color: var(--sga-blue-primary) !important;
     color: #ffffff !important;
     font-size: 11px !important;
     font-weight: 600 !important;
@@ -1514,13 +1524,13 @@ body.lms-master-body {
 }
 
 .lms-master-body .create-portfolio-blue-btn {
-    background-color: #1f6feb !important;
+    background-color: var(--sga-blue-primary) !important;
     color: #ffffff !important;
     font-size: 13px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     padding: 10px 18px !important;
     border: none !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     cursor: pointer !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -1529,7 +1539,7 @@ body.lms-master-body {
 }
 
     .lms-master-body .create-portfolio-blue-btn:hover {
-        background-color: #388bfd !important;
+        background-color: var(--sga-blue-hover) !important;
     }
 
     .lms-master-body .create-portfolio-blue-btn i {
@@ -1566,7 +1576,7 @@ body.lms-master-body {
             left: 0 !important;
             width: 100% !important;
             height: 2px !important;
-            background-color: #1f6feb !important;
+            background-color: var(--sga-blue-primary) !important;
         }
 
 .lms-master-body .portfolio-filter-utility-bar {
@@ -1633,29 +1643,28 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   8. NOTIFICATION SETTINGS MATRIX SPECIFICATIONS (BOUND TO .lms-master-body)
+   8. NOTIFICATION SETTINGS MATRIX SPECIFICATIONS
    ========================================================================== */
-
 .lms-master-body .notification-info-banner {
     display: flex !important;
     align-items: flex-start !important;
     gap: 12px;
-    background-color: rgba(31, 111, 235, 0.1) !important;
-    border: 1px solid rgba(31, 111, 235, 0.25) !important;
+    background-color: rgba(37, 99, 235, 0.1) !important;
+    border: 1px solid rgba(37, 99, 235, 0.25) !important;
     padding: 14px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-bottom: 12px;
     position: relative;
     width: 100%;
 }
 
 .lms-master-body.light-mode .notification-info-banner {
-    background-color: #ebf5ff !important;
+    background-color: #eff6ff !important;
     border-color: #bfdbfe !important;
 }
 
 .lms-master-body .banner-info-icon {
-    color: #388bfd !important;
+    color: var(--sga-blue-primary) !important;
     font-size: 20px !important;
     flex-shrink: 0;
 }
@@ -1777,15 +1786,15 @@ body.lms-master-body {
     }
 
 .lms-master-body .icon-active {
-    color: #2ea44f !important;
+    color: var(--sga-green-success) !important;
 }
 
 .lms-master-body .icon-weekly {
-    color: #388bfd !important;
+    color: var(--sga-blue-primary) !important;
 }
 
 .lms-master-body .icon-alert {
-    color: #e3b341 !important;
+    color: var(--sga-amber-warning) !important;
 }
 
 .lms-master-body .icon-disabled {
@@ -1797,10 +1806,10 @@ body.lms-master-body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: rgba(227, 179, 65, 0.08) !important;
-    border: 1px solid rgba(227, 179, 65, 0.2) !important;
+    background-color: rgba(217, 119, 6, 0.08) !important;
+    border: 1px solid rgba(217, 119, 6, 0.2) !important;
     padding: 10px 14px;
-    border-radius: 6px;
+    border-radius: 8px;
     margin: 4px 0;
 }
 
@@ -1810,7 +1819,7 @@ body.lms-master-body {
 }
 
 .lms-master-body .grading-warning-box i {
-    color: #e3b341 !important;
+    color: var(--sga-amber-warning) !important;
     font-size: 18px !important;
     flex-shrink: 0;
 }
@@ -1822,9 +1831,8 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   9. FILE MANAGER COMPONENT SPECIFICATIONS (BOUND TO .lms-master-body)
+   9. FILE MANAGER COMPONENT SPECIFICATIONS
    ========================================================================== */
-
 .lms-master-body .files-page-layout {
     grid-template-columns: 200px 1fr !important;
     width: 100% !important;
@@ -1872,7 +1880,7 @@ body.lms-master-body {
         font-size: 13px !important;
         background-color: rgba(255, 255, 255, 0.03) !important;
         border: 1px solid var(--border-color) !important;
-        border-radius: 4px !important;
+        border-radius: 8px !important;
         width: 200px;
         color: var(--text-light) !important;
     }
@@ -1888,7 +1896,7 @@ body.lms-master-body {
 
 .lms-master-body .toolbar-link-btn {
     font-size: 13px;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: none;
 }
 
@@ -1908,13 +1916,13 @@ body.lms-master-body {
 }
 
 .lms-master-body .files-upload-blue-btn {
-    background-color: #1f6feb !important;
+    background-color: var(--sga-blue-primary) !important;
     color: #ffffff !important;
     font-size: 13px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
     padding: 8px 16px !important;
     border: none !important;
-    border-radius: 4px !important;
+    border-radius: 8px !important;
     cursor: pointer !important;
     display: inline-flex !important;
     align-items: center !important;
@@ -1922,7 +1930,7 @@ body.lms-master-body {
 }
 
     .lms-master-body .files-upload-blue-btn:hover {
-        background-color: #388bfd !important;
+        background-color: var(--sga-blue-hover) !important;
     }
 
 .lms-master-body .file-explorer-grid {
@@ -1962,7 +1970,7 @@ body.lms-master-body {
     align-items: center !important;
     gap: 6px;
     font-size: 13px;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     cursor: pointer;
 }
 
@@ -1982,7 +1990,7 @@ body.lms-master-body {
     }
 
     .lms-master-body .tree-item-label .text-blue {
-        color: #1f6feb !important;
+        color: var(--sga-blue-primary) !important;
     }
 
 .lms-master-body .file-roster-table-panel {
@@ -2021,7 +2029,7 @@ body.lms-master-body {
     display: inline-flex !important;
     align-items: center !important;
     gap: 8px;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     cursor: pointer;
 }
 
@@ -2039,11 +2047,11 @@ body.lms-master-body {
     }
 
     .lms-master-body .file-row-icon.image-type {
-        color: #4af626 !important;
+        color: var(--sga-green-success) !important;
     }
 
 .lms-master-body .modified-by-link {
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: underline;
     cursor: pointer;
 }
@@ -2061,7 +2069,7 @@ body.lms-master-body {
 
     .lms-master-body .check-indicator:hover {
         opacity: 0.9;
-        color: #1f6feb !important;
+        color: var(--sga-blue-primary) !important;
     }
 
 .lms-master-body.high-contrast .files-upload-blue-btn,
@@ -2071,9 +2079,8 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   10. SETTINGS PAGE DATA MANAGEMENT SPECIFICATIONS (BOUND TO .lms-master-body)
+   10. SETTINGS PAGE DATA MANAGEMENT SPECIFICATIONS
    ========================================================================== */
-
 .lms-master-body .settings-page-layout {
     grid-template-columns: 200px 1fr !important;
     width: 100% !important;
@@ -2143,7 +2150,7 @@ body.lms-master-body {
 .lms-master-body .meta-sub-alert {
     display: block;
     font-size: 12px;
-    color: #e3b341;
+    color: var(--sga-amber-warning);
     margin-top: 4px;
     line-height: 1.5;
 }
@@ -2184,7 +2191,7 @@ body.lms-master-body {
     background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
     padding: 16px;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .lms-master-body.light-mode .services-split-columns {
@@ -2212,7 +2219,7 @@ body.lms-master-body {
 
 .lms-master-body .service-link {
     font-size: 13px;
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: none;
     display: inline-flex !important;
     align-items: center !important;
@@ -2247,17 +2254,17 @@ body.lms-master-body {
     }
 
 .lms-master-body .badge-status-active {
-    background-color: rgba(46, 164, 79, 0.15);
-    color: #2ea44f;
+    background-color: rgba(5, 150, 105, 0.15);
+    color: var(--sga-green-success);
     font-size: 11px;
     font-weight: 600;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: 20px;
     text-transform: uppercase;
 }
 
 .lms-master-body .inline-blue-link {
-    color: var(--accent-blue);
+    color: var(--sga-blue-primary);
     text-decoration: none;
 }
 
@@ -2274,7 +2281,7 @@ body.lms-master-body {
 }
 
     .lms-master-body .action-trash-icon:hover {
-        color: #ff5252 !important;
+        color: var(--sga-red-danger) !important;
         opacity: 1 !important;
     }
 
@@ -2285,7 +2292,7 @@ body.lms-master-body {
     border: 1px solid var(--border-color) !important;
     color: var(--text-light) !important;
     padding: 6px 14px !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
     cursor: pointer;
     display: inline-flex !important;
     align-items: center !important;
@@ -2324,7 +2331,7 @@ body.lms-master-body {
     padding: 8px 12px;
     background-color: rgba(255, 255, 255, 0.02);
     border: 1px solid var(--border-color);
-    border-radius: 4px;
+    border-radius: 6px;
     margin-bottom: 8px;
 }
 
@@ -2338,14 +2345,14 @@ body.lms-master-body {
 }
 
 .lms-master-body .primary-star-icon {
-    color: #e3b341 !important;
+    color: var(--sga-amber-warning) !important;
     font-size: 16px !important;
 }
 
 .lms-master-body .add-contact-method-btn {
     background: transparent !important;
     border: none !important;
-    color: var(--accent-blue) !important;
+    color: var(--sga-blue-primary) !important;
     font-size: 12px !important;
     cursor: pointer;
     display: inline-flex !important;
@@ -2399,7 +2406,7 @@ body.lms-master-body {
     background-color: rgba(255, 255, 255, 0.04) !important;
     border: 1px solid var(--border-color) !important;
     padding: 8px 14px !important;
-    border-radius: 4px !important;
+    border-radius: 6px !important;
     cursor: pointer;
     display: inline-flex !important;
     align-items: center !important;
@@ -2425,7 +2432,7 @@ body.lms-master-body {
 }
 
 /* ==========================================================================
-   NEW SUN & MOON THEME TOGGLE SWITCH (Uiverse.io by alexruix)
+   11. SUN & MOON THEME TOGGLE SWITCH
    ========================================================================== */
 .lms-master-body .theme-switch {
     font-size: 15px;
@@ -2477,9 +2484,8 @@ body.lms-master-body {
             box-shadow: inset 15px -4px 0px 15px #fff000;
         }
 
-
 /* ==========================================================================
-   ANIMATED LOGOUT BUTTON (Uiverse.io by vinodjangid07)
+   12. ANIMATED LOGOUT BUTTON
    ========================================================================== */
 .lms-master-body .sidebar-footer {
     margin-top: auto;
@@ -2537,7 +2543,6 @@ body.lms-master-body {
         white-space: nowrap;
     }
 
-    /* Hover expansion */
     .lms-master-body .account-logout-btn-custom:hover {
         width: 120px;
         border-radius: 40px !important;
@@ -2563,133 +2568,14 @@ body.lms-master-body {
     }
 
 /* ==========================================================================
-   POLISHED DASHBOARD & TABLE COMPONENT STYLES
-   ========================================================================== */
-.assignments-section {
-    margin-top: 30px;
-    margin-bottom: 40px;
-}
-
-.assignments-header-row {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    margin-bottom: 16px;
-}
-
-.assignments-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-light, #2d3135);
-}
-
-body:not(.light-mode) .assignments-title {
-    color: #ffffff;
-}
-
-/* Rounded Segment Pill Toggle */
-.filter-toggle-pill {
-    display: inline-flex;
-    background: #e4e4e7;
-    border-radius: 20px;
-    padding: 3px;
-    gap: 2px;
-}
-
-body:not(.light-mode) .filter-toggle-pill {
-    background: #2a2d32;
-}
-
-.filter-btn {
-    padding: 6px 18px;
-    font-size: 13px;
-    font-weight: 600;
-    border: none;
-    background: transparent;
-    border-radius: 16px;
-    cursor: pointer;
-    color: #71717a;
-    transition: all 0.2s ease;
-}
-
-    .filter-btn.active {
-        background-color: #666666;
-        color: #ffffff;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-    }
-
-/* White / Dark Encapsulated Data Table Container */
-.lms-data-table-container {
-    background: #ffffff;
-    border-radius: 8px;
-    border: 1px solid var(--border-color, #e5e7eb);
-    overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-body:not(.light-mode) .lms-data-table-container {
-    background: #2a2d31;
-}
-
-.lms-table {
-    width: 100%;
-    border-collapse: collapse;
-    text-align: left;
-    font-size: 13.5px;
-}
-
-    .lms-table th {
-        padding: 14px 18px;
-        font-weight: 600;
-        color: var(--text-light, #2d3135);
-        border-bottom: 1px solid var(--border-color, #e5e7eb);
-        background: #f9fafb;
-        white-space: nowrap;
-    }
-
-body:not(.light-mode) .lms-table th {
-    background: #24272b;
-    color: #e2e8f0;
-}
-
-.lms-table td {
-    padding: 16px 18px;
-    color: var(--text-light, #2d3135);
-    border-bottom: 1px solid var(--border-color, #e5e7eb);
-}
-
-body:not(.light-mode) .lms-table td {
-    color: #cbd5e1;
-}
-
-.no-records-row {
-    text-align: center;
-    color: #94a3b8 !important;
-    padding: 50px 18px !important;
-    font-size: 14px;
-}
-
-/* Course Grid Section Spacing */
-.courses-grid-header {
-    font-size: 20px;
-    font-weight: 700;
-    margin-bottom: 16px;
-    color: var(--text-light, #2d3135);
-}
-
-body:not(.light-mode) .courses-grid-header {
-    color: #ffffff;
-}
-
-/* ==========================================================================
-   DASHBOARD & DATA TABLE STYLES (SELF-CONTAINED)
+   13. DASHBOARD & DATA TABLE STYLES
    ========================================================================== */
 .dashboard-info-banner {
-    background-color: #e8f0fe;
-    border: 1px solid #d2e3fc;
-    color: #1967d2;
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: var(--sga-blue-primary);
     padding: 12px 20px;
-    border-radius: 4px;
+    border-radius: 8px;
     margin-bottom: 25px;
     font-size: 13.5px;
     display: flex;
@@ -2701,15 +2587,15 @@ body:not(.light-mode) .courses-grid-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
     padding-bottom: 15px;
     margin-bottom: 30px;
 }
 
     .dashboard-header-strip h1 {
-        font-weight: 400;
-        font-size: 32px;
-        color: #2d3135;
+        font-weight: 700;
+        font-size: 28px;
+        color: #0f172a;
         margin: 0;
     }
 
@@ -2721,7 +2607,7 @@ body:not(.light-mode) .dashboard-header-strip h1 {
     display: flex;
     align-items: center;
     gap: 16px;
-    color: #6c757d;
+    color: var(--text-muted);
 }
 
     .dashboard-header-actions i,
@@ -2730,7 +2616,7 @@ body:not(.light-mode) .dashboard-header-strip h1 {
         cursor: pointer;
         background: none;
         border: none;
-        color: #6c757d;
+        color: var(--text-muted);
         display: flex;
         align-items: center;
         text-decoration: none;
@@ -2738,10 +2624,9 @@ body:not(.light-mode) .dashboard-header-strip h1 {
 
         .dashboard-header-actions i:hover,
         .dashboard-header-actions .btn-add-course-nav:hover {
-            color: #2d3135;
+            color: var(--sga-blue-primary);
         }
 
-/* Assignments Section Header Area */
 .assignments-section {
     margin-top: 30px;
     margin-bottom: 40px;
@@ -2757,7 +2642,7 @@ body:not(.light-mode) .dashboard-header-strip h1 {
 .assignments-title {
     font-size: 20px;
     font-weight: 700;
-    color: #2d3135;
+    color: #0f172a;
 }
 
 body:not(.light-mode) .assignments-title {
@@ -2766,7 +2651,7 @@ body:not(.light-mode) .assignments-title {
 
 .filter-toggle-pill {
     display: inline-flex;
-    background: #e4e4e7;
+    background: #e2e8f0;
     border-radius: 20px;
     padding: 3px;
     gap: 2px;
@@ -2784,22 +2669,22 @@ body:not(.light-mode) .filter-toggle-pill {
     background: transparent;
     border-radius: 16px;
     cursor: pointer;
-    color: #71717a;
+    color: #64748b;
+    transition: all 0.2s ease;
 }
 
     .filter-btn.active {
-        background-color: #666666;
+        background-color: var(--sga-blue-primary);
         color: #ffffff;
         box-shadow: 0 2px 4px rgba(0,0,0,0.15);
     }
 
-/* Encapsulated Data Table Box Wrapper */
 .lms-data-table-container {
     background: #ffffff;
-    border-radius: 8px;
-    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
     overflow: hidden;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 body:not(.light-mode) .lms-data-table-container {
@@ -2817,9 +2702,9 @@ body:not(.light-mode) .lms-data-table-container {
     .lms-table th {
         padding: 14px 18px;
         font-weight: 600;
-        color: #2d3135;
-        border-bottom: 1px solid #e5e7eb;
-        background: #f9fafb;
+        color: #0f172a;
+        border-bottom: 1px solid var(--border-color);
+        background: #f8fafc;
         white-space: nowrap;
     }
 
@@ -2831,8 +2716,8 @@ body:not(.light-mode) .lms-table th {
 
 .lms-table td {
     padding: 16px 18px;
-    color: #2d3135;
-    border-bottom: 1px solid #e5e7eb;
+    color: #334155;
+    border-bottom: 1px solid var(--border-color);
 }
 
 body:not(.light-mode) .lms-table td {
@@ -2847,7 +2732,6 @@ body:not(.light-mode) .lms-table td {
     font-size: 14px;
 }
 
-/* Course Grid Section Spacing */
 .example-courses-section {
     margin-top: 35px;
     margin-bottom: 40px;
@@ -2857,7 +2741,7 @@ body:not(.light-mode) .lms-table td {
     font-size: 20px;
     font-weight: 700;
     margin-bottom: 16px;
-    color: #2d3135;
+    color: #0f172a;
 }
 
 body:not(.light-mode) .courses-grid-header {
@@ -2872,12 +2756,13 @@ body:not(.light-mode) .courses-grid-header {
 
 .course-card {
     background-color: #ffffff;
-    border-radius: 6px;
+    border-radius: 10px;
     overflow: hidden;
-    border: 1px solid #e5e7eb;
+    border: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     height: 200px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
 }
 
 body:not(.light-mode) .course-card {
@@ -2887,7 +2772,7 @@ body:not(.light-mode) .course-card {
 
 .card-banner {
     height: 140px;
-    background-color: #e5e7eb;
+    background-color: var(--sga-blue-primary);
     position: relative;
 }
 
@@ -2899,18 +2784,14 @@ body:not(.light-mode) .card-banner {
     position: absolute;
     top: 12px;
     right: 12px;
-    color: #2d3135;
-    opacity: 0.7;
+    color: #ffffff;
+    opacity: 0.8;
     cursor: pointer;
 }
 
-body:not(.light-mode) .card-menu-trigger {
-    color: #ffffff;
-}
-
-.card-menu-trigger:hover {
-    opacity: 1;
-}
+    .card-menu-trigger:hover {
+        opacity: 1;
+    }
 
 .card-body {
     padding: 15px;
@@ -2925,18 +2806,17 @@ body:not(.light-mode) .card-body {
 }
 
 .course-title {
-    font-size: 13.5px;
-    font-weight: 500;
-    color: #2d3135;
+    font-size: 14px;
+    font-weight: 600;
+    color: #0f172a;
 }
 
 body:not(.light-mode) .course-title {
     color: #ffffff;
 }
 
-
 /* ==========================================================================
-   LMS MODAL DIALOG COMPONENT
+   14. LMS MODAL DIALOG COMPONENT
    ========================================================================== */
 .lms-modal-overlay {
     position: fixed;
@@ -2944,8 +2824,8 @@ body:not(.light-mode) .course-title {
     left: 0;
     width: 100vw;
     height: 100vh;
-    background: rgba(0, 0, 0, 0.6);
-    backdrop-filter: blur(3px);
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(4px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2962,13 +2842,14 @@ body:not(.light-mode) .course-title {
 
 .lms-modal-card {
     background: #ffffff;
-    border-radius: 8px;
+    border-radius: 12px;
     width: 100%;
     max-width: 480px;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     overflow: hidden;
     transform: translateY(-20px);
     transition: transform 0.25s ease;
+    border-top: 4px solid var(--sga-blue-primary);
 }
 
 .lms-modal-overlay.show .lms-modal-card {
@@ -2977,16 +2858,15 @@ body:not(.light-mode) .course-title {
 
 body:not(.light-mode) .lms-modal-card {
     background: #2a2d31;
-    border: 1px solid #3f444e;
+    border-color: #3f444e;
 }
 
-/* Modal Header */
 .lms-modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 16px 20px;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid var(--border-color);
 }
 
 body:not(.light-mode) .lms-modal-header {
@@ -2996,8 +2876,8 @@ body:not(.light-mode) .lms-modal-header {
 .lms-modal-header h3 {
     margin: 0;
     font-size: 18px;
-    font-weight: 600;
-    color: #2d3135;
+    font-weight: 700;
+    color: #0f172a;
 }
 
 body:not(.light-mode) .lms-modal-header h3 {
@@ -3008,20 +2888,19 @@ body:not(.light-mode) .lms-modal-header h3 {
     background: none;
     border: none;
     font-size: 24px;
-    color: #6c757d;
+    color: var(--text-muted);
     cursor: pointer;
     line-height: 1;
 }
 
     .modal-close-btn:hover {
-        color: #2d3135;
+        color: #0f172a;
     }
 
 body:not(.light-mode) .modal-close-btn:hover {
     color: #ffffff;
 }
 
-/* Modal Body Form */
 .lms-modal-body {
     padding: 20px;
 }
@@ -3035,7 +2914,7 @@ body:not(.light-mode) .modal-close-btn:hover {
         font-size: 13px;
         font-weight: 600;
         margin-bottom: 6px;
-        color: #2d3135;
+        color: #0f172a;
     }
 
 body:not(.light-mode) .form-group label {
@@ -3043,24 +2922,24 @@ body:not(.light-mode) .form-group label {
 }
 
 .required-star {
-    color: #ef4444;
+    color: var(--sga-red-danger);
 }
 
 .form-control {
     width: 100%;
     padding: 10px 12px;
     font-size: 13.5px;
-    border-radius: 6px;
-    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
     background: #ffffff;
-    color: #2d3135;
+    color: #0f172a;
     box-sizing: border-box;
     outline: none;
     transition: border-color 0.15s;
 }
 
     .form-control:focus {
-        border-color: #3b82f6;
+        border-color: var(--sga-blue-primary);
     }
 
 body:not(.light-mode) .form-control {
@@ -3069,14 +2948,13 @@ body:not(.light-mode) .form-control {
     color: #ffffff;
 }
 
-/* Modal Footer Actions */
 .lms-modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: 10px;
     padding: 14px 20px;
-    background: #f9fafb;
-    border-top: 1px solid #e5e7eb;
+    background: #f8fafc;
+    border-top: 1px solid var(--border-color);
 }
 
 body:not(.light-mode) .lms-modal-footer {
@@ -3086,13 +2964,13 @@ body:not(.light-mode) .lms-modal-footer {
 
 .btn-cancel {
     background: transparent;
-    border: 1px solid #d1d5db;
+    border: 1px solid #cbd5e1;
     padding: 8px 16px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
     cursor: pointer;
-    color: #4b5563;
+    color: #475569;
 }
 
 body:not(.light-mode) .btn-cancel {
@@ -3101,10 +2979,10 @@ body:not(.light-mode) .btn-cancel {
 }
 
 .btn-submit {
-    background: #2563eb;
+    background: var(--sga-blue-primary);
     border: none;
     padding: 8px 18px;
-    border-radius: 6px;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 600;
     color: #ffffff;
@@ -3113,15 +2991,14 @@ body:not(.light-mode) .btn-cancel {
 }
 
     .btn-submit:hover {
-        background: #1d4ed8;
+        background: var(--sga-blue-hover);
     }
 
-
 /* ==========================================================================
-   STUDENT PREVIEW MODE BANNER (National Geographic Replica)
+   15. STUDENT PREVIEW MODE BANNER
    ========================================================================== */
 .student-preview-bar {
-    background-color: #ffc20e;
+    background-color: #f59e0b;
     color: #000000;
     padding: 10px 24px;
     font-size: 13.5px;
@@ -3147,14 +3024,12 @@ body:not(.light-mode) .btn-cancel {
         opacity: 0.8;
     }
 
-/* Hide Teacher-Only controls when Student Preview is Active */
 body.student-preview-active .teacher-only-control {
     display: none !important;
 }
 
-
 /* ==========================================================================
-   COURSE DETAILS WORKSPACE LAYOUT & SUB-NAVIGATION (HARMONIZED)
+   16. COURSE DETAILS WORKSPACE LAYOUT & SUB-NAVIGATION
    ========================================================================== */
 .course-layout-wrapper {
     display: flex !important;
@@ -3168,10 +3043,10 @@ body.student-preview-active .teacher-only-control {
     width: 230px !important;
     flex-shrink: 0 !important;
     background: #ffffff !important;
-    border-radius: 8px !important;
-    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-color) !important;
     padding: 16px 0 !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 
 body:not(.light-mode) .course-nav-panel {
@@ -3183,8 +3058,8 @@ body:not(.light-mode) .course-nav-panel {
     padding: 0 16px 12px 16px !important;
     font-size: 15px !important;
     font-weight: 700 !important;
-    border-bottom: 1px solid #e5e7eb !important;
-    color: #2d3135 !important;
+    border-bottom: 1px solid var(--border-color) !important;
+    color: #0f172a !important;
 }
 
 body:not(.light-mode) .course-nav-header {
@@ -3194,15 +3069,15 @@ body:not(.light-mode) .course-nav-header {
 
 .course-menu-list {
     list-style: none !important;
-    padding: 10px 0 0 0 !important;
+    padding: 10px 8px 0 8px !important;
     margin: 0 !important;
     display: flex !important;
     flex-direction: column !important;
 }
 
     .course-menu-list li {
-        margin: 0 !important;
-        padding: 0 8px !important;
+        margin: 0 0 4px 0 !important;
+        padding: 0 !important;
         list-style-type: none !important;
     }
 
@@ -3214,12 +3089,12 @@ body:not(.light-mode) .course-nav-header {
             gap: 12px !important;
             padding: 10px 14px !important;
             font-size: 13.5px !important;
-            color: #6c757d !important;
+            color: #64748b !important;
             text-decoration: none !important;
             font-weight: 500 !important;
             width: 100% !important;
             box-sizing: border-box !important;
-            border-radius: 6px !important;
+            border-radius: 8px !important;
             transition: background 0.15s ease, color 0.15s ease !important;
         }
 
@@ -3228,8 +3103,8 @@ body:not(.light-mode) .course-menu-list li a {
 }
 
 .course-menu-list li a:hover {
-    color: #2563eb !important;
-    background: rgba(37, 99, 235, 0.08) !important;
+    color: var(--sga-blue-primary) !important;
+    background: #eff6ff !important;
 }
 
 body:not(.light-mode) .course-menu-list li a:hover {
@@ -3238,14 +3113,23 @@ body:not(.light-mode) .course-menu-list li a:hover {
 }
 
 .course-menu-list li.active a {
-    background: #2563eb !important;
-    color: #ffffff !important;
+    background: #eff6ff !important;
+    color: var(--sga-blue-primary) !important;
     font-weight: 600 !important;
 }
 
-    .course-menu-list li.active a i {
-        color: #ffffff !important;
-    }
+body:not(.light-mode) .course-menu-list li.active a {
+    background: var(--sga-blue-primary) !important;
+    color: #ffffff !important;
+}
+
+.course-menu-list li.active a i {
+    color: var(--sga-blue-primary) !important;
+}
+
+body:not(.light-mode) .course-menu-list li.active a i {
+    color: #ffffff !important;
+}
 
 .course-menu-list li a i {
     font-size: 20px !important;
@@ -3257,10 +3141,10 @@ body:not(.light-mode) .course-menu-list li a:hover {
 .course-content-panel {
     flex: 1 !important;
     background: #ffffff !important;
-    border-radius: 8px !important;
-    border: 1px solid #e5e7eb !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--border-color) !important;
     padding: 24px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 
 body:not(.light-mode) .course-content-panel {
@@ -3274,7 +3158,7 @@ body:not(.light-mode) .course-content-panel {
     align-items: center !important;
     margin-bottom: 20px !important;
     padding-bottom: 12px !important;
-    border-bottom: 1px solid #e5e7eb !important;
+    border-bottom: 1px solid var(--border-color) !important;
 }
 
 body:not(.light-mode) .workspace-header {
@@ -3284,7 +3168,7 @@ body:not(.light-mode) .workspace-header {
 .workspace-title {
     font-size: 20px !important;
     font-weight: 700 !important;
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 body:not(.light-mode) .workspace-title {
@@ -3292,11 +3176,11 @@ body:not(.light-mode) .workspace-title {
 }
 
 .btn-primary-action {
-    background: #2563eb !important;
+    background: var(--sga-blue-primary) !important;
     color: #ffffff !important;
     border: none !important;
     padding: 8px 16px !important;
-    border-radius: 6px !important;
+    border-radius: 8px !important;
     font-size: 13px !important;
     font-weight: 600 !important;
     cursor: pointer !important;
@@ -3307,15 +3191,17 @@ body:not(.light-mode) .workspace-title {
 }
 
     .btn-primary-action:hover {
-        background: #1d4ed8 !important;
+        background: var(--sga-blue-hover) !important;
     }
 
 .feed-card {
-    border: 1px solid #e5e7eb !important;
-    border-radius: 6px !important;
-    padding: 16px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    padding: 18px !important;
     margin-bottom: 16px !important;
-    background: #fafafa !important;
+    background: #ffffff !important;
+    border-left: 4px solid var(--sga-blue-primary) !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 
 body:not(.light-mode) .feed-card {
@@ -3324,9 +3210,9 @@ body:not(.light-mode) .feed-card {
 }
 
 .feed-card-title {
-    font-size: 15px !important;
-    font-weight: 600 !important;
-    color: #2d3135 !important;
+    font-size: 16px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
     margin-bottom: 4px !important;
 }
 
@@ -3336,7 +3222,7 @@ body:not(.light-mode) .feed-card-title {
 
 .feed-card-meta {
     font-size: 12px !important;
-    color: #888888 !important;
+    color: var(--text-muted) !important;
     margin-bottom: 12px !important;
 }
 
@@ -3345,10 +3231,11 @@ body:not(.light-mode) .feed-card-title {
     justify-content: space-between !important;
     align-items: center !important;
     padding: 14px 16px !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 6px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
     margin-bottom: 12px !important;
     background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 
 body:not(.light-mode) .quiz-item-row {
@@ -3359,7 +3246,7 @@ body:not(.light-mode) .quiz-item-row {
 .quiz-info-title {
     font-weight: 600 !important;
     font-size: 14px !important;
-    color: #2d3135 !important;
+    color: #0f172a !important;
 }
 
 body:not(.light-mode) .quiz-info-title {
@@ -3368,18 +3255,32 @@ body:not(.light-mode) .quiz-info-title {
 
 .quiz-info-sub {
     font-size: 12px !important;
-    color: #888888 !important;
+    color: var(--text-muted) !important;
     margin-top: 2px !important;
 }
 
 .badge-status {
-    padding: 4px 10px !important;
-    border-radius: 12px !important;
-    font-size: 11.5px !important;
+    padding: 4px 12px !important;
+    border-radius: 20px !important;
+    font-size: 12px !important;
     font-weight: 600 !important;
-    background: #e0f2fe !important;
-    color: #0369a1 !important;
+    display: inline-block !important;
 }
+
+    .badge-status.badge-open {
+        background: #dcfce7 !important;
+        color: #15803d !important;
+    }
+
+    .badge-status.badge-closed {
+        background: #fee2e2 !important;
+        color: #b91c1c !important;
+    }
+
+    .badge-status.badge-pending {
+        background: #fef3c7 !important;
+        color: #b45309 !important;
+    }
 
 .modules-grid {
     display: grid !important;
@@ -3388,10 +3289,11 @@ body:not(.light-mode) .quiz-info-title {
 }
 
 .unit-card {
-    border: 1px solid #e5e7eb !important;
-    border-radius: 8px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 10px !important;
     overflow: hidden !important;
     background: #ffffff !important;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04) !important;
 }
 
 body:not(.light-mode) .unit-card {
@@ -3401,7 +3303,7 @@ body:not(.light-mode) .unit-card {
 
 .unit-card-banner {
     height: 100px !important;
-    background: #2563eb !important;
+    background: var(--sga-blue-primary) !important;
     color: #ffffff !important;
     padding: 12px !important;
     display: flex !important;
@@ -3425,7 +3327,7 @@ body:not(.light-mode) .unit-card {
     .lms-table th, .lms-table td {
         padding: 12px 14px !important;
         text-align: left !important;
-        border-bottom: 1px solid #e5e7eb !important;
+        border-bottom: 1px solid var(--border-color) !important;
     }
 
 body:not(.light-mode) .lms-table th,

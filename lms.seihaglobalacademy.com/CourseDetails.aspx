@@ -1,11 +1,149 @@
 ﻿<%@ Page Title="Course Details" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CourseDetails.aspx.cs" Inherits="lms.seihaglobalacademy.com.CourseDetails" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
+    <style type="text/css">
+        /* Mode Indicator Banner */
+        .mode-banner-student {
+            background-color: #fef3c7;
+            color: #92400e;
+            border: 1px solid #fcd34d;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .mode-banner-teacher {
+            background-color: #e0e7ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13.5px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Responsive Table & Grading Fixes */
+        .lms-table-container {
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 12px;
+        }
+
+        .lms-table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: auto;
+            background: #ffffff;
+        }
+
+        .lms-table th {
+            background-color: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+            font-size: 13px;
+            padding: 10px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        .lms-table td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #f3f4f6;
+            vertical-align: middle;
+            font-size: 13.5px;
+            color: #1f2937;
+        }
+
+        /* Specific Column Widths */
+        .col-student  { width: 14%; min-width: 110px; }
+        .col-date     { width: 14%; min-width: 110px; }
+        .col-file     { width: 12%; min-width: 90px; }
+        .col-notes    { width: 20%; min-width: 140px; }
+        .col-grade    { width: 10%; min-width: 80px; }
+        .col-feedback { width: 18%; min-width: 140px; }
+        .col-actions  { width: 12%; min-width: 130px; text-align: center; }
+
+        /* Form Inputs Inside Table */
+        .input-grade {
+            width: 100% !important;
+            max-width: 70px;
+            text-align: center;
+            padding: 6px !important;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        .input-feedback {
+            width: 100% !important;
+            padding: 6px 8px !important;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 13px;
+        }
+
+        /* Button Action Group Layout */
+        .action-btn-group {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .btn-table-save {
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+
+        .btn-table-save:hover {
+            background-color: #047857;
+        }
+
+        .btn-table-delete {
+            background-color: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            transition: background 0.15s;
+        }
+
+        .btn-table-delete:hover {
+            background-color: #dc2626;
+        }
+    </style>
 </asp:Content>
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     
-    <div class="course-layout-wrapper">
+    <!-- Mode Indicator Banner -->
+    <asp:Panel ID="pnlModeBanner" runat="server" CssClass="mode-banner-teacher">
+        <i class="material-icons-outlined" style="font-size: 20px;">info</i>
+        <asp:Label ID="lblModeStatus" runat="server" Text="TEACHER MODE — Full administrative access active."></asp:Label>
+    </asp:Panel>
+
+    <div id="divMainWrapper" runat="server" class="course-layout-wrapper">
         <!-- Left Sub-Navigation Panel -->
         <div class="course-nav-panel">
             <div class="course-nav-header">
@@ -271,7 +409,6 @@
                         </div>
                     </div>
 
-                    <!-- REFACTORED LESSON REPEATER WITH CLEAN WEB FORMS CONTROLS -->
                     <div class="lessons-accordion-list">
                         <asp:Repeater ID="rptLessons" runat="server" OnItemCommand="rptLessons_ItemCommand" OnItemDataBound="rptLessons_ItemDataBound">
                             <ItemTemplate>
@@ -296,7 +433,6 @@
                                     </div>
 
                                     <div style="display: flex; align-items: center; gap: 10px;">
-                                        <!-- Student Progress Actions -->
                                         <asp:PlaceHolder ID="phStudentViewActions" runat="server">
                                             <asp:Panel ID="pnlCompletedBadge" runat="server" Visible='<%# (bool)Eval("IsCompleted") %>'>
                                                 <span class="badge-status" style="background: #10b981; color: white; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600;">Completed</span>
@@ -316,7 +452,6 @@
                                             </asp:Panel>
                                         </asp:PlaceHolder>
 
-                                        <!-- Teacher Content Actions -->
                                         <asp:PlaceHolder ID="phTeacherLessonActions" runat="server">
                                             <div class="teacher-only-control" style="display: flex; gap: 6px; margin-left: 10px;">
                                                 <asp:LinkButton ID="btnEditLesson" runat="server" CommandName="EditLesson" CommandArgument='<%# Eval("LessonID") %>' Style="color: #2563eb; text-decoration: none;" ToolTip="Edit Lesson">
@@ -345,7 +480,6 @@
                     </asp:LinkButton>
                 </div>
 
-                <!-- ASSIGNMENT LIST REPEATER -->
                 <asp:Repeater ID="rptAssignments" runat="server" OnItemCommand="rptAssignments_ItemCommand" OnItemDataBound="rptAssignments_ItemDataBound">
                     <ItemTemplate>
                         <div class="quiz-item-row">
@@ -369,7 +503,7 @@
                 </asp:Repeater>
 
                 <!-- ASSIGNMENT DETAIL VIEW PANEL -->
-                <asp:Panel ID="pnlAssignmentDetail" runat="server" Visible="false" Style="max-width: 720px; margin: 0 auto;">
+                <asp:Panel ID="pnlAssignmentDetail" runat="server" Visible="false" Style="max-width: 760px; margin: 0 auto;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                         <asp:Button ID="btnBackToAssignments" runat="server" Text="← Back to Assignments" CssClass="btn-primary-action" OnClick="btnBackToAssignments_Click" Style="background: #6b7280;" />
                         <asp:HiddenField ID="hfActiveAssignmentID" runat="server" />
@@ -382,51 +516,92 @@
                             Due: <asp:Label ID="lblDetailDueDate" runat="server"></asp:Label> | 
                             Max Points: <asp:Label ID="lblDetailMaxPoints" runat="server"></asp:Label>
                         </div>
-                        <div style="font-size: 14px; color: var(--text-light); line-height: 1.6; padding-top: 10px; border-top: 1px solid #374151;">
+                        <div style="font-size: 14px; color: var(--text-light); line-height: 1.6; padding-top: 10px; border-top: 1px solid #e5e7eb;">
                             <strong>Instructions:</strong>
                             <p><asp:Label ID="lblDetailInstructions" runat="server"></asp:Label></p>
                         </div>
                     </div>
 
-                    <!-- STUDENT SUBMISSION FORM -->
-                    <asp:Panel ID="pnlStudentSubmission" runat="server" CssClass="feed-card">
-                        <h3>Submit Your Work</h3>
-                        <div class="form-group" style="margin-top: 12px;">
-                            <label>Text Response / Notes</label>
-                            <asp:TextBox ID="txtSubmissionNotes" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control" placeholder="Write response here..."></asp:TextBox>
+                    <!-- STUDENT SUBMISSION FORM & GRADE RESULT CARD -->
+                    <asp:Panel ID="pnlStudentSubmission" runat="server">
+                        <!-- STUDENT GRADE & FEEDBACK DISPLAY -->
+                        <asp:Panel ID="pnlStudentFeedbackCard" runat="server" CssClass="feed-card" Style="margin-bottom: 20px; border-left: 4px solid #059669; background: #f0fdf4;">
+                            <h3 style="margin: 0 0 10px 0; color: #166534; font-size: 16px; display: flex; align-items: center; gap: 6px;">
+                                <i class="material-icons-outlined" style="font-size: 20px;">verified</i> Grade & Teacher Feedback
+                            </h3>
+                            <div style="font-size: 15px; font-weight: 700; color: #15803d; margin-bottom: 6px;">
+                                <asp:Label ID="lblStudentGradeDisplay" runat="server" Text="Status: Not Graded Yet"></asp:Label>
+                            </div>
+                            <div style="font-size: 13.5px; color: #166534; line-height: 1.5;">
+                                <asp:Label ID="lblStudentFeedbackDisplay" runat="server" Text="No feedback provided yet."></asp:Label>
+                            </div>
+                        </asp:Panel>
+
+                        <!-- STUDENT SUBMISSION FORM -->
+                        <div class="feed-card">
+                            <h3 style="margin-top: 0;">Submit Your Work</h3>
+                            <div class="form-group" style="margin-top: 12px;">
+                                <label>Text Response / Notes</label>
+                                <asp:TextBox ID="txtSubmissionNotes" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control" placeholder="Write response here..."></asp:TextBox>
+                            </div>
+                            <div class="form-group">
+                                <label>Upload File (PDF, DOCX, ZIP)</label>
+                                <asp:FileUpload ID="fileSubmissionUpload" runat="server" CssClass="form-control" Style="padding: 6px;" />
+                            </div>
+                            <asp:Button ID="btnSubmitAssignmentWork" runat="server" Text="Submit Assignment" CssClass="btn-primary-action" OnClick="btnSubmitAssignmentWork_Click" Style="background: #059669;" />
                         </div>
-                        <div class="form-group">
-                            <label>Upload File (PDF, DOCX, ZIP)</label>
-                            <asp:FileUpload ID="fileSubmissionUpload" runat="server" CssClass="form-control" Style="padding: 6px;" />
-                        </div>
-                        <asp:Button ID="btnSubmitAssignmentWork" runat="server" Text="Submit Assignment" CssClass="btn-primary-action" OnClick="btnSubmitAssignmentWork_Click" Style="background: #059669;" />
                     </asp:Panel>
 
-                    <!-- TEACHER SUBMISSIONS VIEW TABLE -->
+                    <!-- TEACHER SUBMISSIONS VIEW & MANUAL GRADING TABLE -->
                     <asp:Panel ID="pnlTeacherSubmissions" runat="server" CssClass="feed-card" Visible="false">
-                        <h3>Submitted Student Work</h3>
-                        <asp:Repeater ID="rptSubmissions" runat="server">
-                            <HeaderTemplate>
-                                <table class="lms-table" style="margin-top: 12px;">
-                                    <thead><tr><th>Student</th><th>Date</th><th>Attachment</th><th>Notes</th><th>Status/Grade</th></tr></thead>
-                                    <tbody>
-                            </HeaderTemplate>
-                            <ItemTemplate>
-                                <tr>
-                                    <td><%# Eval("StudentName") %></td>
-                                    <td><%# Eval("SubmittedDate") %></td>
-                                    <td>
-                                        <%# string.IsNullOrEmpty(Eval("FilePath").ToString()) ? "No File" : "<a href='" + ResolveUrl(Eval("FilePath").ToString()) + "' target='_blank' style='color:#60a5fa;'>Download</a>" %>
-                                    </td>
-                                    <td><%# Eval("SubmissionText") %></td>
-                                    <td><span class="badge-status"><%# Eval("Grade") %></span></td>
-                                </tr>
-                            </ItemTemplate>
-                            <FooterTemplate>
-                                    </tbody>
-                                </table>
-                            </FooterTemplate>
-                        </asp:Repeater>
+                        <h3 style="margin-top: 0; margin-bottom: 12px;">Submitted Student Work</h3>
+                        <div class="lms-table-container">
+                            <asp:Repeater ID="rptSubmissions" runat="server" OnItemCommand="rptSubmissions_ItemCommand">
+                                <HeaderTemplate>
+                                    <table class="lms-table">
+                                        <thead>
+                                            <tr>
+                                                <th class="col-student">Student</th>
+                                                <th class="col-date">Date</th>
+                                                <th class="col-file">Attachment</th>
+                                                <th class="col-notes">Notes</th>
+                                                <th class="col-grade">Grade</th>
+                                                <th class="col-feedback">Feedback</th>
+                                                <th class="col-actions">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                </HeaderTemplate>
+                                <ItemTemplate>
+                                    <tr>
+                                        <td class="col-student"><strong><%# Eval("StudentName") %></strong></td>
+                                        <td class="col-date" style="color: #6b7280; font-size: 12px;"><%# Eval("SubmittedDate") %></td>
+                                        <td class="col-file">
+                                            <asp:HyperLink ID="hlFile" runat="server" NavigateUrl='<%# Eval("FilePath") %>' Target="_blank" Visible='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("FilePath"))) %>' Style="color:#2563eb; font-weight: 500; text-decoration: underline;">
+                                                View File
+                                            </asp:HyperLink>
+                                        </td>
+                                        <td class="col-notes" style="color: #374151; max-width: 180px; word-break: break-word;"><%# Eval("SubmissionText") %></td>
+                                        <td class="col-grade">
+                                            <asp:TextBox ID="txtGrade" runat="server" Text='<%# Eval("Grade") %>' CssClass="input-grade" placeholder="Pts"></asp:TextBox>
+                                        </td>
+                                        <td class="col-feedback">
+                                            <asp:TextBox ID="txtFeedback" runat="server" Text='<%# Eval("Feedback") %>' CssClass="input-feedback" placeholder="Feedback..."></asp:TextBox>
+                                        </td>
+                                        <td class="col-actions">
+                                            <div class="action-btn-group">
+                                                <asp:Button ID="btnSaveGrade" runat="server" CommandName="GradeSubmission" CommandArgument='<%# Eval("SubmissionID") %>' Text="Save" CssClass="btn-table-save" />
+                                                <asp:Button ID="btnDeleteSubmission" runat="server" CommandName="DeleteSubmission" CommandArgument='<%# Eval("SubmissionID") %>' Text="Delete" CssClass="btn-table-delete" OnClientClick="return confirm('Are you sure you want to delete this submission record?');" />
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </ItemTemplate>
+                                <FooterTemplate>
+                                        </tbody>
+                                    </table>
+                                </FooterTemplate>
+                            </asp:Repeater>
+                        </div>
                     </asp:Panel>
                 </asp:Panel>
             </asp:Panel>
@@ -435,31 +610,90 @@
             <asp:Panel ID="pnlGradebook" runat="server" Visible="false">
                 <div class="workspace-header">
                     <div class="workspace-title">Gradebook</div>
+                    <asp:Button ID="btnExportGradebook" runat="server" Text="Export CSV" CssClass="btn-primary-action" OnClick="btnExportGradebook_Click" Style="background: #4b5563;" />
                 </div>
-                <table class="lms-table">
-                    <thead><tr><th>Student Name</th><th>Unit 1 Quiz</th><th>Midterm Speaking</th><th>Total Grade</th></tr></thead>
-                    <tbody>
-                        <tr><td>Kazumi Sakai</td><td>48 / 50</td><td>92 / 100</td><td>93.3%</td></tr>
-                        <tr><td>Mary Ann Saito</td><td>45 / 50</td><td>88 / 100</td><td>88.6%</td></tr>
-                    </tbody>
-                </table>
+
+                <asp:GridView ID="gvGradebook" runat="server" AutoGenerateColumns="False" CssClass="lms-table" GridLines="None">
+                    <HeaderStyle BackColor="#f9fafb" ForeColor="#374151" Font-Bold="true" />
+                    <Columns>
+                        <asp:BoundField DataField="StudentName" HeaderText="Student Name" />
+                        <asp:BoundField DataField="QuizAverage" HeaderText="Quiz Avg (%)" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" />
+                        <asp:BoundField DataField="AssignmentAverage" HeaderText="Assignment Avg (%)" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" />
+                        <asp:BoundField DataField="OverallGrade" HeaderText="Overall Grade (%)" ItemStyle-HorizontalAlign="Center" HeaderStyle-HorizontalAlign="Center" ItemStyle-Font-Bold="true" />
+                    </Columns>
+                    <EmptyDataTemplate>
+                        <div style="padding: 20px; text-align: center; color: #6b7280;">No grade records found for this course.</div>
+                    </EmptyDataTemplate>
+                </asp:GridView>
             </asp:Panel>
 
-            <!-- SECTION 6: USER MANAGEMENT PANEL -->
+            <!-- SECTION 6: USER MANAGEMENT & ENROLLMENTS PANEL -->
             <asp:Panel ID="pnlUserManagement" runat="server" Visible="false">
                 <div class="workspace-header">
-                    <div class="workspace-title">User Management</div>
+                    <div class="workspace-title">User Management & Enrollments</div>
+                    <asp:LinkButton ID="btnOpenAddStudentModal" runat="server" CssClass="btn-primary-action" OnClientClick="openModal('addStudentModal'); return false;">
+                        <i class="material-icons-outlined" style="font-size: 18px;">person_add</i> Enroll Student
+                    </asp:LinkButton>
                 </div>
-                <table class="lms-table">
-                    <thead><tr><th>Name</th><th>Role</th><th>Created On</th><th>Status</th></tr></thead>
-                    <tbody>
-                        <tr><td>Kazumi Sakai</td><td>Student</td><td>07/Jun/2026</td><td><span class="badge-status">Active</span></td></tr>
-                        <tr><td>Mary Ann Saito</td><td>Student</td><td>08/May/2026</td><td><span class="badge-status">Active</span></td></tr>
-                        <tr><td>SENPI Seiha</td><td>Instructor</td><td>14/Feb/2022</td><td><span class="badge-status">Instructor</span></td></tr>
-                    </tbody>
-                </table>
+
+                <!-- Pending Approval Requests Table -->
+                <h4 style="margin: 16px 0 8px 0; font-size: 15px;">Pending Approval Requests</h4>
+                <asp:GridView ID="gvPendingEnrollments" runat="server" AutoGenerateColumns="False" CssClass="lms-table" GridLines="None" OnRowCommand="gvPendingEnrollments_RowCommand">
+                    <HeaderStyle BackColor="#f9fafb" ForeColor="#374151" Font-Bold="true" />
+                    <Columns>
+                        <asp:BoundField DataField="StudentName" HeaderText="Student Name" />
+                        <asp:BoundField DataField="RequestedDate" HeaderText="Requested On" DataFormatString="{0:MMM dd, yyyy}" />
+                        <asp:TemplateField HeaderText="Actions" ItemStyle-HorizontalAlign="Right">
+                            <ItemTemplate>
+                                <asp:Button ID="btnApprove" runat="server" CommandName="ApproveStudent" CommandArgument='<%# Eval("EnrollmentID") %>' Text="Accept" CssClass="btn-submit" Style="background: #059669; padding: 4px 12px; font-size: 12px;" />
+                                <asp:Button ID="btnReject" runat="server" CommandName="RejectStudent" CommandArgument='<%# Eval("EnrollmentID") %>' Text="Reject" CssClass="btn-cancel" Style="padding: 4px 12px; font-size: 12px;" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                    <EmptyDataTemplate>
+                        <div style="padding: 12px; text-align: center; color: #9ca3af; font-size: 13px;">No pending enrollment requests.</div>
+                    </EmptyDataTemplate>
+                </asp:GridView>
+
+                <!-- Active Enrolled Roster Table -->
+                <h4 style="margin: 24px 0 8px 0; font-size: 15px;">Active Roster</h4>
+                <asp:GridView ID="gvActiveStudents" runat="server" AutoGenerateColumns="False" CssClass="lms-table" GridLines="None">
+                    <HeaderStyle BackColor="#f9fafb" ForeColor="#374151" Font-Bold="true" />
+                    <Columns>
+                        <asp:BoundField DataField="StudentName" HeaderText="Student Name" />
+                        <asp:BoundField DataField="ApprovedDate" HeaderText="Enrolled Date" DataFormatString="{0:MMM dd, yyyy}" />
+                        <asp:TemplateField HeaderText="Status">
+                            <ItemTemplate>
+                                <span class="badge-status" style="background: #10b981; color: white;">Active</span>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                    <EmptyDataTemplate>
+                        <div style="padding: 12px; text-align: center; color: #9ca3af; font-size: 13px;">No active students in this course.</div>
+                    </EmptyDataTemplate>
+                </asp:GridView>
             </asp:Panel>
 
+        </div>
+    </div>
+
+    <!-- DIRECT ENROLLMENT MODAL -->
+    <div id="addStudentModal" class="lms-modal-overlay">
+        <div class="lms-modal-card">
+            <div class="lms-modal-header">
+                <h3>Enroll Student to Course</h3>
+                <button type="button" class="modal-close-btn" onclick="closeModal('addStudentModal');">&times;</button>
+            </div>
+            <div class="lms-modal-body">
+                <div class="form-group">
+                    <label>Select Student <span class="required-star">*</span></label>
+                    <asp:DropDownList ID="ddlAvailableStudents" runat="server" CssClass="form-control"></asp:DropDownList>
+                </div>
+            </div>
+            <div class="lms-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('addStudentModal');">Cancel</button>
+                <asp:Button ID="btnDirectEnroll" runat="server" Text="Enroll Student" CssClass="btn-submit" OnClick="btnDirectEnroll_Click" />
+            </div>
         </div>
     </div>
 
