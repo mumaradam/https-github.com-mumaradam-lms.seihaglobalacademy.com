@@ -67,12 +67,12 @@
 
         /* Specific Column Widths */
         .col-student  { width: 14%; min-width: 110px; }
-        .col-date     { width: 14%; min-width: 110px; }
-        .col-file     { width: 12%; min-width: 90px; }
-        .col-notes    { width: 20%; min-width: 140px; }
+        .col-date     { width: 12%; min-width: 100px; }
+        .col-file     { width: 22%; min-width: 220px; }
+        .col-notes    { width: 16%; min-width: 130px; }
         .col-grade    { width: 10%; min-width: 80px; }
-        .col-feedback { width: 18%; min-width: 140px; }
-        .col-actions  { width: 12%; min-width: 130px; text-align: center; }
+        .col-feedback { width: 16%; min-width: 130px; }
+        .col-actions  { width: 10%; min-width: 110px; text-align: center; }
 
         /* Form Inputs Inside Table */
         .input-grade {
@@ -497,6 +497,18 @@
                                 <asp:LinkButton ID="btnViewAssignment" runat="server" CssClass="btn-primary-action" CommandName="ViewAssignment" CommandArgument='<%# Eval("AssignmentID") %>'>
                                     View Details
                                 </asp:LinkButton>
+
+                                <!-- Teacher Actions: Edit & Delete -->
+                                <asp:PlaceHolder ID="phTeacherAssignmentActions" runat="server">
+                                    <div class="teacher-only-control" style="display: flex; gap: 6px; margin-left: 4px;">
+                                        <asp:LinkButton ID="btnEditAssignment" runat="server" CommandName="EditAssignment" CommandArgument='<%# Eval("AssignmentID") %>' Style="color: #60a5fa; text-decoration: none;" ToolTip="Edit Assignment">
+                                            <i class="material-icons-outlined" style="font-size: 18px;">edit</i>
+                                        </asp:LinkButton>
+                                        <asp:LinkButton ID="btnDeleteAssignment" runat="server" CommandName="DeleteAssignment" CommandArgument='<%# Eval("AssignmentID") %>' Style="color: #ef4444; text-decoration: none;" ToolTip="Delete Assignment" OnClientClick="return confirm('Are you sure you want to delete this assignment and all associated student submissions?');">
+                                            <i class="material-icons-outlined" style="font-size: 18px;">delete</i>
+                                        </asp:LinkButton>
+                                    </div>
+                                </asp:PlaceHolder>
                             </div>
                         </div>
                     </ItemTemplate>
@@ -545,14 +557,14 @@
                                 <asp:TextBox ID="txtSubmissionNotes" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control" placeholder="Write response here..."></asp:TextBox>
                             </div>
                             <div class="form-group">
-                                <label>Upload File (PDF, DOCX, ZIP)</label>
+                                <label>Upload File or Video (PDF, DOCX, ZIP, MP4, WEBM, MOV)</label>
                                 <asp:FileUpload ID="fileSubmissionUpload" runat="server" CssClass="form-control" Style="padding: 6px;" />
                             </div>
                             <asp:Button ID="btnSubmitAssignmentWork" runat="server" Text="Submit Assignment" CssClass="btn-primary-action" OnClick="btnSubmitAssignmentWork_Click" Style="background: #059669;" />
                         </div>
                     </asp:Panel>
 
-                    <!-- TEACHER SUBMISSIONS VIEW & MANUAL GRADING TABLE -->
+                    <!-- TEACHER SUBMISSIONS VIEW & MANUAL GRADING TABLE WITH VIDEO PLAYER -->
                     <asp:Panel ID="pnlTeacherSubmissions" runat="server" CssClass="feed-card" Visible="false">
                         <h3 style="margin-top: 0; margin-bottom: 12px;">Submitted Student Work</h3>
                         <div class="lms-table-container">
@@ -563,7 +575,7 @@
                                             <tr>
                                                 <th class="col-student">Student</th>
                                                 <th class="col-date">Date</th>
-                                                <th class="col-file">Attachment</th>
+                                                <th class="col-file">Attachment / Video</th>
                                                 <th class="col-notes">Notes</th>
                                                 <th class="col-grade">Grade</th>
                                                 <th class="col-feedback">Feedback</th>
@@ -577,9 +589,17 @@
                                         <td class="col-student"><strong><%# Eval("StudentName") %></strong></td>
                                         <td class="col-date" style="color: #6b7280; font-size: 12px;"><%# Eval("SubmittedDate") %></td>
                                         <td class="col-file">
-                                            <asp:HyperLink ID="hlFile" runat="server" NavigateUrl='<%# Eval("FilePath") %>' Target="_blank" Visible='<%# !string.IsNullOrEmpty(Convert.ToString(Eval("FilePath"))) %>' Style="color:#2563eb; font-weight: 500; text-decoration: underline;">
-                                                View File
-                                            </asp:HyperLink>
+                                            <%# !string.IsNullOrEmpty(Convert.ToString(Eval("FilePath"))) ? 
+                                                (
+                                                    Convert.ToString(Eval("FilePath")).ToLower().EndsWith(".mp4") || 
+                                                    Convert.ToString(Eval("FilePath")).ToLower().EndsWith(".webm") || 
+                                                    Convert.ToString(Eval("FilePath")).ToLower().EndsWith(".mov") || 
+                                                    Convert.ToString(Eval("FilePath")).ToLower().EndsWith(".avi") ||
+                                                    Convert.ToString(Eval("FilePath")).ToLower().EndsWith(".mkv") ?
+                                                    "<video width='220' height='130' controls controlsList='nodownload' style='border-radius:6px; background:#000; display:block;'><source src='" + ResolveUrl(Eval("FilePath").ToString()) + "'>Your browser does not support HTML5 video.</video>" :
+                                                    "<a href='" + ResolveUrl(Eval("FilePath").ToString()) + "' target='_blank' style='color:#2563eb; font-weight:500; text-decoration:underline;'>Download Attached File</a>"
+                                                ) : "<span style='color:#9ca3af;'>No File</span>" 
+                                            %>
                                         </td>
                                         <td class="col-notes" style="color: #374151; max-width: 180px; word-break: break-word;"><%# Eval("SubmissionText") %></td>
                                         <td class="col-grade">
@@ -888,7 +908,7 @@
 
                 <div id="questionsContainer"></div>
 
-                <button type="button" class="btn-primary-action" onclick="addQuestionCard();" style="background: #f3f4f6; color: #1f2937; border: 1px dashed #9ca3af; width: 100%; justify-content: center; margin-top: 10px;">
+                <button type="button" class="btn-primary-action" onclick="addQuestionCard(null);" style="background: #f3f4f6; color: #1f2937; border: 1px dashed #9ca3af; width: 100%; justify-content: center; margin-top: 10px;">
                     <i class="material-icons-outlined" style="font-size: 18px;">add_circle_outline</i> Add Question
                 </button>
 
@@ -942,18 +962,62 @@
         </div>
     </div>
 
+    <!-- EDIT ASSIGNMENT MODAL -->
+    <div id="editAssignmentModal" class="lms-modal-overlay">
+        <div class="lms-modal-card" style="max-width: 520px;">
+            <div class="lms-modal-header">
+                <h3>Edit Assignment</h3>
+                <button type="button" class="modal-close-btn" onclick="closeModal('editAssignmentModal');">&times;</button>
+            </div>
+            <div class="lms-modal-body">
+                <asp:HiddenField ID="hfEditAssignmentID" runat="server" />
+                <div class="form-group">
+                    <label>Assignment Title <span class="required-star">*</span></label>
+                    <asp:TextBox ID="txtEditAssignmentTitle" runat="server" CssClass="form-control"></asp:TextBox>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label>Start Date & Time <span class="required-star">*</span></label>
+                        <asp:TextBox ID="txtEditAssignmentStartDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control"></asp:TextBox>
+                    </div>
+                    <div class="form-group">
+                        <label>Due Date & Time <span class="required-star">*</span></label>
+                        <asp:TextBox ID="txtEditAssignmentDueDate" runat="server" TextMode="DateTimeLocal" CssClass="form-control"></asp:TextBox>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Maximum Points</label>
+                    <asp:TextBox ID="txtEditMaxPoints" runat="server" TextMode="Number" CssClass="form-control"></asp:TextBox>
+                </div>
+
+                <div class="form-group">
+                    <label>Instructions / Prompt</label>
+                    <asp:TextBox ID="txtEditAssignmentInstructions" runat="server" TextMode="MultiLine" Rows="3" CssClass="form-control"></asp:TextBox>
+                </div>
+            </div>
+            <div class="lms-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('editAssignmentModal');">Cancel</button>
+                <asp:Button ID="btnUpdateAssignment" runat="server" Text="Update Assignment" CssClass="btn-submit" OnClick="btnUpdateAssignment_Click" />
+            </div>
+        </div>
+    </div>
+
     <script type="text/javascript">
-        function openModal(id) {
+        function openModal(id = "") {
             var modal = document.getElementById(id);
             if (modal) modal.classList.add("show");
         }
-        function closeModal(id) {
+
+        function closeModal(id = "") {
             var modal = document.getElementById(id);
             if (modal) modal.classList.remove("show");
         }
-
         let questionCounter = 0;
-        var quizTimerInterval = null;
+        
+        /** @type {any} */
+        var quizTimerInterval = 0;
 
         function startQuizTimer() {
             var timerDisplay = document.getElementById('quizTimer');
@@ -961,29 +1025,31 @@
 
             if (!timerDisplay || !hfMinutes) return;
 
-            var totalMinutes = parseInt(hfMinutes.value) || 15;
+            var totalMinutes = parseInt(Object(hfMinutes).value) || 15;
             var totalSeconds = totalMinutes * 60;
 
-            if (quizTimerInterval) clearInterval(quizTimerInterval);
+            if (quizTimerInterval !== 0) clearInterval(quizTimerInterval);
 
             quizTimerInterval = setInterval(function () {
                 var minutes = Math.floor(totalSeconds / 60);
                 var seconds = totalSeconds % 60;
 
-                minutes = minutes < 10 ? '0' + minutes : minutes;
-                seconds = seconds < 10 ? '0' + seconds : seconds;
+                var strMinutes = minutes < 10 ? '0' + minutes : minutes.toString();
+                var strSeconds = seconds < 10 ? '0' + seconds : seconds.toString();
 
-                timerDisplay.textContent = minutes + ':' + seconds;
+                if (timerDisplay) {
+                    timerDisplay.textContent = strMinutes + ':' + strSeconds;
 
-                if (totalSeconds <= 300) {
-                    timerDisplay.style.color = '#f59e0b';
-                }
-                if (totalSeconds <= 60) {
-                    timerDisplay.style.color = '#ef4444';
+                    if (totalSeconds <= 300) {
+                        timerDisplay.style.color = '#f59e0b';
+                    }
+                    if (totalSeconds <= 60) {
+                        timerDisplay.style.color = '#ef4444';
+                    }
                 }
 
                 if (--totalSeconds < 0) {
-                    clearInterval(quizTimerInterval);
+                    if (quizTimerInterval !== 0) clearInterval(quizTimerInterval);
                     alert('Time is up! Your quiz will now be submitted automatically.');
                     var submitBtn = document.getElementById('btnSubmitQuiz');
                     if (submitBtn) submitBtn.click();
@@ -992,43 +1058,55 @@
         }
 
         function resetQuizModal() {
-            document.getElementById('hfEditQuizID').value = '';
-            document.getElementById('txtFormQuizTitle').value = '';
-            document.getElementById('txtFormOpenDate').value = '';
-            document.getElementById('txtFormCloseDate').value = '';
-            document.getElementById('txtFormTimeLimit').value = '';
-            document.getElementById('quizModalHeaderTitle').innerText = 'Create Google Form-style Quiz';
+            var hfEditQuizID = document.getElementById('hfEditQuizID');
+            var txtFormQuizTitle = document.getElementById('txtFormQuizTitle');
+            var txtFormOpenDate = document.getElementById('txtFormOpenDate');
+            var txtFormCloseDate = document.getElementById('txtFormCloseDate');
+            var txtFormTimeLimit = document.getElementById('txtFormTimeLimit');
+            var headerTitle = document.getElementById('quizModalHeaderTitle');
+
+            if (hfEditQuizID) Object(hfEditQuizID).value = '';
+            if (txtFormQuizTitle) Object(txtFormQuizTitle).value = '';
+            if (txtFormOpenDate) Object(txtFormOpenDate).value = '';
+            if (txtFormCloseDate) Object(txtFormCloseDate).value = '';
+            if (txtFormTimeLimit) Object(txtFormTimeLimit).value = '';
+            if (headerTitle) headerTitle.innerText = 'Create Google Form-style Quiz';
 
             const container = document.getElementById('questionsContainer');
             if (container) container.innerHTML = '';
             questionCounter = 0;
-            addQuestionCard();
+            addQuestionCard(null);
         }
 
         function populateEditQuizModal() {
-            document.getElementById('quizModalHeaderTitle').innerText = 'Edit Quiz & Questions';
+            var headerTitle = document.getElementById('quizModalHeaderTitle');
+            if (headerTitle) headerTitle.innerText = 'Edit Quiz & Questions';
+
             const container = document.getElementById('questionsContainer');
             if (!container) return;
             container.innerHTML = '';
             questionCounter = 0;
 
-            const jsonVal = document.getElementById('hfQuizJsonData').value;
+            var hfQuizJson = document.getElementById('hfQuizJsonData');
+            const jsonVal = hfQuizJson ? Object(hfQuizJson).value : '';
+
             if (jsonVal) {
                 try {
                     const questions = JSON.parse(jsonVal);
-                    questions.forEach(q => {
+                    questions.forEach(function (q = null) {
                         addQuestionCard(q);
                     });
                 } catch (e) {
-                    addQuestionCard();
+                    addQuestionCard(null);
                 }
             } else {
-                addQuestionCard();
+                addQuestionCard(null);
             }
             openModal('quizFormModal');
         }
 
-        function addQuestionCard(data) {
+        /** @param {any} data */
+        function addQuestionCard(data = null) {
             questionCounter++;
             const container = document.getElementById('questionsContainer');
             if (!container) return;
@@ -1037,12 +1115,12 @@
             card.className = 'feed-card question-builder-card';
             card.id = 'qCard_' + questionCounter;
 
-            const qText = data ? data.QuestionText : '';
-            const optA = data ? data.OptionA : '';
-            const optB = data ? data.OptionB : '';
-            const optC = data ? data.OptionC : '';
-            const optD = data ? data.OptionD : '';
-            const correct = data ? data.CorrectAnswer : 'A';
+            const qText = data && Object(data).QuestionText ? Object(data).QuestionText : '';
+            const optA = data && Object(data).OptionA ? Object(data).OptionA : '';
+            const optB = data && Object(data).OptionB ? Object(data).OptionB : '';
+            const optC = data && Object(data).OptionC ? Object(data).OptionC : '';
+            const optD = data && Object(data).OptionD ? Object(data).OptionD : '';
+            const correct = data && Object(data).CorrectAnswer ? Object(data).CorrectAnswer : 'A';
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -1071,22 +1149,33 @@
             container.appendChild(card);
         }
 
-        function removeQuestionCard(id) {
+        /** @param {number} id */
+        function removeQuestionCard(id = 0) {
             const card = document.getElementById('qCard_' + id);
             if (card) card.remove();
         }
 
         function prepareQuizJson() {
             const cards = document.querySelectorAll('.question-builder-card');
-            const questions = [];
 
-            cards.forEach(card => {
-                const text = card.querySelector('.q-text').value.trim();
-                const optA = card.querySelector('.opt-a').value.trim();
-                const optB = card.querySelector('.opt-b').value.trim();
-                const optC = card.querySelector('.opt-c').value.trim();
-                const optD = card.querySelector('.opt-d').value.trim();
-                const correct = card.querySelector('.correct-opt').value;
+            // Seed and clear to explicitly define object structure
+            var questions = [Object({ QuestionText: '', OptionA: '', OptionB: '', OptionC: '', OptionD: '', CorrectAnswer: '' })];
+            questions.pop();
+
+            cards.forEach(function (card) {
+                const qInput = card.querySelector('.q-text');
+                const optAInput = card.querySelector('.opt-a');
+                const optBInput = card.querySelector('.opt-b');
+                const optCInput = card.querySelector('.opt-c');
+                const optDInput = card.querySelector('.opt-d');
+                const correctSelect = card.querySelector('.correct-opt');
+
+                const text = qInput ? Object(qInput).value.trim() : '';
+                const optA = optAInput ? Object(optAInput).value.trim() : '';
+                const optB = optBInput ? Object(optBInput).value.trim() : '';
+                const optC = optCInput ? Object(optCInput).value.trim() : '';
+                const optD = optDInput ? Object(optDInput).value.trim() : '';
+                const correct = correctSelect ? Object(correctSelect).value : 'A';
 
                 if (text && optA) {
                     questions.push({
@@ -1105,14 +1194,17 @@
                 return false;
             }
 
-            document.getElementById('hfQuizJsonData').value = JSON.stringify(questions);
+            var hfQuizJson = document.getElementById('hfQuizJsonData');
+            if (hfQuizJson) {
+                Object(hfQuizJson).value = JSON.stringify(questions);
+            }
             return true;
         }
 
         document.addEventListener('DOMContentLoaded', function () {
             const container = document.getElementById('questionsContainer');
             if (container && container.children.length === 0) {
-                addQuestionCard();
+                addQuestionCard(null);
             }
         });
     </script>

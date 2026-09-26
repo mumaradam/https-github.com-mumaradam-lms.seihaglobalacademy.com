@@ -663,7 +663,7 @@ namespace lms.seihaglobalacademy.com
             lblQuizScore.Text = correctCount + " / " + totalQuestions;
             lblQuizPercentage.Text = Math.Round(pct, 1) + "%";
 
-            int studentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : 1;
+            int studentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : (Session["UserID"] != null ? Convert.ToInt32(Session["UserID"]) : 1);
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string saveQuizSubSql = @"
@@ -747,7 +747,7 @@ namespace lms.seihaglobalacademy.com
 
         private void LoadModuleDetails(int moduleId)
         {
-            int currentStudentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : 1;
+            int currentStudentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : (Session["UserID"] != null ? Convert.ToInt32(Session["UserID"]) : 1);
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
@@ -848,7 +848,7 @@ namespace lms.seihaglobalacademy.com
 
             if (e.CommandName == "MarkComplete")
             {
-                int studentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : 1;
+                int studentId = Session["LMS_StudentID"] != null ? Convert.ToInt32(Session["LMS_StudentID"]) : (Session["UserID"] != null ? Convert.ToInt32(Session["UserID"]) : 1);
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -1162,11 +1162,109 @@ namespace lms.seihaglobalacademy.com
 
         protected void rptAssignments_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
+            int assignmentId = Convert.ToInt32(e.CommandArgument);
+
             if (e.CommandName == "ViewAssignment")
             {
-                int assignmentId = Convert.ToInt32(e.CommandArgument);
                 OpenAssignmentDetailView(assignmentId);
             }
+            else if (e.CommandName == "EditAssignment")
+            {
+                if (IsStudentView()) return;
+                PopulateEditAssignmentModal(assignmentId);
+            }
+            else if (e.CommandName == "DeleteAssignment")
+            {
+                if (IsStudentView()) return;
+                DeleteAssignmentRecord(assignmentId);
+            }
+        }
+
+        private void PopulateEditAssignmentModal(int assignmentId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = "SELECT AssignmentID, AssignmentName, OpenDate, CloseDate, MaxPoints, Instructions FROM dbo.Assignments WHERE AssignmentID = @ID";
+                SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@ID", assignmentId);
+                conn.Open();
+                SqlDataReader dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    hfEditAssignmentID.Value = dr["AssignmentID"].ToString();
+                    txtEditAssignmentTitle.Text = dr["AssignmentName"].ToString();
+
+                    if (dr["OpenDate"] != DBNull.Value)
+                        txtEditAssignmentStartDate.Text = Convert.ToDateTime(dr["OpenDate"]).ToString("yyyy-MM-ddTHH:mm");
+
+                    if (dr["CloseDate"] != DBNull.Value)
+                        txtEditAssignmentDueDate.Text = Convert.ToDateTime(dr["CloseDate"]).ToString("yyyy-MM-ddTHH:mm");
+
+                    txtEditMaxPoints.Text = dr["MaxPoints"] != DBNull.Value ? dr["MaxPoints"].ToString() : "100";
+                    txtEditAssignmentInstructions.Text = dr["Instructions"].ToString();
+                }
+            }
+            ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditAssignmentModal", "openModal('editAssignmentModal');", true);
+        }
+
+        protected void btnUpdateAssignment_Click(object sender, EventArgs e)
+        {
+            if (IsStudentView())
+            {
+                ScriptManager.RegisterStartupScript(this, GetType(), "UnauthorizedAlert", "alert('Access Denied.');", true);
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(hfEditAssignmentID.Value) && !string.IsNullOrEmpty(txtEditAssignmentTitle.Text.Trim()))
+            {
+                int assignmentId = Convert.ToInt32(hfEditAssignmentID.Value);
+                string title = txtEditAssignmentTitle.Text.Trim();
+                DateTime openDate = string.IsNullOrEmpty(txtEditAssignmentStartDate.Text) ? DateTime.Now : Convert.ToDateTime(txtEditAssignmentStartDate.Text);
+                DateTime dueDate = string.IsNullOrEmpty(txtEditAssignmentDueDate.Text) ? DateTime.Now.AddDays(7) : Convert.ToDateTime(txtEditAssignmentDueDate.Text);
+                int maxPoints = string.IsNullOrEmpty(txtEditMaxPoints.Text) ? 100 : Convert.ToInt32(txtEditMaxPoints.Text);
+                string instructions = txtEditAssignmentInstructions.Text.Trim();
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string query = @"UPDATE dbo.Assignments 
+                                     SET AssignmentName = @Title, OpenDate = @OpenDate, EndDateTime = @DueDate, CloseDate = @DueDate, MaxPoints = @MaxPoints, Instructions = @Instructions 
+                                     WHERE AssignmentID = @ID";
+                    SqlCommand cmd = new SqlCommand(query, conn);
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@OpenDate", openDate);
+                    cmd.Parameters.AddWithValue("@DueDate", dueDate);
+                    cmd.Parameters.AddWithValue("@MaxPoints", maxPoints);
+                    cmd.Parameters.AddWithValue("@Instructions", instructions);
+                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                ScriptManager.RegisterStartupScript(this, GetType(), "CloseEditAssignment", "closeModal('editAssignmentModal');", true);
+                BindAssignments();
+            }
+        }
+
+        private void DeleteAssignmentRecord(int assignmentId)
+        {
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                conn.Open();
+                using (SqlCommand cmdSub = new SqlCommand("DELETE FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID", conn))
+                {
+                    cmdSub.Parameters.AddWithValue("@ID", assignmentId);
+                    cmdSub.ExecuteNonQuery();
+                }
+
+                using (SqlCommand cmd = new SqlCommand("DELETE FROM dbo.Assignments WHERE AssignmentID = @ID", conn))
+                {
+                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+                    cmd.ExecuteNonQuery();
+                }
+            }
+
+            BindAssignments();
         }
 
         private void OpenAssignmentDetailView(int assignmentId)
@@ -1436,6 +1534,24 @@ namespace lms.seihaglobalacademy.com
 
             if (fileSubmissionUpload.HasFile)
             {
+                string extension = Path.GetExtension(fileSubmissionUpload.FileName).ToLower();
+                string[] allowedExtensions = { ".pdf", ".docx", ".zip", ".mp4", ".webm", ".mov", ".avi", ".mkv" };
+
+                if (Array.IndexOf(allowedExtensions, extension) < 0)
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "FormatError",
+                        "alert('Invalid file format. Allowed formats: PDF, DOCX, ZIP, MP4, WEBM, MOV, AVI, MKV.');", true);
+                    return;
+                }
+
+                // Enforce 100MB max limit check (100 * 1024 * 1024 bytes)
+                if (fileSubmissionUpload.PostedFile.ContentLength > 104857600)
+                {
+                    ScriptManager.RegisterStartupScript(this, GetType(), "SizeError",
+                        "alert('File size exceeds the maximum allowed 100MB limit.');", true);
+                    return;
+                }
+
                 string folder = Server.MapPath("~/Uploads/Submissions/");
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
 
