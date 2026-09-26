@@ -45,6 +45,99 @@
             transform: translateY(-2px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.12);
         }
+
+        /* Modal Backdrop Overlay */
+        .lms-modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 1000;
+        }
+
+        /* LIGHT MODE DEFAULT STYLING */
+        #courseModal .lms-modal-card {
+            background-color: #ffffff;
+            padding: 24px;
+            border-radius: 8px;
+            width: 400px;
+            margin: 80px auto;
+            position: relative;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            color: #111827;
+        }
+        #courseModal h3,
+        #courseModal #modalTitle,
+        #courseModal label {
+            color: #111827 !important;
+        }
+        #courseModal .form-control {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            box-sizing: border-box;
+            background-color: #ffffff !important;
+            color: #111827 !important;
+        }
+        #courseModal .btn-cancel-modal {
+            padding: 8px 16px;
+            border: 1px solid #d1d5db;
+            background: #ffffff !important;
+            color: #374151 !important;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        /* --- DARK MODE OVERRIDES --- */
+
+        /* Modal Container */
+        .dark #courseModal .lms-modal-card,
+        .dark-mode #courseModal .lms-modal-card,
+        [data-theme='dark'] #courseModal .lms-modal-card,
+        body[class*='dark'] #courseModal .lms-modal-card {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: #ffffff !important;
+        }
+
+        /* Titles and Field Labels */
+        .dark #courseModal h3, .dark #courseModal #modalTitle, .dark #courseModal label,
+        .dark-mode #courseModal h3, .dark-mode #courseModal #modalTitle, .dark-mode #courseModal label,
+        [data-theme='dark'] #courseModal h3, [data-theme='dark'] #courseModal #modalTitle, [data-theme='dark'] #courseModal label,
+        body[class*='dark'] #courseModal h3, body[class*='dark'] #courseModal #modalTitle, body[class*='dark'] #courseModal label {
+            color: #ffffff !important;
+        }
+
+        /* Form Inputs */
+        .dark #courseModal .form-control,
+        .dark-mode #courseModal .form-control,
+        [data-theme='dark'] #courseModal .form-control,
+        body[class*='dark'] #courseModal .form-control {
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+            color: #ffffff !important;
+        }
+
+        /* Cancel Button */
+        .dark #courseModal .btn-cancel-modal,
+        .dark-mode #courseModal .btn-cancel-modal,
+        [data-theme='dark'] #courseModal .btn-cancel-modal,
+        body[class*='dark'] #courseModal .btn-cancel-modal {
+            background-color: #334155 !important;
+            color: #ffffff !important;
+            border: 1px solid #475569 !important;
+        }
+
+        /* Native OS/Browser Dark Mode Preference Fallback */
+        @media (prefers-color-scheme: dark) {
+            #courseModal .lms-modal-card { background-color: #1e293b !important; border: 1px solid #334155 !important; }
+            #courseModal h3, #courseModal #modalTitle, #courseModal label { color: #ffffff !important; }
+            #courseModal .form-control { background-color: #0f172a !important; border: 1px solid #334155 !important; color: #ffffff !important; }
+            #courseModal .btn-cancel-modal { background-color: #334155 !important; color: #ffffff !important; border: 1px solid #475569 !important; }
+        }
     </style>
 </asp:Content>
 
@@ -108,39 +201,39 @@
     </div>
 
     <!-- Create / Edit Course Modal -->
-    <div id="courseModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000;">
-        <div style="background: #ffffff; padding: 24px; border-radius: 8px; width: 400px; margin: 80px auto; position: relative;">
+    <div id="courseModal" class="lms-modal-backdrop" style="display: none;">
+        <div class="lms-modal-card">
             <asp:HiddenField ID="hfEditCourseID" runat="server" ClientIDMode="Static" />
             
             <div style="margin-bottom: 16px;">
-                <h3 style="margin: 0;" id="modalTitle">Create New Course</h3>
+                <h3 id="modalTitle">Create New Course</h3>
             </div>
             
             <div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Code</label>
-                    <asp:TextBox ID="txtCourseCode" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                    <label>Course Code</label>
+                    <asp:TextBox ID="txtCourseCode" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Name</label>
-                    <asp:TextBox ID="txtCourseName" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                    <label>Course Name</label>
+                    <asp:TextBox ID="txtCourseName" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Type</label>
-                    <asp:TextBox ID="txtCourseType" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                    <label>Course Type</label>
+                    <asp:TextBox ID="txtCourseType" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
                 </div>
                 <div style="margin-bottom: 12px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Term</label>
-                    <asp:TextBox ID="txtTerm" runat="server" ClientIDMode="Static" Style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box;"></asp:TextBox>
+                    <label>Term</label>
+                    <asp:TextBox ID="txtTerm" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
                 </div>
                 <div style="margin-bottom: 16px;">
-                    <label style="display: block; font-weight: 600; margin-bottom: 4px;">Course Banner Image (Optional)</label>
-                    <asp:FileUpload ID="fileCourseBanner" runat="server" accept="image/*" Style="width: 100%; box-sizing: border-box;" />
+                    <label>Course Banner Image (Optional)</label>
+                    <asp:FileUpload ID="fileCourseBanner" runat="server" accept="image/*" CssClass="form-control" />
                 </div>
             </div>
             
             <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px;">
-                <button type="button" onclick="closeModal('courseModal');" style="padding: 8px 16px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer;">Cancel</button>
+                <button type="button" class="btn-cancel-modal" onclick="closeModal('courseModal');">Cancel</button>
                 <asp:Button ID="btnSaveCourse" runat="server" Text="Save Course" OnClick="btnSaveCourse_Click" Style="padding: 8px 16px; background: #059669; color: white; border: none; border-radius: 4px; cursor: pointer;" />
             </div>
         </div>
@@ -164,5 +257,4 @@
             document.getElementById('modalTitle').innerText = 'Create New Course';
         }
     </script>
-
 </asp:Content>

@@ -717,6 +717,42 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.GridView gvActiveStudents;
 
         /// <summary>
+        /// hfEditModuleID control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.HiddenField hfEditModuleID;
+
+        /// <summary>
+        /// txtEditUnitTitle control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtEditUnitTitle;
+
+        /// <summary>
+        /// txtEditFocusArea control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtEditFocusArea;
+
+        /// <summary>
+        /// btnUpdateModule control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Button btnUpdateModule;
+
+        /// <summary>
         /// ddlAvailableStudents control.
         /// </summary>
         /// <remarks>

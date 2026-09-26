@@ -15,6 +15,17 @@ namespace lms.seihaglobalacademy.com
         private readonly string connStr = ConfigurationManager.ConnectionStrings["SGA_LMSDB"].ConnectionString;
         private const string ActiveQuizIndexKey = "LMS_Demo_ActiveQuizIndex";
 
+        // Helper property to securely get the Course ID from the URL across all methods
+        private int CurrentCourseID
+        {
+            get
+            {
+                if (int.TryParse(Request.QueryString["courseId"], out int id))
+                    return id;
+                return 0; // Fallback or handle redirect if 0
+            }
+        }
+
         protected void Page_Load(object sender, EventArgs e)
         {
             if (!IsPostBack)
@@ -39,14 +50,13 @@ namespace lms.seihaglobalacademy.com
 
         private void InitializeCourseContext()
         {
-            string courseId = Request.QueryString["courseId"];
-            if (!string.IsNullOrEmpty(courseId) && int.TryParse(courseId, out int parsedId))
+            if (CurrentCourseID > 0)
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "SELECT CourseName FROM dbo.Courses WHERE CourseID = @CourseID";
                     SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", parsedId);
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                     conn.Open();
                     object result = cmd.ExecuteScalar();
                     if (result != null && result != DBNull.Value)
@@ -154,8 +164,10 @@ namespace lms.seihaglobalacademy.com
             var list = new List<CourseAnnouncementModel>();
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string sql = "SELECT AnnouncementID, Title, Author, FORMAT(PostDate, 'MMM dd, yyyy') AS PostDateFormatted, Body FROM dbo.Announcements ORDER BY AnnouncementID DESC";
+                string sql = "SELECT AnnouncementID, Title, Author, FORMAT(PostDate, 'MMM dd, yyyy') AS PostDateFormatted, Body FROM dbo.Announcements WHERE CourseID = @CourseID ORDER BY AnnouncementID DESC";
                 SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -200,8 +212,9 @@ namespace lms.seihaglobalacademy.com
                 {
                     using (SqlConnection conn = new SqlConnection(connStr))
                     {
-                        string sql = "INSERT INTO dbo.Announcements (Title, Author, Body) VALUES (@Title, @Author, @Body)";
+                        string sql = "INSERT INTO dbo.Announcements (CourseID, Title, Author, Body) VALUES (@CourseID, @Title, @Author, @Body)";
                         SqlCommand cmd = new SqlCommand(sql, conn);
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                         cmd.Parameters.AddWithValue("@Title", txtAnnouncementTitle.Text.Trim());
                         cmd.Parameters.AddWithValue("@Author", "Teacher / Admin");
                         cmd.Parameters.AddWithValue("@Body", txtAnnouncementBody.Text.Trim());
@@ -301,8 +314,11 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
-                string quizSql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit FROM dbo.Quizzes ORDER BY QuizID DESC";
+
+                string quizSql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit FROM dbo.Quizzes WHERE CourseID = @CourseID ORDER BY QuizID DESC";
                 SqlCommand quizCmd = new SqlCommand(quizSql, conn);
+                quizCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+
                 SqlDataReader dr = quizCmd.ExecuteReader();
 
                 var tempQuizzes = new List<Tuple<int, string, DateTime, DateTime, string>>();
@@ -560,8 +576,9 @@ namespace lms.seihaglobalacademy.com
                     }
                     else
                     {
-                        string insertQuizSql = "INSERT INTO dbo.Quizzes (Title, OpenDate, CloseDate, DueDate, TimeLimit) VALUES (@Title, @OpenDate, @CloseDate, @DueDate, @TimeLimit); SELECT SCOPE_IDENTITY();";
+                        string insertQuizSql = "INSERT INTO dbo.Quizzes (CourseID, Title, OpenDate, CloseDate, DueDate, TimeLimit) VALUES (@CourseID, @Title, @OpenDate, @CloseDate, @DueDate, @TimeLimit); SELECT SCOPE_IDENTITY();";
                         SqlCommand cmd = new SqlCommand(insertQuizSql, conn);
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                         cmd.Parameters.AddWithValue("@Title", title);
                         cmd.Parameters.AddWithValue("@OpenDate", openDt);
                         cmd.Parameters.AddWithValue("@CloseDate", closeDt);
@@ -695,14 +712,12 @@ namespace lms.seihaglobalacademy.com
             phNewModuleBtn.Visible = !IsStudentView();
 
             var list = new List<CourseModuleModel>();
-            string courseIdStr = Request.QueryString["courseId"];
-            int.TryParse(courseIdStr, out int currentCourseId);
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string sql = "SELECT ModuleID, UnitTitle, LessonCount, FocusArea FROM dbo.Modules WHERE CourseID = @CourseID OR @CourseID = 0 ORDER BY ModuleID ASC";
+                string sql = "SELECT ModuleID, UnitTitle, LessonCount, FocusArea FROM dbo.Modules WHERE CourseID = @CourseID ORDER BY ModuleID ASC";
                 SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -721,6 +736,18 @@ namespace lms.seihaglobalacademy.com
             rptModules.DataBind();
         }
 
+        protected void rptModules_ItemDataBound(object sender, RepeaterItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+            {
+                var phTeacherActions = (PlaceHolder)e.Item.FindControl("phTeacherModuleActions");
+                if (phTeacherActions != null)
+                {
+                    phTeacherActions.Visible = !IsStudentView();
+                }
+            }
+        }
+
         public string GetContentTypeIcon(string type)
         {
             switch (type)
@@ -736,12 +763,79 @@ namespace lms.seihaglobalacademy.com
 
         protected void rptModules_ItemCommand(object source, RepeaterCommandEventArgs e)
         {
+            int moduleId = Convert.ToInt32(e.CommandArgument);
+
             if (e.CommandName == "SelectModule")
             {
-                int moduleId = Convert.ToInt32(e.CommandArgument);
                 hfActiveModuleID.Value = moduleId.ToString();
-
                 LoadModuleDetails(moduleId);
+            }
+            else if (e.CommandName == "EditModule")
+            {
+                if (IsStudentView()) return;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "SELECT ModuleID, UnitTitle, FocusArea FROM dbo.Modules WHERE ModuleID = @ModuleID";
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    conn.Open();
+                    SqlDataReader dr = cmd.ExecuteReader();
+                    if (dr.Read())
+                    {
+                        hfEditModuleID.Value = dr["ModuleID"].ToString();
+                        txtEditUnitTitle.Text = dr["UnitTitle"].ToString();
+                        txtEditFocusArea.Text = dr["FocusArea"].ToString();
+                    }
+                }
+                ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditModuleModal", "openModal('editModuleModal');", true);
+            }
+            else if (e.CommandName == "DeleteModule")
+            {
+                if (IsStudentView()) return;
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    conn.Open();
+                    // First delete all lessons in the module
+                    string delLessonsSql = "DELETE FROM dbo.Lessons WHERE ModuleID = @ModuleID";
+                    SqlCommand delLessonsCmd = new SqlCommand(delLessonsSql, conn);
+                    delLessonsCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    delLessonsCmd.ExecuteNonQuery();
+
+                    // Then delete the module record
+                    string delModSql = "DELETE FROM dbo.Modules WHERE ModuleID = @ModuleID";
+                    SqlCommand delModCmd = new SqlCommand(delModSql, conn);
+                    delModCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    delModCmd.ExecuteNonQuery();
+                }
+
+                BindModules();
+            }
+        }
+
+        protected void btnUpdateModule_Click(object sender, EventArgs e)
+        {
+            if (IsStudentView()) return;
+
+            if (!string.IsNullOrEmpty(hfEditModuleID.Value) && !string.IsNullOrEmpty(txtEditUnitTitle.Text.Trim()))
+            {
+                int moduleId = Convert.ToInt32(hfEditModuleID.Value);
+
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string sql = "UPDATE dbo.Modules SET UnitTitle = @UnitTitle, FocusArea = @FocusArea WHERE ModuleID = @ModuleID";
+                    SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@UnitTitle", txtEditUnitTitle.Text.Trim());
+                    cmd.Parameters.AddWithValue("@FocusArea", txtEditFocusArea.Text.Trim());
+                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
+
+                BindModules();
+                ScriptManager.RegisterStartupScript(this, GetType(), "CloseEditModuleModal", "closeModal('editModuleModal');", true);
             }
         }
 
@@ -999,14 +1093,11 @@ namespace lms.seihaglobalacademy.com
 
             if (!string.IsNullOrEmpty(txtUnitTitle.Text.Trim()))
             {
-                string courseIdStr = Request.QueryString["courseId"];
-                int.TryParse(courseIdStr, out int currentCourseId);
-
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "INSERT INTO dbo.Modules (CourseID, UnitTitle, LessonCount, FocusArea) VALUES (@CourseID, @UnitTitle, @LessonCount, @FocusArea)";
                     SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                     cmd.Parameters.AddWithValue("@UnitTitle", txtUnitTitle.Text.Trim());
                     cmd.Parameters.AddWithValue("@LessonCount", string.IsNullOrEmpty(txtLessonCount.Text) ? 0 : Convert.ToInt32(txtLessonCount.Text.Trim()));
                     cmd.Parameters.AddWithValue("@FocusArea", string.IsNullOrEmpty(txtFocusArea.Text) ? "General Practice" : txtFocusArea.Text.Trim());
@@ -1104,9 +1195,11 @@ namespace lms.seihaglobalacademy.com
                                       FORMAT(CloseDate, 'MMM dd, yyyy hh:mm tt') AS CloseDateFormatted,
                                       OpenDate, CloseDate, ISNULL(MaxPoints, 100) AS MaxPoints 
                                FROM dbo.Assignments 
+                               WHERE CourseID = @CourseID
                                ORDER BY AssignmentID DESC";
 
                 SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -1602,11 +1695,12 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = @"INSERT INTO dbo.Assignments 
-                                   (AssignmentName, CourseName, OpenDate, EndDateTime, CloseDate, MaxPoints, Instructions, ManualGrading, Completed)
+                                   (CourseID, AssignmentName, CourseName, OpenDate, EndDateTime, CloseDate, MaxPoints, Instructions, ManualGrading, Completed)
                                    VALUES 
-                                   (@AssignmentName, @CourseName, @OpenDate, @CloseDate, @CloseDate, @MaxPoints, @Instructions, @ManualGrading, @Completed)";
+                                   (@CourseID, @AssignmentName, @CourseName, @OpenDate, @CloseDate, @CloseDate, @MaxPoints, @Instructions, @ManualGrading, @Completed)";
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                     cmd.Parameters.AddWithValue("@AssignmentName", txtAssignmentTitle.Text.Trim());
                     cmd.Parameters.AddWithValue("@CourseName", lblCourseTitle.Text);
                     cmd.Parameters.AddWithValue("@OpenDate", openDt);
@@ -1644,18 +1738,23 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = @"
-                    SELECT 
-                        s.StudentID,
-                        s.StudentName,
-                        ISNULL(AVG(CAST(sub.Grade AS FLOAT) / NULLIF(a.MaxPoints, 0) * 100), 0) AS AssignmentAvg,
-                        ISNULL(AVG(CAST(qz.Score AS FLOAT) / NULLIF(qz.TotalQuestions, 0) * 100), 0) AS QuizAvg
-                    FROM dbo.Students s
-                    LEFT JOIN dbo.AssignmentSubmissions sub ON s.StudentName = sub.StudentName
-                    LEFT JOIN dbo.Assignments a ON sub.AssignmentID = a.AssignmentID
-                    LEFT JOIN dbo.QuizSubmissions qz ON s.StudentID = qz.StudentID
-                    GROUP BY s.StudentID, s.StudentName";
+            SELECT 
+                s.StudentID,
+                s.StudentName,
+                ISNULL((SELECT AVG(CAST(sub.Grade AS FLOAT) / NULLIF(a.MaxPoints, 0) * 100) 
+                        FROM dbo.AssignmentSubmissions sub 
+                        INNER JOIN dbo.Assignments a ON sub.AssignmentID = a.AssignmentID 
+                        WHERE sub.StudentName = s.StudentName AND a.CourseID = @CourseID), 0) AS AssignmentAvg,
+                ISNULL((SELECT AVG(CAST(qs.Score AS FLOAT) / NULLIF(qs.TotalQuestions, 0) * 100) 
+                        FROM dbo.QuizSubmissions qs 
+                        INNER JOIN dbo.Quizzes qz ON qs.QuizID = qz.QuizID 
+                        WHERE qs.StudentID = s.StudentID AND qz.CourseID = @CourseID), 0) AS QuizAvg
+            FROM dbo.Students s
+            INNER JOIN dbo.CourseEnrollments e ON s.StudentID = e.StudentID
+            WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Active'";
 
                 SqlCommand cmd = new SqlCommand(sql, conn);
+                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
                 while (dr.Read())
@@ -1708,9 +1807,6 @@ namespace lms.seihaglobalacademy.com
         // ==========================================
         private void BindUserManagement()
         {
-            int currentCourseId = 0;
-            int.TryParse(Request.QueryString["courseId"], out currentCourseId);
-
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
@@ -1720,9 +1816,9 @@ namespace lms.seihaglobalacademy.com
                     SELECT e.EnrollmentID, s.StudentName, e.RequestedDate 
                     FROM dbo.CourseEnrollments e
                     INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
-                    WHERE (e.CourseID = @CourseID OR @CourseID = 0) AND e.EnrollmentStatus = 'Pending'";
+                    WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Pending'";
                 SqlCommand pendingCmd = new SqlCommand(pendingSql, conn);
-                pendingCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                pendingCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 SqlDataAdapter da1 = new SqlDataAdapter(pendingCmd);
                 DataTable dtPending = new DataTable();
                 da1.Fill(dtPending);
@@ -1734,9 +1830,9 @@ namespace lms.seihaglobalacademy.com
                     SELECT s.StudentName, e.ApprovedDate 
                     FROM dbo.CourseEnrollments e
                     INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
-                    WHERE (e.CourseID = @CourseID OR @CourseID = 0) AND e.EnrollmentStatus = 'Active'";
+                    WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Active'";
                 SqlCommand activeCmd = new SqlCommand(activeSql, conn);
-                activeCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                activeCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 SqlDataAdapter da2 = new SqlDataAdapter(activeCmd);
                 DataTable dtActive = new DataTable();
                 da2.Fill(dtActive);
@@ -1748,10 +1844,10 @@ namespace lms.seihaglobalacademy.com
                     SELECT StudentID, StudentName FROM dbo.Students 
                     WHERE StudentID NOT IN (
                         SELECT StudentID FROM dbo.CourseEnrollments 
-                        WHERE (CourseID = @CourseID OR @CourseID = 0) AND EnrollmentStatus = 'Active'
+                        WHERE CourseID = @CourseID AND EnrollmentStatus = 'Active'
                     )";
                 SqlCommand ddlCmd = new SqlCommand(ddlSql, conn);
-                ddlCmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                ddlCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                 SqlDataReader dr = ddlCmd.ExecuteReader();
                 ddlAvailableStudents.DataSource = dr;
                 ddlAvailableStudents.DataTextField = "StudentName";
@@ -1785,9 +1881,6 @@ namespace lms.seihaglobalacademy.com
         {
             if (IsStudentView()) return;
 
-            int currentCourseId = 0;
-            int.TryParse(Request.QueryString["courseId"], out currentCourseId);
-
             if (ddlAvailableStudents.SelectedValue != null && int.TryParse(ddlAvailableStudents.SelectedValue, out int studentId))
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
@@ -1799,7 +1892,7 @@ namespace lms.seihaglobalacademy.com
                             INSERT INTO dbo.CourseEnrollments (CourseID, StudentID, EnrollmentStatus, ApprovedDate) VALUES (@CourseID, @StudentID, 'Active', GETDATE());";
 
                     SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", currentCourseId);
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
                     cmd.Parameters.AddWithValue("@StudentID", studentId);
                     conn.Open();
                     cmd.ExecuteNonQuery();

@@ -1,6 +1,8 @@
 ﻿<%@ Page Title="Course Details" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CourseDetails.aspx.cs" Inherits="lms.seihaglobalacademy.com.CourseDetails" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
+    <!-- Google Material Icons CDN -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
     <style type="text/css">
         /* Mode Indicator Banner */
         .mode-banner-student {
@@ -131,6 +133,69 @@
 
         .btn-table-delete:hover {
             background-color: #dc2626;
+        }
+
+        /* Floating Actions for Module Cards */
+        .module-card-actions {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            display: flex;
+            gap: 6px;
+            background: rgba(0, 0, 0, 0.4);
+            padding: 4px 8px;
+            border-radius: 6px;
+            z-index: 10;
+        }
+
+        .module-card-actions a {
+            color: #ffffff !important;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .modules-grid-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .module-card-item {
+            width: 250px;
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            overflow: hidden;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        /* DARK MODE OVERRIDES FOR ALL MODALS */
+        .dark .lms-modal-card,
+        .dark-mode .lms-modal-card,
+        [data-theme='dark'] .lms-modal-card,
+        body[class*='dark'] .lms-modal-card {
+            background-color: #1e293b !important;
+            border: 1px solid #334155 !important;
+            color: #ffffff !important;
+        }
+
+        .dark .lms-modal-card h3, .dark .lms-modal-card label,
+        .dark-mode .lms-modal-card h3, .dark-mode .lms-modal-card label,
+        [data-theme='dark'] .lms-modal-card h3, [data-theme='dark'] .lms-modal-card label,
+        body[class*='dark'] .lms-modal-card h3, body[class*='dark'] .lms-modal-card label {
+            color: #ffffff !important;
+        }
+
+        .dark .lms-modal-card .form-control,
+        .dark-mode .lms-modal-card .form-control,
+        [data-theme='dark'] .lms-modal-card .form-control,
+        body[class*='dark'] .lms-modal-card .form-control {
+            background-color: #0f172a !important;
+            border: 1px solid #334155 !important;
+            color: #ffffff !important;
         }
     </style>
 </asp:Content>
@@ -376,18 +441,35 @@
 
                 <!-- VIEW 1: MODULE CARDS GRID -->
                 <asp:Panel ID="pnlModulesGrid" runat="server" Visible="true">
-                    <div class="modules-grid">
-                        <asp:Repeater ID="rptModules" runat="server" OnItemCommand="rptModules_ItemCommand">
+                    <div class="modules-grid-container">
+                        <asp:Repeater ID="rptModules" runat="server" OnItemCommand="rptModules_ItemCommand" OnItemDataBound="rptModules_ItemDataBound">
                             <ItemTemplate>
-                                <asp:LinkButton ID="btnSelectModule" runat="server" CommandName="SelectModule" CommandArgument='<%# Eval("ModuleID") %>' Style="text-decoration: none; color: inherit; display: block;">
-                                    <div class="unit-card" style="cursor: pointer; transition: transform 0.2s;">
-                                        <div class="unit-card-banner unit-1"><%# Eval("UnitTitle") %></div>
-                                        <div class="unit-card-body">
-                                            <div><%# Eval("LessonCount") %> Lessons • <%# Eval("FocusArea") %></div>
-                                            <div style="font-size: 12px; color: #2563eb; margin-top: 8px; font-weight: 600;">Click to view content →</div>
+                                <div class="module-card-item">
+                                    
+                                    <!-- Floating Edit / Delete Actions (Teacher Only) -->
+                                    <asp:PlaceHolder ID="phTeacherModuleActions" runat="server">
+                                        <div class="module-card-actions teacher-only-control">
+                                            <asp:LinkButton ID="btnEditModule" runat="server" CommandName="EditModule" CommandArgument='<%# Eval("ModuleID") %>' ToolTip="Edit Module">
+                                                <i class="material-icons-outlined" style="font-size: 18px;">edit</i>
+                                            </asp:LinkButton>
+                                            <asp:LinkButton ID="btnDeleteModule" runat="server" CommandName="DeleteModule" CommandArgument='<%# Eval("ModuleID") %>' OnClientClick="return confirm('Deleting this module will also remove all its content items. Continue?');" ToolTip="Delete Module">
+                                                <i class="material-icons-outlined" style="font-size: 18px;">delete</i>
+                                            </asp:LinkButton>
                                         </div>
-                                    </div>
-                                </asp:LinkButton>
+                                    </asp:PlaceHolder>
+
+                                    <!-- Main Module Card Content -->
+                                    <asp:LinkButton ID="btnSelectModule" runat="server" CommandName="SelectModule" CommandArgument='<%# Eval("ModuleID") %>' Style="text-decoration: none; color: inherit; display: block;">
+                                        <div style="height: 100px; background-color: #2563eb; padding: 16px; box-sizing: border-box; display: flex; align-items: flex-end;">
+                                            <h3 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700;"><%# Eval("UnitTitle") %></h3>
+                                        </div>
+                                        <div style="padding: 14px 16px;">
+                                            <div style="font-size: 13px; color: #6b7280;"><%# Eval("LessonCount") %> Lessons • <%# Eval("FocusArea") %></div>
+                                            <div style="font-size: 12px; color: #2563eb; margin-top: 10px; font-weight: 600;">Click to view content →</div>
+                                        </div>
+                                    </asp:LinkButton>
+
+                                </div>
                             </ItemTemplate>
                         </asp:Repeater>
                     </div>
@@ -694,6 +776,31 @@
                 </asp:GridView>
             </asp:Panel>
 
+        </div>
+    </div>
+
+    <!-- EDIT MODULE MODAL (TEACHER SIDE) -->
+    <div id="editModuleModal" class="lms-modal-overlay">
+        <div class="lms-modal-card">
+            <div class="lms-modal-header">
+                <h3>Edit Module / Unit</h3>
+                <button type="button" class="modal-close-btn" onclick="closeModal('editModuleModal');">&times;</button>
+            </div>
+            <div class="lms-modal-body">
+                <asp:HiddenField ID="hfEditModuleID" runat="server" ClientIDMode="Static" />
+                <div class="form-group">
+                    <label>Unit Title <span class="required-star">*</span></label>
+                    <asp:TextBox ID="txtEditUnitTitle" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
+                </div>
+                <div class="form-group">
+                    <label>Focus Area</label>
+                    <asp:TextBox ID="txtEditFocusArea" runat="server" ClientIDMode="Static" CssClass="form-control"></asp:TextBox>
+                </div>
+            </div>
+            <div class="lms-modal-footer">
+                <button type="button" class="btn-cancel" onclick="closeModal('editModuleModal');">Cancel</button>
+                <asp:Button ID="btnUpdateModule" runat="server" Text="Update Module" CssClass="btn-submit" OnClick="btnUpdateModule_Click" />
+            </div>
         </div>
     </div>
 
@@ -1158,7 +1265,6 @@
         function prepareQuizJson() {
             const cards = document.querySelectorAll('.question-builder-card');
 
-            // Seed and clear to explicitly define object structure
             var questions = [Object({ QuestionText: '', OptionA: '', OptionB: '', OptionC: '', OptionD: '', CorrectAnswer: '' })];
             questions.pop();
 
