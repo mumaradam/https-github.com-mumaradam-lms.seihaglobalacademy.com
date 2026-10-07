@@ -34,7 +34,8 @@ namespace lms.seihaglobalacademy.com
 
             using (SqlConnection conn = new SqlConnection(connStr))
             {
-                string sql = "SELECT CourseID, CourseName, Description FROM dbo.Courses ORDER BY CourseID DESC";
+                // UPDATED: Added CourseImage column to SELECT statement
+                string sql = "SELECT CourseID, CourseName, Description, ISNULL(CourseImage, '') AS CourseImage FROM dbo.Courses ORDER BY CourseID DESC";
                 SqlCommand cmd = new SqlCommand(sql, conn);
                 conn.Open();
                 SqlDataReader dr = cmd.ExecuteReader();
@@ -44,7 +45,8 @@ namespace lms.seihaglobalacademy.com
                     {
                         CourseID = Convert.ToInt32(dr["CourseID"]),
                         CourseName = dr["CourseName"].ToString(),
-                        Description = dr["Description"].ToString()
+                        Description = dr["Description"].ToString(),
+                        CourseImage = dr["CourseImage"].ToString() // Fetches the image path
                     });
                 }
             }
@@ -172,6 +174,7 @@ namespace lms.seihaglobalacademy.com
         public int CourseID { get; set; }
         public string CourseName { get; set; }
         public string Description { get; set; }
+        public string CourseImage { get; set; } // UPDATED: Added property for course image
     }
 
     // Local model specific to Dashboard to avoid global namespace conflicts

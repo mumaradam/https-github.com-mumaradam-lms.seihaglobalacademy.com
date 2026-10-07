@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -6,35 +6,36 @@ using System.Web;
 
 namespace lms.seihaglobalacademy.com
 {
-    [Serializable]
-    public class CourseAnnouncementModel
+    public class GradebookEntryModel
     {
-        public int AnnouncementID { get; set; }
-        public string Title { get; set; }
-        public string Author { get; set; }
-        public string PostDate { get; set; }
-        public string Body { get; set; }
+        public int StudentID { get; set; }
+        public string StudentName { get; set; }
+        public double QuizAverage { get; set; }
+        public double AssignmentAverage { get; set; }
+        public double OverallGrade { get; set; }
     }
 
-    [Serializable]
-    public class CourseModuleModel
+    public class QuestionModel
     {
-        public int ModuleID { get; set; }
-        public string UnitTitle { get; set; }
-        public int LessonCount { get; set; }
-        public string FocusArea { get; set; }
+        public string QuestionText { get; set; }
+        public string OptionA { get; set; }
+        public string OptionB { get; set; }
+        public string OptionC { get; set; }
+        public string OptionD { get; set; }
+        public string CorrectAnswer { get; set; }
+        public string ImagePath { get; set; }
+        public string AudioPath { get; set; }
+        public string Instructions { get; set; } // <--- Added
     }
 
-    [Serializable]
-    public class LessonModel
+    public class QuestionResultModel
     {
-        public int LessonID { get; set; }
-        public string LessonTitle { get; set; }
-        public string ContentType { get; set; }
-        public string ContentDetails { get; set; }
+        public string QuestionText { get; set; }
+        public string SelectedAnswer { get; set; }
+        public string CorrectAnswer { get; set; }
+        public bool IsCorrect { get; set; }
     }
 
-    [Serializable]
     public class GoogleFormQuizModel
     {
         public int QuizID { get; set; }
@@ -44,36 +45,27 @@ namespace lms.seihaglobalacademy.com
         public DateTime RawOpenDate { get; set; }
         public DateTime RawCloseDate { get; set; }
         public string TimeLimit { get; set; }
-        public List<QuestionModel> Questions { get; set; } = new List<QuestionModel>();
+        public string Instructions { get; set; } // <--- Added
+        public List<QuestionModel> Questions { get; set; }
     }
 
-    [Serializable]
-    public class QuestionModel
+    public class CourseAnnouncementModel
     {
-        public string QuestionText { get; set; }
-        public string OptionA { get; set; } = "Option A";
-        public string OptionB { get; set; } = "Option B";
-        public string OptionC { get; set; } = "Option C";
-        public string OptionD { get; set; } = "Option D";
-        public string CorrectAnswer { get; set; } = "A";
+        public int AnnouncementID { get; set; }
+        public string Title { get; set; }
+        public string Author { get; set; }
+        public string PostDate { get; set; }
+        public string Body { get; set; }
     }
 
-    [Serializable]
-    public class QuestionResultModel
+    public class CourseModuleModel
     {
-        public string QuestionText { get; set; }
-        public string SelectedAnswer { get; set; }
-        public string CorrectAnswer { get; set; }
-        public bool IsCorrect { get; set; }
+        public int ModuleID { get; set; }
+        public string UnitTitle { get; set; }
+        public int LessonCount { get; set; }
+        public string FocusArea { get; set; }
     }
 
-    [Serializable]
-    public class CourseModel
-    {
-        public string CourseName { get; set; }
-    }
-
-    [Serializable]
     public class AssignmentModel
     {
         public int AssignmentID { get; set; }
@@ -83,10 +75,7 @@ namespace lms.seihaglobalacademy.com
         public string EndDateTime { get; set; }
         public DateTime RawOpenDate { get; set; }
         public DateTime RawCloseDate { get; set; }
-        public int MaxPoints { get; set; } = 100;
+        public int MaxPoints { get; set; }
         public string Instructions { get; set; }
-        public string ManualGrading { get; set; }
-        public string Completed { get; set; }
-        public string AttemptsAllowed { get; set; }
     }
 }

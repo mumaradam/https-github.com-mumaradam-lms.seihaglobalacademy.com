@@ -1,7 +1,5 @@
 ﻿<%@ Page Title="Dashboard" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="Dashboard.aspx.cs" Inherits="lms.seihaglobalacademy.com.Dashboard" %>
-
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server"></asp:Content>
-
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     
     <!-- Top Information Banner Block -->
@@ -54,7 +52,6 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <!-- FIXED: ID changed to rptAssignments to match code-behind -->
                     <asp:Repeater ID="rptAssignments" runat="server" OnItemCommand="rptAssignments_ItemCommand">
                         <ItemTemplate>
                             <tr>
@@ -64,7 +61,6 @@
                                 <td><%# Eval("ManualGrading") %></td>
                                 <td><%# Eval("Completed") %></td>
                                 <td>
-                                    <!-- Redirects directly with courseId and assignmentId parameters -->
                                     <asp:LinkButton ID="btnViewAssignment" runat="server" 
                                         CommandName="ViewAssignment" 
                                         CommandArgument='<%# Eval("CourseID") + "|" + Eval("AssignmentID") %>' 
@@ -91,10 +87,12 @@
         <div class="dashboard-grid">
             <asp:Repeater ID="rptDashboardCourses" runat="server">
                 <ItemTemplate>
-                    <!-- FIXED: Uses actual CourseID from database instead of ItemIndex -->
                     <a href='CourseDetails.aspx?courseId=<%# Eval("CourseID") %>' class="course-card-link" style="text-decoration: none; color: inherit;">
                         <div class="course-card">
-                            <div class="card-banner">
+                            <!-- UPDATED: Dynamic Background Image with Fallback -->
+                            <div class="card-banner" style='<%# !string.IsNullOrEmpty(Eval("CourseImage") as string) 
+                                ? "background-image: url(" + ResolveUrl(Eval("CourseImage").ToString()) + "); background-size: cover; background-position: center;" 
+                                : "" %>'>
                                 <i class="material-icons-outlined card-menu-trigger">more_vert</i>
                             </div>
                             <div class="card-body">

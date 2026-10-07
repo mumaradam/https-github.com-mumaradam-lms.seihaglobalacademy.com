@@ -1,9 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
+using System.Web;
 using System.Web.Script.Serialization;
 using System.Web.UI;
 using System.Web.UI.WebControls;
@@ -15,19 +17,20 @@ namespace lms.seihaglobalacademy.com
         private readonly string connStr = ConfigurationManager.ConnectionStrings["SGA_LMSDB"].ConnectionString;
         private const string ActiveQuizIndexKey = "LMS_Demo_ActiveQuizIndex";
 
-        // Helper property to securely get the Course ID from the URL across all methods
         private int CurrentCourseID
         {
             get
             {
                 if (int.TryParse(Request.QueryString["courseId"], out int id))
                     return id;
-                return 0; // Fallback or handle redirect if 0
+                return 0;
             }
         }
 
         protected void Page_Load(object sender, EventArgs e)
         {
+            UpdateTeacherBannerVisibility();
+
             if (!IsPostBack)
             {
                 InitializeCourseContext();
@@ -55,14 +58,16 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "SELECT CourseName FROM dbo.Courses WHERE CourseID = @CourseID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                    conn.Open();
-                    object result = cmd.ExecuteScalar();
-                    if (result != null && result != DBNull.Value)
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        lblCourseTitle.Text = result.ToString();
-                        return;
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                        conn.Open();
+                        object result = cmd.ExecuteScalar();
+                        if (result != null && result != DBNull.Value)
+                        {
+                            lblCourseTitle.Text = result.ToString();
+                            return;
+                        }
                     }
                 }
             }
@@ -72,17 +77,47 @@ namespace lms.seihaglobalacademy.com
 
         private void BindAll()
         {
+            UpdateTeacherBannerVisibility();
+
             BindAnnouncements();
             BindQuizzes();
             BindAssignments();
             BindModules();
         }
 
-        // ==========================================
-        // TAB NAVIGATION & DEEP LINKING
-        // ==========================================
+        private void UpdateTeacherBannerVisibility()
+        {
+            bool showTeacherBanner = !IsStudentView();
+
+            if (phTeacherBanner != null)
+            {
+                phTeacherBanner.Visible = showTeacherBanner;
+            }
+            else
+            {
+                Control found = FindControlRecursive(this, "phTeacherBanner");
+                if (found != null)
+                {
+                    found.Visible = showTeacherBanner;
+                }
+            }
+        }
+
+        private Control FindControlRecursive(Control root, string id)
+        {
+            if (root.ID == id) return root;
+            foreach (Control c in root.Controls)
+            {
+                Control t = FindControlRecursive(c, id);
+                if (t != null) return t;
+            }
+            return null;
+        }
+
         private void SwitchTab(string target, string assignmentIdStr = null)
         {
+            UpdateTeacherBannerVisibility();
+
             liAnnouncements.Attributes["class"] = "";
             liQuizzes.Attributes["class"] = "";
             liModules.Attributes["class"] = "";
@@ -165,21 +200,25 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "SELECT AnnouncementID, Title, Author, FORMAT(PostDate, 'MMM dd, yyyy') AS PostDateFormatted, Body FROM dbo.Announcements WHERE CourseID = @CourseID ORDER BY AnnouncementID DESC";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    list.Add(new CourseAnnouncementModel
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        AnnouncementID = Convert.ToInt32(dr["AnnouncementID"]),
-                        Title = dr["Title"].ToString(),
-                        Author = dr["Author"].ToString(),
-                        PostDate = dr["PostDateFormatted"].ToString(),
-                        Body = dr["Body"].ToString()
-                    });
+                        while (dr.Read())
+                        {
+                            list.Add(new CourseAnnouncementModel
+                            {
+                                AnnouncementID = Convert.ToInt32(dr["AnnouncementID"]),
+                                Title = dr["Title"].ToString(),
+                                Author = dr["Author"].ToString(),
+                                PostDate = dr["PostDateFormatted"].ToString(),
+                                Body = dr["Body"].ToString()
+                            });
+                        }
+                    }
                 }
             }
             rptAnnouncements.DataSource = list;
@@ -206,33 +245,39 @@ namespace lms.seihaglobalacademy.com
                 return;
             }
 
-            if (!string.IsNullOrEmpty(txtAnnouncementTitle.Text) && !string.IsNullOrEmpty(txtAnnouncementBody.Text))
+            string title = txtAnnouncementTitle.Text.Trim();
+            string rawBody = hfAnnouncementBody.Value;
+            string bodyHtml = HttpUtility.UrlDecode(rawBody);
+
+            if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(bodyHtml))
             {
                 try
                 {
                     using (SqlConnection conn = new SqlConnection(connStr))
                     {
                         string sql = "INSERT INTO dbo.Announcements (CourseID, Title, Author, Body) VALUES (@CourseID, @Title, @Author, @Body)";
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                        cmd.Parameters.AddWithValue("@Title", txtAnnouncementTitle.Text.Trim());
-                        cmd.Parameters.AddWithValue("@Author", "Teacher / Admin");
-                        cmd.Parameters.AddWithValue("@Body", txtAnnouncementBody.Text.Trim());
+                        using (SqlCommand cmd = new SqlCommand(sql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                            cmd.Parameters.AddWithValue("@Title", title);
+                            cmd.Parameters.AddWithValue("@Author", "Teacher / Admin");
+                            cmd.Parameters.AddWithValue("@Body", bodyHtml);
 
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
+                            conn.Open();
+                            cmd.ExecuteNonQuery();
+                        }
                     }
 
                     txtAnnouncementTitle.Text = "";
-                    txtAnnouncementBody.Text = "";
+                    hfAnnouncementBody.Value = "";
 
                     BindAnnouncements();
                     ScriptManager.RegisterStartupScript(this, GetType(), "CloseAnnounceModal", "closeModal('announcementModal');", true);
                 }
                 catch (Exception ex)
                 {
-                    string cleanMsg = ex.Message.Replace("'", "\\'");
-                    ScriptManager.RegisterStartupScript(this, GetType(), "SqlErrorAlert", $"alert('Database Error: {cleanMsg}');", true);
+                    System.Diagnostics.Trace.TraceError("Post Announcement Error: " + ex.Message);
+                    ScriptManager.RegisterStartupScript(this, GetType(), "SqlErrorAlert", "alert('An error occurred while saving the announcement.');", true);
                 }
             }
         }
@@ -252,30 +297,40 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "DELETE FROM dbo.Announcements WHERE AnnouncementID = @ID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ID", announcementId);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ID", announcementId);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
                 BindAnnouncements();
             }
             else if (e.CommandName == "EditAnnouncement")
             {
+                string bodyContent = "";
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "SELECT AnnouncementID, Title, Body FROM dbo.Announcements WHERE AnnouncementID = @ID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ID", announcementId);
-                    conn.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    if (dr.Read())
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        hfEditAnnouncementID.Value = dr["AnnouncementID"].ToString();
-                        txtEditAnnouncementTitle.Text = dr["Title"].ToString();
-                        txtEditAnnouncementBody.Text = dr["Body"].ToString();
+                        cmd.Parameters.AddWithValue("@ID", announcementId);
+                        conn.Open();
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                hfEditAnnouncementID.Value = dr["AnnouncementID"].ToString();
+                                txtEditAnnouncementTitle.Text = dr["Title"].ToString();
+                                bodyContent = dr["Body"].ToString();
+                            }
+                        }
                     }
                 }
-                ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditModal", "openModal('editAnnouncementModal');", true);
+
+                string encodedBodyHtml = HttpUtility.UrlDecode(bodyContent);
+                string script = $"loadQuillEditContent('{encodedBodyHtml}'); openModal('editAnnouncementModal');";
+                ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditQuillModal", script, true);
             }
         }
 
@@ -287,17 +342,24 @@ namespace lms.seihaglobalacademy.com
                 return;
             }
 
-            if (!string.IsNullOrEmpty(hfEditAnnouncementID.Value) && !string.IsNullOrEmpty(txtEditAnnouncementTitle.Text))
+            string announcementId = hfEditAnnouncementID.Value;
+            string title = txtEditAnnouncementTitle.Text.Trim();
+            string rawBody = hfEditAnnouncementBody.Value;
+            string bodyHtml = HttpUtility.UrlDecode(rawBody);
+
+            if (!string.IsNullOrEmpty(announcementId) && !string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(bodyHtml))
             {
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "UPDATE dbo.Announcements SET Title = @Title, Body = @Body WHERE AnnouncementID = @ID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@Title", txtEditAnnouncementTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@Body", txtEditAnnouncementBody.Text.Trim());
-                    cmd.Parameters.AddWithValue("@ID", Convert.ToInt32(hfEditAnnouncementID.Value));
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Title", title);
+                        cmd.Parameters.AddWithValue("@Body", bodyHtml);
+                        cmd.Parameters.AddWithValue("@ID", Convert.ToInt32(announcementId));
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 ScriptManager.RegisterStartupScript(this, GetType(), "CloseEditModal", "closeModal('editAnnouncementModal');", true);
@@ -306,70 +368,82 @@ namespace lms.seihaglobalacademy.com
         }
 
         // ==========================================
-        // 2. QUIZZES
+        // 2. QUIZZES & TOEIC ATTACHMENTS
         // ==========================================
         private List<GoogleFormQuizModel> GetQuizzesFromDb()
         {
             var quizzes = new List<GoogleFormQuizModel>();
+            var quizMap = new Dictionary<int, GoogleFormQuizModel>();
+
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
 
-                string quizSql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit FROM dbo.Quizzes WHERE CourseID = @CourseID ORDER BY QuizID DESC";
-                SqlCommand quizCmd = new SqlCommand(quizSql, conn);
-                quizCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-
-                SqlDataReader dr = quizCmd.ExecuteReader();
-
-                var tempQuizzes = new List<Tuple<int, string, DateTime, DateTime, string>>();
-                while (dr.Read())
+                string quizSql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit, ISNULL(Instructions, '') AS Instructions FROM dbo.Quizzes WHERE CourseID = @CourseID ORDER BY QuizID DESC";
+                using (SqlCommand quizCmd = new SqlCommand(quizSql, conn))
                 {
-                    DateTime openDt = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]) : DateTime.Now;
-                    DateTime closeDt = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]) : DateTime.Now.AddDays(7);
+                    quizCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
 
-                    tempQuizzes.Add(new Tuple<int, string, DateTime, DateTime, string>(
-                        Convert.ToInt32(dr["QuizID"]),
-                        dr["Title"].ToString(),
-                        openDt,
-                        closeDt,
-                        dr["TimeLimit"].ToString()
-                    ));
-                }
-                dr.Close();
-
-                foreach (var q in tempQuizzes)
-                {
-                    var quizModel = new GoogleFormQuizModel
+                    using (SqlDataReader dr = quizCmd.ExecuteReader())
                     {
-                        QuizID = q.Item1,
-                        Title = q.Item2,
-                        OpenDate = q.Item3.ToString("MMM dd, yyyy hh:mm tt"),
-                        CloseDate = q.Item4.ToString("MMM dd, yyyy hh:mm tt"),
-                        RawOpenDate = q.Item3,
-                        RawCloseDate = q.Item4,
-                        TimeLimit = q.Item5,
-                        Questions = new List<QuestionModel>()
-                    };
-
-                    string qSql = "SELECT QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer FROM dbo.Questions WHERE QuizID = @QuizID";
-                    SqlCommand qCmd = new SqlCommand(qSql, conn);
-                    qCmd.Parameters.AddWithValue("@QuizID", q.Item1);
-                    SqlDataReader qDr = qCmd.ExecuteReader();
-                    while (qDr.Read())
-                    {
-                        quizModel.Questions.Add(new QuestionModel
+                        while (dr.Read())
                         {
-                            QuestionText = qDr["QuestionText"].ToString(),
-                            OptionA = qDr["OptionA"].ToString(),
-                            OptionB = qDr["OptionB"].ToString(),
-                            OptionC = qDr["OptionC"].ToString(),
-                            OptionD = qDr["OptionD"].ToString(),
-                            CorrectAnswer = qDr["CorrectAnswer"].ToString()
-                        });
-                    }
-                    qDr.Close();
+                            int id = Convert.ToInt32(dr["QuizID"]);
+                            DateTime openDt = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]) : DateTime.Now;
+                            DateTime closeDt = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]) : DateTime.Now.AddDays(7);
 
-                    quizzes.Add(quizModel);
+                            var qModel = new GoogleFormQuizModel
+                            {
+                                QuizID = id,
+                                Title = dr["Title"].ToString(),
+                                OpenDate = openDt.ToString("MMM dd, yyyy hh:mm tt"),
+                                CloseDate = closeDt.ToString("MMM dd, yyyy hh:mm tt"),
+                                RawOpenDate = openDt,
+                                RawCloseDate = closeDt,
+                                TimeLimit = dr["TimeLimit"].ToString(),
+                                Instructions = dr["Instructions"].ToString(),
+                                Questions = new List<QuestionModel>()
+                            };
+
+                            quizzes.Add(qModel);
+                            quizMap[id] = qModel;
+                        }
+                    }
+                }
+
+                if (!quizzes.Any()) return quizzes;
+
+                string qSql = @"SELECT q.QuizID, q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectAnswer, 
+                                ISNULL(q.ImagePath,'') AS ImagePath, ISNULL(q.AudioPath,'') AS AudioPath 
+                                FROM dbo.Questions q
+                                INNER JOIN dbo.Quizzes qz ON q.QuizID = qz.QuizID
+                                WHERE qz.CourseID = @CourseID";
+
+                using (SqlCommand qCmd = new SqlCommand(qSql, conn))
+                {
+                    qCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+
+                    using (SqlDataReader qDr = qCmd.ExecuteReader())
+                    {
+                        while (qDr.Read())
+                        {
+                            int qId = Convert.ToInt32(qDr["QuizID"]);
+                            if (quizMap.ContainsKey(qId))
+                            {
+                                quizMap[qId].Questions.Add(new QuestionModel
+                                {
+                                    QuestionText = qDr["QuestionText"].ToString(),
+                                    OptionA = qDr["OptionA"].ToString(),
+                                    OptionB = qDr["OptionB"].ToString(),
+                                    OptionC = qDr["OptionC"].ToString(),
+                                    OptionD = qDr["OptionD"].ToString(),
+                                    CorrectAnswer = qDr["CorrectAnswer"].ToString(),
+                                    ImagePath = qDr["ImagePath"].ToString(),
+                                    AudioPath = qDr["AudioPath"].ToString()
+                                });
+                            }
+                        }
+                    }
                 }
             }
             return quizzes;
@@ -441,14 +515,18 @@ namespace lms.seihaglobalacademy.com
                 {
                     conn.Open();
                     string delQSql = "DELETE FROM dbo.Questions WHERE QuizID = @QuizID";
-                    SqlCommand delQCmd = new SqlCommand(delQSql, conn);
-                    delQCmd.Parameters.AddWithValue("@QuizID", quizId);
-                    delQCmd.ExecuteNonQuery();
+                    using (SqlCommand delQCmd = new SqlCommand(delQSql, conn))
+                    {
+                        delQCmd.Parameters.AddWithValue("@QuizID", quizId);
+                        delQCmd.ExecuteNonQuery();
+                    }
 
                     string delSql = "DELETE FROM dbo.Quizzes WHERE QuizID = @QuizID";
-                    SqlCommand delCmd = new SqlCommand(delSql, conn);
-                    delCmd.Parameters.AddWithValue("@QuizID", quizId);
-                    delCmd.ExecuteNonQuery();
+                    using (SqlCommand delCmd = new SqlCommand(delSql, conn))
+                    {
+                        delCmd.Parameters.AddWithValue("@QuizID", quizId);
+                        delCmd.ExecuteNonQuery();
+                    }
                 }
 
                 BindQuizzes();
@@ -460,41 +538,53 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
-                    string sql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit FROM dbo.Quizzes WHERE QuizID = @QuizID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@QuizID", quizId);
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    if (dr.Read())
+                    string sql = "SELECT QuizID, Title, OpenDate, CloseDate, TimeLimit, ISNULL(Instructions, '') AS Instructions FROM dbo.Quizzes WHERE QuizID = @QuizID";
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        hfEditQuizID.Value = dr["QuizID"].ToString();
-                        txtFormQuizTitle.Text = dr["Title"].ToString();
-                        txtFormTimeLimit.Text = dr["TimeLimit"].ToString();
+                        cmd.Parameters.AddWithValue("@QuizID", quizId);
 
-                        if (dr["OpenDate"] != DBNull.Value)
-                            txtFormOpenDate.Text = Convert.ToDateTime(dr["OpenDate"]).ToString("yyyy-MM-ddTHH:mm");
-                        if (dr["CloseDate"] != DBNull.Value)
-                            txtFormCloseDate.Text = Convert.ToDateTime(dr["CloseDate"]).ToString("yyyy-MM-ddTHH:mm");
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                hfEditQuizID.Value = dr["QuizID"].ToString();
+                                txtFormQuizTitle.Text = dr["Title"].ToString();
+                                txtFormTimeLimit.Text = dr["TimeLimit"].ToString();
+                                txtFormInstructions.Text = dr["Instructions"].ToString();
+
+                                if (dr["OpenDate"] != DBNull.Value)
+                                    txtFormOpenDate.Text = Convert.ToDateTime(dr["OpenDate"]).ToString("yyyy-MM-ddTHH:mm");
+                                if (dr["CloseDate"] != DBNull.Value)
+                                    txtFormCloseDate.Text = Convert.ToDateTime(dr["CloseDate"]).ToString("yyyy-MM-ddTHH:mm");
+                            }
+                        }
                     }
-                    dr.Close();
 
                     var qList = new List<QuestionModel>();
-                    string qSql = "SELECT QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer FROM dbo.Questions WHERE QuizID = @QuizID";
-                    SqlCommand qCmd = new SqlCommand(qSql, conn);
-                    qCmd.Parameters.AddWithValue("@QuizID", quizId);
-                    SqlDataReader qDr = qCmd.ExecuteReader();
-                    while (qDr.Read())
+                    string qSql = "SELECT QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, ISNULL(ImagePath,'') AS ImagePath, ISNULL(AudioPath,'') AS AudioPath FROM dbo.Questions WHERE QuizID = @QuizID";
+                    using (SqlCommand qCmd = new SqlCommand(qSql, conn))
                     {
-                        qList.Add(new QuestionModel
+                        qCmd.Parameters.AddWithValue("@QuizID", quizId);
+
+                        using (SqlDataReader qDr = qCmd.ExecuteReader())
                         {
-                            QuestionText = qDr["QuestionText"].ToString(),
-                            OptionA = qDr["OptionA"].ToString(),
-                            OptionB = qDr["OptionB"].ToString(),
-                            OptionC = qDr["OptionC"].ToString(),
-                            OptionD = qDr["OptionD"].ToString(),
-                            CorrectAnswer = qDr["CorrectAnswer"].ToString()
-                        });
+                            while (qDr.Read())
+                            {
+                                qList.Add(new QuestionModel
+                                {
+                                    QuestionText = qDr["QuestionText"].ToString(),
+                                    OptionA = qDr["OptionA"].ToString(),
+                                    OptionB = qDr["OptionB"].ToString(),
+                                    OptionC = qDr["OptionC"].ToString(),
+                                    OptionD = qDr["OptionD"].ToString(),
+                                    CorrectAnswer = qDr["CorrectAnswer"].ToString(),
+                                    ImagePath = qDr["ImagePath"].ToString(),
+                                    AudioPath = qDr["AudioPath"].ToString(),
+                                    Instructions = txtFormInstructions.Text.Trim()
+                                });
+                            }
+                        }
                     }
-                    qDr.Close();
 
                     JavaScriptSerializer serializer = new JavaScriptSerializer();
                     hfQuizJsonData.Value = serializer.Serialize(qList);
@@ -514,9 +604,14 @@ namespace lms.seihaglobalacademy.com
                     pnlQuizList.Visible = false;
                     pnlQuizResults.Visible = false;
 
+                    string displayInstructions = string.IsNullOrWhiteSpace(quiz.Instructions)
+                        ? "Please complete all questions below and click Submit."
+                        : quiz.Instructions;
+
                     if (IsStudentView())
                     {
                         lblActiveQuizTitle.Text = quiz.Title;
+                        lblActiveQuizInstructions.Text = displayInstructions;
                         hfQuizTimeLimitMinutes.Value = string.IsNullOrEmpty(quiz.TimeLimit) ? "15" : quiz.TimeLimit;
                         rptFormQuestions.DataSource = quiz.Questions;
                         rptFormQuestions.DataBind();
@@ -528,6 +623,7 @@ namespace lms.seihaglobalacademy.com
                     else
                     {
                         lblTeacherPreviewTitle.Text = quiz.Title;
+                        lblTeacherPreviewInstructions.Text = displayInstructions;
                         rptTeacherPreviewQuestions.DataSource = quiz.Questions;
                         rptTeacherPreviewQuestions.DataBind();
                         pnlTakeQuizForm.Visible = false;
@@ -546,11 +642,74 @@ namespace lms.seihaglobalacademy.com
             DateTime openDt = string.IsNullOrEmpty(txtFormOpenDate.Text) ? DateTime.Now : Convert.ToDateTime(txtFormOpenDate.Text);
             DateTime closeDt = string.IsNullOrEmpty(txtFormCloseDate.Text) ? DateTime.Now.AddDays(7) : Convert.ToDateTime(txtFormCloseDate.Text);
             string timeLimit = string.IsNullOrEmpty(txtFormTimeLimit.Text) ? "15" : txtFormTimeLimit.Text.Trim();
+            string instructions = txtFormInstructions.Text.Trim();
 
             if (!string.IsNullOrEmpty(title) && !string.IsNullOrEmpty(jsonPayload))
             {
-                JavaScriptSerializer serializer = new JavaScriptSerializer();
+                JavaScriptSerializer serializer = new JavaScriptSerializer { MaxJsonLength = 104857600 };
                 List<QuestionModel> questions = serializer.Deserialize<List<QuestionModel>>(jsonPayload);
+
+                string uploadFolder = Server.MapPath("~/Uploads/QuizMedia/");
+                if (!Directory.Exists(uploadFolder))
+                    Directory.CreateDirectory(uploadFolder);
+
+                for (int qi = 0; qi < questions.Count; qi++)
+                {
+                    var q = questions[qi];
+
+                    if (!string.IsNullOrEmpty(q.ImagePath) && q.ImagePath.StartsWith("data:image/"))
+                    {
+                        try
+                        {
+                            int commaIdx = q.ImagePath.IndexOf(',');
+                            string header = q.ImagePath.Substring(0, commaIdx);
+                            string base64Data = q.ImagePath.Substring(commaIdx + 1);
+
+                            string ext = ".png";
+                            if (header.Contains("jpeg") || header.Contains("jpg")) ext = ".jpg";
+                            else if (header.Contains("gif")) ext = ".gif";
+                            else if (header.Contains("webp")) ext = ".webp";
+
+                            string fileName = "qimg_" + Guid.NewGuid().ToString("N").Substring(0, 10) + ext;
+                            string savePath = Path.Combine(uploadFolder, fileName);
+                            byte[] bytes = Convert.FromBase64String(base64Data);
+                            File.WriteAllBytes(savePath, bytes);
+                            q.ImagePath = "~/Uploads/QuizMedia/" + fileName;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Trace.TraceError("Quiz Image decode failure: " + ex.Message);
+                            q.ImagePath = "";
+                        }
+                    }
+
+                    if (!string.IsNullOrEmpty(q.AudioPath) && q.AudioPath.StartsWith("data:audio/"))
+                    {
+                        try
+                        {
+                            int commaIdx = q.AudioPath.IndexOf(',');
+                            string header = q.AudioPath.Substring(0, commaIdx);
+                            string base64Data = q.AudioPath.Substring(commaIdx + 1);
+
+                            string ext = ".mp3";
+                            if (header.Contains("ogg")) ext = ".ogg";
+                            else if (header.Contains("wav")) ext = ".wav";
+
+                            string fileName = "qaudio_" + Guid.NewGuid().ToString("N").Substring(0, 10) + ext;
+                            string savePath = Path.Combine(uploadFolder, fileName);
+                            byte[] bytes = Convert.FromBase64String(base64Data);
+                            File.WriteAllBytes(savePath, bytes);
+                            q.AudioPath = "~/Uploads/QuizMedia/" + fileName;
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Trace.TraceError("Quiz Audio decode failure: " + ex.Message);
+                            q.AudioPath = "";
+                        }
+                    }
+
+                    questions[qi] = q;
+                }
 
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
@@ -559,48 +718,60 @@ namespace lms.seihaglobalacademy.com
 
                     if (!string.IsNullOrEmpty(hfEditQuizID.Value) && int.TryParse(hfEditQuizID.Value, out quizId))
                     {
-                        string updateQuizSql = "UPDATE dbo.Quizzes SET Title = @Title, OpenDate = @OpenDate, CloseDate = @CloseDate, DueDate = @DueDate, TimeLimit = @TimeLimit WHERE QuizID = @QuizID";
-                        SqlCommand cmd = new SqlCommand(updateQuizSql, conn);
-                        cmd.Parameters.AddWithValue("@Title", title);
-                        cmd.Parameters.AddWithValue("@OpenDate", openDt);
-                        cmd.Parameters.AddWithValue("@CloseDate", closeDt);
-                        cmd.Parameters.AddWithValue("@DueDate", closeDt);
-                        cmd.Parameters.AddWithValue("@TimeLimit", timeLimit);
-                        cmd.Parameters.AddWithValue("@QuizID", quizId);
-                        cmd.ExecuteNonQuery();
+                        string updateQuizSql = "UPDATE dbo.Quizzes SET Title = @Title, OpenDate = @OpenDate, CloseDate = @CloseDate, DueDate = @DueDate, TimeLimit = @TimeLimit, Instructions = @Instructions WHERE QuizID = @QuizID";
+                        using (SqlCommand cmd = new SqlCommand(updateQuizSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@Title", title);
+                            cmd.Parameters.AddWithValue("@OpenDate", openDt);
+                            cmd.Parameters.AddWithValue("@CloseDate", closeDt);
+                            cmd.Parameters.AddWithValue("@DueDate", closeDt);
+                            cmd.Parameters.AddWithValue("@TimeLimit", timeLimit);
+                            cmd.Parameters.AddWithValue("@Instructions", instructions);
+                            cmd.Parameters.AddWithValue("@QuizID", quizId);
+                            cmd.ExecuteNonQuery();
+                        }
 
                         string delQ = "DELETE FROM dbo.Questions WHERE QuizID = @QuizID";
-                        SqlCommand delCmd = new SqlCommand(delQ, conn);
-                        delCmd.Parameters.AddWithValue("@QuizID", quizId);
-                        delCmd.ExecuteNonQuery();
+                        using (SqlCommand delCmd = new SqlCommand(delQ, conn))
+                        {
+                            delCmd.Parameters.AddWithValue("@QuizID", quizId);
+                            delCmd.ExecuteNonQuery();
+                        }
                     }
                     else
                     {
-                        string insertQuizSql = "INSERT INTO dbo.Quizzes (CourseID, Title, OpenDate, CloseDate, DueDate, TimeLimit) VALUES (@CourseID, @Title, @OpenDate, @CloseDate, @DueDate, @TimeLimit); SELECT SCOPE_IDENTITY();";
-                        SqlCommand cmd = new SqlCommand(insertQuizSql, conn);
-                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                        cmd.Parameters.AddWithValue("@Title", title);
-                        cmd.Parameters.AddWithValue("@OpenDate", openDt);
-                        cmd.Parameters.AddWithValue("@CloseDate", closeDt);
-                        cmd.Parameters.AddWithValue("@DueDate", closeDt);
-                        cmd.Parameters.AddWithValue("@TimeLimit", timeLimit);
+                        string insertQuizSql = "INSERT INTO dbo.Quizzes (CourseID, Title, OpenDate, CloseDate, DueDate, TimeLimit, Instructions) VALUES (@CourseID, @Title, @OpenDate, @CloseDate, @DueDate, @TimeLimit, @Instructions); SELECT SCOPE_IDENTITY();";
+                        using (SqlCommand cmd = new SqlCommand(insertQuizSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                            cmd.Parameters.AddWithValue("@Title", title);
+                            cmd.Parameters.AddWithValue("@OpenDate", openDt);
+                            cmd.Parameters.AddWithValue("@CloseDate", closeDt);
+                            cmd.Parameters.AddWithValue("@DueDate", closeDt);
+                            cmd.Parameters.AddWithValue("@TimeLimit", timeLimit);
+                            cmd.Parameters.AddWithValue("@Instructions", instructions);
 
-                        quizId = Convert.ToInt32(cmd.ExecuteScalar());
+                            quizId = Convert.ToInt32(cmd.ExecuteScalar());
+                        }
                     }
 
                     foreach (var q in questions)
                     {
-                        string insertQSql = @"INSERT INTO dbo.Questions (QuizID, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer) 
-                                              VALUES (@QuizID, @QuestionText, @OptionA, @OptionB, @OptionC, @OptionD, @CorrectAnswer)";
-                        SqlCommand qCmd = new SqlCommand(insertQSql, conn);
-                        qCmd.Parameters.AddWithValue("@QuizID", quizId);
-                        qCmd.Parameters.AddWithValue("@QuestionText", q.QuestionText);
-                        qCmd.Parameters.AddWithValue("@OptionA", q.OptionA);
-                        qCmd.Parameters.AddWithValue("@OptionB", q.OptionB);
-                        qCmd.Parameters.AddWithValue("@OptionC", q.OptionC);
-                        qCmd.Parameters.AddWithValue("@OptionD", q.OptionD);
-                        qCmd.Parameters.AddWithValue("@CorrectAnswer", q.CorrectAnswer);
-                        qCmd.ExecuteNonQuery();
+                        string insertQSql = @"INSERT INTO dbo.Questions (QuizID, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, ImagePath, AudioPath) 
+                                              VALUES (@QuizID, @QuestionText, @OptionA, @OptionB, @OptionC, @OptionD, @CorrectAnswer, @ImagePath, @AudioPath)";
+                        using (SqlCommand qCmd = new SqlCommand(insertQSql, conn))
+                        {
+                            qCmd.Parameters.AddWithValue("@QuizID", quizId);
+                            qCmd.Parameters.AddWithValue("@QuestionText", q.QuestionText);
+                            qCmd.Parameters.AddWithValue("@OptionA", q.OptionA);
+                            qCmd.Parameters.AddWithValue("@OptionB", q.OptionB);
+                            qCmd.Parameters.AddWithValue("@OptionC", q.OptionC);
+                            qCmd.Parameters.AddWithValue("@OptionD", q.OptionD);
+                            qCmd.Parameters.AddWithValue("@CorrectAnswer", q.CorrectAnswer);
+                            qCmd.Parameters.AddWithValue("@ImagePath", string.IsNullOrEmpty(q.ImagePath) ? (object)DBNull.Value : q.ImagePath);
+                            qCmd.Parameters.AddWithValue("@AudioPath", string.IsNullOrEmpty(q.AudioPath) ? (object)DBNull.Value : q.AudioPath);
+                            qCmd.ExecuteNonQuery();
+                        }
                     }
                 }
 
@@ -608,6 +779,7 @@ namespace lms.seihaglobalacademy.com
                 txtFormOpenDate.Text = "";
                 txtFormCloseDate.Text = "";
                 txtFormTimeLimit.Text = "";
+                txtFormInstructions.Text = "";
                 hfEditQuizID.Value = "";
                 hfQuizJsonData.Value = "";
 
@@ -626,10 +798,73 @@ namespace lms.seihaglobalacademy.com
                 if (rblOptions != null && q != null)
                 {
                     rblOptions.Items.Clear();
-                    rblOptions.Items.Add(new ListItem(" Option A: " + q.OptionA, "A"));
-                    rblOptions.Items.Add(new ListItem(" Option B: " + q.OptionB, "B"));
-                    rblOptions.Items.Add(new ListItem(" Option C: " + q.OptionC, "C"));
-                    rblOptions.Items.Add(new ListItem(" Option D: " + q.OptionD, "D"));
+
+                    if (!string.IsNullOrWhiteSpace(q.OptionA))
+                    {
+                        rblOptions.Items.Add(new ListItem(" A: " + q.OptionA, "A"));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(q.OptionB))
+                    {
+                        rblOptions.Items.Add(new ListItem(" B: " + q.OptionB, "B"));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(q.OptionC) && !q.OptionC.Equals("Option C", StringComparison.OrdinalIgnoreCase))
+                    {
+                        rblOptions.Items.Add(new ListItem(" C: " + q.OptionC, "C"));
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(q.OptionD) && !q.OptionD.Equals("Option D", StringComparison.OrdinalIgnoreCase))
+                    {
+                        rblOptions.Items.Add(new ListItem(" D: " + q.OptionD, "D"));
+                    }
+                }
+
+                var phAudio = (PlaceHolder)e.Item.FindControl("phQuizAudio");
+                var litAudio = (Literal)e.Item.FindControl("litQuizAudio");
+                if (phAudio != null && q != null && !string.IsNullOrEmpty(q.AudioPath))
+                {
+                    string audioSrc = ResolveUrl(q.AudioPath);
+                    phAudio.Visible = true;
+                    if (litAudio != null)
+                        litAudio.Text = string.Format("<audio controls style=\"width:100%;\"><source src=\"{0}\" />Your browser does not support the audio element.</audio>", audioSrc);
+                }
+
+                var phImage = (PlaceHolder)e.Item.FindControl("phQuizImage");
+                var imgCtrl = (Image)e.Item.FindControl("imgQuizQuestion");
+                if (phImage != null && q != null && !string.IsNullOrEmpty(q.ImagePath))
+                {
+                    phImage.Visible = true;
+                    if (imgCtrl != null)
+                        imgCtrl.ImageUrl = q.ImagePath;
+                }
+            }
+        }
+
+        protected void rptTeacherPreviewQuestions_ItemDataBound(object sender, RepeaterItemEventArgs e)
+        {
+            if (e.Item.ItemType == ListItemType.Item || e.Item.ItemType == ListItemType.AlternatingItem)
+            {
+                var q = (QuestionModel)e.Item.DataItem;
+                if (q == null) return;
+
+                var phAudio = (PlaceHolder)e.Item.FindControl("phTeacherAudio");
+                var litAudio = (Literal)e.Item.FindControl("litTeacherAudio");
+                if (phAudio != null && !string.IsNullOrEmpty(q.AudioPath))
+                {
+                    string audioSrc = ResolveUrl(q.AudioPath);
+                    phAudio.Visible = true;
+                    if (litAudio != null)
+                        litAudio.Text = string.Format("<audio controls style=\"flex:1;height:36px;\"><source src=\"{0}\" />Your browser does not support the audio element.</audio>", audioSrc);
+                }
+
+                var phImage = (PlaceHolder)e.Item.FindControl("phTeacherImage");
+                var imgCtrl = (Image)e.Item.FindControl("imgTeacherQuestion");
+                if (phImage != null && !string.IsNullOrEmpty(q.ImagePath))
+                {
+                    phImage.Visible = true;
+                    if (imgCtrl != null)
+                        imgCtrl.ImageUrl = q.ImagePath;
                 }
             }
         }
@@ -687,14 +922,16 @@ namespace lms.seihaglobalacademy.com
                     INSERT INTO dbo.QuizSubmissions (QuizID, StudentID, Score, TotalQuestions, SubmittedDate)
                     VALUES (@QuizID, @StudentID, @Score, @TotalQuestions, GETDATE())";
 
-                SqlCommand qCmd = new SqlCommand(saveQuizSubSql, conn);
-                qCmd.Parameters.AddWithValue("@QuizID", activeQuizId);
-                qCmd.Parameters.AddWithValue("@StudentID", studentId);
-                qCmd.Parameters.AddWithValue("@Score", correctCount);
-                qCmd.Parameters.AddWithValue("@TotalQuestions", totalQuestions);
+                using (SqlCommand qCmd = new SqlCommand(saveQuizSubSql, conn))
+                {
+                    qCmd.Parameters.AddWithValue("@QuizID", activeQuizId);
+                    qCmd.Parameters.AddWithValue("@StudentID", studentId);
+                    qCmd.Parameters.AddWithValue("@Score", correctCount);
+                    qCmd.Parameters.AddWithValue("@TotalQuestions", totalQuestions);
 
-                conn.Open();
-                qCmd.ExecuteNonQuery();
+                    conn.Open();
+                    qCmd.ExecuteNonQuery();
+                }
             }
 
             rptResultBreakdown.DataSource = resultList;
@@ -716,19 +953,23 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "SELECT ModuleID, UnitTitle, LessonCount, FocusArea FROM dbo.Modules WHERE CourseID = @CourseID ORDER BY ModuleID ASC";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    list.Add(new CourseModuleModel
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        ModuleID = Convert.ToInt32(dr["ModuleID"]),
-                        UnitTitle = dr["UnitTitle"].ToString(),
-                        LessonCount = Convert.ToInt32(dr["LessonCount"]),
-                        FocusArea = dr["FocusArea"].ToString()
-                    });
+                        while (dr.Read())
+                        {
+                            list.Add(new CourseModuleModel
+                            {
+                                ModuleID = Convert.ToInt32(dr["ModuleID"]),
+                                UnitTitle = dr["UnitTitle"].ToString(),
+                                LessonCount = Convert.ToInt32(dr["LessonCount"]),
+                                FocusArea = dr["FocusArea"].ToString()
+                            });
+                        }
+                    }
                 }
             }
 
@@ -748,15 +989,17 @@ namespace lms.seihaglobalacademy.com
             }
         }
 
-        public string GetContentTypeIcon(string type)
+        public string GetContentTypeIcon(string contentType)
         {
-            switch (type)
+            if (string.IsNullOrEmpty(contentType)) return "description";
+            switch (contentType.Trim().ToLower())
             {
-                case "Video": return "play_circle_outline";
-                case "Document": return "description";
-                case "Image": return "image";
-                case "Quiz": return "assignment_turned_in";
-                case "Assignment": return "assignment";
+                case "video": return "play_circle_outline";
+                case "document": return "description";
+                case "reading": return "menu_book";
+                case "image": return "image";
+                case "quiz": return "assignment_turned_in";
+                case "assignment": return "assignment";
                 default: return "article";
             }
         }
@@ -777,15 +1020,19 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "SELECT ModuleID, UnitTitle, FocusArea FROM dbo.Modules WHERE ModuleID = @ModuleID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    conn.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    if (dr.Read())
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        hfEditModuleID.Value = dr["ModuleID"].ToString();
-                        txtEditUnitTitle.Text = dr["UnitTitle"].ToString();
-                        txtEditFocusArea.Text = dr["FocusArea"].ToString();
+                        cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        conn.Open();
+                        using (SqlDataReader dr = cmd.ExecuteReader())
+                        {
+                            if (dr.Read())
+                            {
+                                hfEditModuleID.Value = dr["ModuleID"].ToString();
+                                txtEditUnitTitle.Text = dr["UnitTitle"].ToString();
+                                txtEditFocusArea.Text = dr["FocusArea"].ToString();
+                            }
+                        }
                     }
                 }
                 ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditModuleModal", "openModal('editModuleModal');", true);
@@ -797,17 +1044,19 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
-                    // First delete all lessons in the module
                     string delLessonsSql = "DELETE FROM dbo.Lessons WHERE ModuleID = @ModuleID";
-                    SqlCommand delLessonsCmd = new SqlCommand(delLessonsSql, conn);
-                    delLessonsCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    delLessonsCmd.ExecuteNonQuery();
+                    using (SqlCommand delLessonsCmd = new SqlCommand(delLessonsSql, conn))
+                    {
+                        delLessonsCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        delLessonsCmd.ExecuteNonQuery();
+                    }
 
-                    // Then delete the module record
                     string delModSql = "DELETE FROM dbo.Modules WHERE ModuleID = @ModuleID";
-                    SqlCommand delModCmd = new SqlCommand(delModSql, conn);
-                    delModCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    delModCmd.ExecuteNonQuery();
+                    using (SqlCommand delModCmd = new SqlCommand(delModSql, conn))
+                    {
+                        delModCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        delModCmd.ExecuteNonQuery();
+                    }
                 }
 
                 BindModules();
@@ -825,13 +1074,15 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "UPDATE dbo.Modules SET UnitTitle = @UnitTitle, FocusArea = @FocusArea WHERE ModuleID = @ModuleID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@UnitTitle", txtEditUnitTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@FocusArea", txtEditFocusArea.Text.Trim());
-                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@UnitTitle", txtEditUnitTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@FocusArea", txtEditFocusArea.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ModuleID", moduleId);
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 BindModules();
@@ -848,15 +1099,18 @@ namespace lms.seihaglobalacademy.com
                 conn.Open();
 
                 string modSql = "SELECT UnitTitle, FocusArea FROM dbo.Modules WHERE ModuleID = @ModuleID";
-                SqlCommand modCmd = new SqlCommand(modSql, conn);
-                modCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                SqlDataReader dr = modCmd.ExecuteReader();
-                if (dr.Read())
+                using (SqlCommand modCmd = new SqlCommand(modSql, conn))
                 {
-                    lblActiveUnitTitle.Text = dr["UnitTitle"].ToString();
-                    lblActiveUnitFocus.Text = dr["FocusArea"].ToString();
+                    modCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    using (SqlDataReader dr = modCmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            lblActiveUnitTitle.Text = dr["UnitTitle"].ToString();
+                            lblActiveUnitFocus.Text = dr["FocusArea"].ToString();
+                        }
+                    }
                 }
-                dr.Close();
 
                 var rawLessons = new List<dynamic>();
                 string lessonSql = @"SELECT LessonID, LessonTitle, ContentType, ContentDetails, ISNULL(SequenceOrder, LessonID) AS SequenceOrder 
@@ -864,33 +1118,49 @@ namespace lms.seihaglobalacademy.com
                                      WHERE ModuleID = @ModuleID 
                                      ORDER BY SequenceOrder ASC, LessonID ASC";
 
-                SqlCommand lessonCmd = new SqlCommand(lessonSql, conn);
-                lessonCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                SqlDataReader lDr = lessonCmd.ExecuteReader();
-                while (lDr.Read())
+                using (SqlCommand lessonCmd = new SqlCommand(lessonSql, conn))
                 {
-                    rawLessons.Add(new
+                    lessonCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    using (SqlDataReader lDr = lessonCmd.ExecuteReader())
                     {
-                        LessonID = Convert.ToInt32(lDr["LessonID"]),
-                        LessonTitle = lDr["LessonTitle"].ToString(),
-                        ContentType = lDr["ContentType"].ToString(),
-                        ContentDetails = lDr["ContentDetails"].ToString(),
-                        SequenceOrder = Convert.ToInt32(lDr["SequenceOrder"])
-                    });
+                        while (lDr.Read())
+                        {
+                            rawLessons.Add(new
+                            {
+                                LessonID = Convert.ToInt32(lDr["LessonID"]),
+                                LessonTitle = lDr["LessonTitle"].ToString(),
+                                ContentType = lDr["ContentType"].ToString(),
+                                ContentDetails = lDr["ContentDetails"].ToString(),
+                                SequenceOrder = Convert.ToInt32(lDr["SequenceOrder"])
+                            });
+                        }
+                    }
                 }
-                lDr.Close();
+
+                HashSet<int> completedLessonIds = new HashSet<int>();
+                string checkSql = @"SELECT lc.LessonID FROM dbo.LessonCompletions lc
+                                    INNER JOIN dbo.Lessons l ON lc.LessonID = l.LessonID
+                                    WHERE lc.StudentID = @StudentID AND l.ModuleID = @ModuleID";
+                using (SqlCommand checkCmd = new SqlCommand(checkSql, conn))
+                {
+                    checkCmd.Parameters.AddWithValue("@StudentID", currentStudentId);
+                    checkCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+
+                    using (SqlDataReader cDr = checkCmd.ExecuteReader())
+                    {
+                        while (cDr.Read())
+                        {
+                            completedLessonIds.Add(Convert.ToInt32(cDr["LessonID"]));
+                        }
+                    }
+                }
 
                 var lessonsWithProgression = new List<dynamic>();
                 bool previousLessonCompleted = true;
 
                 foreach (var lesson in rawLessons)
                 {
-                    string checkSql = "SELECT COUNT(1) FROM dbo.LessonCompletions WHERE StudentID = @StudentID AND LessonID = @LessonID";
-                    SqlCommand checkCmd = new SqlCommand(checkSql, conn);
-                    checkCmd.Parameters.AddWithValue("@StudentID", currentStudentId);
-                    checkCmd.Parameters.AddWithValue("@LessonID", lesson.LessonID);
-                    bool isCompleted = Convert.ToInt32(checkCmd.ExecuteScalar()) > 0;
-
+                    bool isCompleted = completedLessonIds.Contains((int)lesson.LessonID);
                     bool isUnlocked = !IsStudentView() || previousLessonCompleted;
 
                     lessonsWithProgression.Add(new
@@ -951,11 +1221,13 @@ namespace lms.seihaglobalacademy.com
                                        INSERT INTO dbo.LessonCompletions (StudentID, LessonID) VALUES (@StudentID, @LessonID);
                                    END";
 
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@StudentID", studentId);
-                    cmd.Parameters.AddWithValue("@LessonID", lessonId);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@StudentID", studentId);
+                        cmd.Parameters.AddWithValue("@LessonID", lessonId);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 LoadModuleDetails(moduleId);
@@ -972,14 +1244,18 @@ namespace lms.seihaglobalacademy.com
                 {
                     conn.Open();
                     string deleteSql = "DELETE FROM dbo.Lessons WHERE LessonID = @LessonID";
-                    SqlCommand cmd = new SqlCommand(deleteSql, conn);
-                    cmd.Parameters.AddWithValue("@LessonID", lessonId);
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(deleteSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@LessonID", lessonId);
+                        cmd.ExecuteNonQuery();
+                    }
 
                     string updateSql = "UPDATE dbo.Modules SET LessonCount = CASE WHEN LessonCount > 0 THEN LessonCount - 1 ELSE 0 END WHERE ModuleID = @ModuleID";
-                    SqlCommand updateCmd = new SqlCommand(updateSql, conn);
-                    updateCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    updateCmd.ExecuteNonQuery();
+                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn))
+                    {
+                        updateCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        updateCmd.ExecuteNonQuery();
+                    }
                 }
 
                 LoadModuleDetails(moduleId);
@@ -995,22 +1271,26 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "SELECT LessonID, LessonTitle, ContentType, ContentDetails FROM dbo.Lessons WHERE LessonID = @LessonID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@LessonID", lessonId);
-                    conn.Open();
-                    SqlDataReader dr = cmd.ExecuteReader();
-                    if (dr.Read())
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
                     {
-                        hfEditLessonID.Value = dr["LessonID"].ToString();
-                        txtEditLessonTitle.Text = dr["LessonTitle"].ToString();
-
-                        string cType = dr["ContentType"].ToString();
-                        if (ddlEditContentType.Items.FindByValue(cType) != null)
+                        cmd.Parameters.AddWithValue("@LessonID", lessonId);
+                        conn.Open();
+                        using (SqlDataReader dr = cmd.ExecuteReader())
                         {
-                            ddlEditContentType.SelectedValue = cType;
-                        }
+                            if (dr.Read())
+                            {
+                                hfEditLessonID.Value = dr["LessonID"].ToString();
+                                txtEditLessonTitle.Text = dr["LessonTitle"].ToString();
 
-                        txtEditContentDetails.Text = dr["ContentDetails"].ToString();
+                                string cType = dr["ContentType"].ToString();
+                                if (ddlEditContentType.Items.FindByValue(cType) != null)
+                                {
+                                    ddlEditContentType.SelectedValue = cType;
+                                }
+
+                                txtEditContentDetails.Text = dr["ContentDetails"].ToString();
+                            }
+                        }
                     }
                 }
                 ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditLessonModal", "openModal('editLessonModal');", true);
@@ -1035,8 +1315,11 @@ namespace lms.seihaglobalacademy.com
                 {
                     try
                     {
-                        string filename = Path.GetFileName(fileEditContentUpload.FileName);
-                        string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + filename;
+                        string originalFileName = Path.GetFileName(fileEditContentUpload.FileName);
+                        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
+                        string fileExtension = Path.GetExtension(originalFileName); // Preserves exact extension (e.g. .jfif, .jpg, .pdf)
+
+                        string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExtension;
 
                         string uploadFolder = Server.MapPath("~/Uploads/Lessons/");
                         if (!Directory.Exists(uploadFolder))
@@ -1051,8 +1334,8 @@ namespace lms.seihaglobalacademy.com
                     }
                     catch (Exception ex)
                     {
-                        string cleanMsg = ex.Message.Replace("'", "\\'");
-                        ScriptManager.RegisterStartupScript(this, GetType(), "UploadError", $"alert('File Upload Error: {cleanMsg}');", true);
+                        System.Diagnostics.Trace.TraceError("File Upload Error: " + ex.Message);
+                        ScriptManager.RegisterStartupScript(this, GetType(), "UploadError", "alert('An error occurred during file upload.');", true);
                         return;
                     }
                 }
@@ -1060,14 +1343,16 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "UPDATE dbo.Lessons SET LessonTitle = @LessonTitle, ContentType = @ContentType, ContentDetails = @ContentDetails WHERE LessonID = @LessonID";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@LessonTitle", txtEditLessonTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@ContentType", ddlEditContentType.SelectedValue);
-                    cmd.Parameters.AddWithValue("@ContentDetails", string.IsNullOrEmpty(contentDetails) ? "No details provided" : contentDetails);
-                    cmd.Parameters.AddWithValue("@LessonID", lessonId);
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@LessonTitle", txtEditLessonTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ContentType", ddlEditContentType.SelectedValue);
+                        cmd.Parameters.AddWithValue("@ContentDetails", string.IsNullOrEmpty(contentDetails) ? "No details provided" : contentDetails);
+                        cmd.Parameters.AddWithValue("@LessonID", lessonId);
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 ScriptManager.RegisterStartupScript(this, GetType(), "CloseEditLessonModal", "closeModal('editLessonModal');", true);
@@ -1096,14 +1381,16 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "INSERT INTO dbo.Modules (CourseID, UnitTitle, LessonCount, FocusArea) VALUES (@CourseID, @UnitTitle, @LessonCount, @FocusArea)";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                    cmd.Parameters.AddWithValue("@UnitTitle", txtUnitTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@LessonCount", string.IsNullOrEmpty(txtLessonCount.Text) ? 0 : Convert.ToInt32(txtLessonCount.Text.Trim()));
-                    cmd.Parameters.AddWithValue("@FocusArea", string.IsNullOrEmpty(txtFocusArea.Text) ? "General Practice" : txtFocusArea.Text.Trim());
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                        cmd.Parameters.AddWithValue("@UnitTitle", txtUnitTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@LessonCount", string.IsNullOrEmpty(txtLessonCount.Text) ? 0 : Convert.ToInt32(txtLessonCount.Text.Trim()));
+                        cmd.Parameters.AddWithValue("@FocusArea", string.IsNullOrEmpty(txtFocusArea.Text) ? "General Practice" : txtFocusArea.Text.Trim());
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 txtUnitTitle.Text = "";
@@ -1132,8 +1419,11 @@ namespace lms.seihaglobalacademy.com
                 {
                     try
                     {
-                        string filename = Path.GetFileName(fileContentUpload.FileName);
-                        string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + filename;
+                        string originalFileName = Path.GetFileName(fileContentUpload.FileName);
+                        string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
+                        string fileExtension = Path.GetExtension(originalFileName); // Preserves exact extension (e.g. .jfif, .jpg, .pdf)
+
+                        string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExtension;
 
                         string uploadFolder = Server.MapPath("~/Uploads/Lessons/");
                         if (!Directory.Exists(uploadFolder))
@@ -1148,8 +1438,8 @@ namespace lms.seihaglobalacademy.com
                     }
                     catch (Exception ex)
                     {
-                        string cleanMsg = ex.Message.Replace("'", "\\'");
-                        ScriptManager.RegisterStartupScript(this, GetType(), "UploadError", $"alert('File Upload Error: {cleanMsg}');", true);
+                        System.Diagnostics.Trace.TraceError("File Upload Error: " + ex.Message);
+                        ScriptManager.RegisterStartupScript(this, GetType(), "UploadError", "alert('An error occurred during file upload.');", true);
                         return;
                     }
                 }
@@ -1157,19 +1447,23 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = "INSERT INTO dbo.Lessons (ModuleID, LessonTitle, ContentType, ContentDetails) VALUES (@ModuleID, @LessonTitle, @ContentType, @ContentDetails)";
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    cmd.Parameters.AddWithValue("@LessonTitle", txtLessonTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@ContentType", ddlContentType.SelectedValue);
-                    cmd.Parameters.AddWithValue("@ContentDetails", string.IsNullOrEmpty(contentDetails) ? "No details provided" : contentDetails);
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        cmd.Parameters.AddWithValue("@LessonTitle", txtLessonTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ContentType", ddlContentType.SelectedValue);
+                        cmd.Parameters.AddWithValue("@ContentDetails", string.IsNullOrEmpty(contentDetails) ? "No details provided" : contentDetails);
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
 
                     string updateSql = "UPDATE dbo.Modules SET LessonCount = LessonCount + 1 WHERE ModuleID = @ModuleID";
-                    SqlCommand updateCmd = new SqlCommand(updateSql, conn);
-                    updateCmd.Parameters.AddWithValue("@ModuleID", moduleId);
-                    updateCmd.ExecuteNonQuery();
+                    using (SqlCommand updateCmd = new SqlCommand(updateSql, conn))
+                    {
+                        updateCmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                        updateCmd.ExecuteNonQuery();
+                    }
                 }
 
                 txtLessonTitle.Text = "";
@@ -1198,23 +1492,27 @@ namespace lms.seihaglobalacademy.com
                                WHERE CourseID = @CourseID
                                ORDER BY AssignmentID DESC";
 
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    list.Add(new AssignmentModel
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        AssignmentID = Convert.ToInt32(dr["AssignmentID"]),
-                        AssignmentName = dr["AssignmentName"].ToString(),
-                        CourseName = dr["CourseName"].ToString(),
-                        OpenDate = dr["OpenDateFormatted"].ToString(),
-                        EndDateTime = dr["CloseDateFormatted"].ToString(),
-                        RawOpenDate = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]) : DateTime.Now,
-                        RawCloseDate = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]) : DateTime.Now.AddDays(7),
-                        MaxPoints = Convert.ToInt32(dr["MaxPoints"])
-                    });
+                        while (dr.Read())
+                        {
+                            list.Add(new AssignmentModel
+                            {
+                                AssignmentID = Convert.ToInt32(dr["AssignmentID"]),
+                                AssignmentName = dr["AssignmentName"].ToString(),
+                                CourseName = dr["CourseName"].ToString(),
+                                OpenDate = dr["OpenDateFormatted"].ToString(),
+                                EndDateTime = dr["CloseDateFormatted"].ToString(),
+                                RawOpenDate = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]) : DateTime.Now,
+                                RawCloseDate = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]) : DateTime.Now.AddDays(7),
+                                MaxPoints = Convert.ToInt32(dr["MaxPoints"])
+                            });
+                        }
+                    }
                 }
             }
             rptAssignments.DataSource = list;
@@ -1278,23 +1576,27 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "SELECT AssignmentID, AssignmentName, OpenDate, CloseDate, MaxPoints, Instructions FROM dbo.Assignments WHERE AssignmentID = @ID";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@ID", assignmentId);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                if (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    hfEditAssignmentID.Value = dr["AssignmentID"].ToString();
-                    txtEditAssignmentTitle.Text = dr["AssignmentName"].ToString();
+                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
+                    {
+                        if (dr.Read())
+                        {
+                            hfEditAssignmentID.Value = dr["AssignmentID"].ToString();
+                            txtEditAssignmentTitle.Text = dr["AssignmentName"].ToString();
 
-                    if (dr["OpenDate"] != DBNull.Value)
-                        txtEditAssignmentStartDate.Text = Convert.ToDateTime(dr["OpenDate"]).ToString("yyyy-MM-ddTHH:mm");
+                            if (dr["OpenDate"] != DBNull.Value)
+                                txtEditAssignmentStartDate.Text = Convert.ToDateTime(dr["OpenDate"]).ToString("yyyy-MM-ddTHH:mm");
 
-                    if (dr["CloseDate"] != DBNull.Value)
-                        txtEditAssignmentDueDate.Text = Convert.ToDateTime(dr["CloseDate"]).ToString("yyyy-MM-ddTHH:mm");
+                            if (dr["CloseDate"] != DBNull.Value)
+                                txtEditAssignmentDueDate.Text = Convert.ToDateTime(dr["CloseDate"]).ToString("yyyy-MM-ddTHH:mm");
 
-                    txtEditMaxPoints.Text = dr["MaxPoints"] != DBNull.Value ? dr["MaxPoints"].ToString() : "100";
-                    txtEditAssignmentInstructions.Text = dr["Instructions"].ToString();
+                            txtEditMaxPoints.Text = dr["MaxPoints"] != DBNull.Value ? dr["MaxPoints"].ToString() : "100";
+                            txtEditAssignmentInstructions.Text = dr["Instructions"].ToString();
+                        }
+                    }
                 }
             }
             ScriptManager.RegisterStartupScript(this, GetType(), "OpenEditAssignmentModal", "openModal('editAssignmentModal');", true);
@@ -1320,18 +1622,20 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string query = @"UPDATE dbo.Assignments 
-                                     SET AssignmentName = @Title, OpenDate = @OpenDate, EndDateTime = @DueDate, CloseDate = @DueDate, MaxPoints = @MaxPoints, Instructions = @Instructions 
+                                     SET AssignmentName = @Title, OpenDate = @OpenDate, CloseDate = @DueDate, MaxPoints = @MaxPoints, Instructions = @Instructions 
                                      WHERE AssignmentID = @ID";
-                    SqlCommand cmd = new SqlCommand(query, conn);
-                    cmd.Parameters.AddWithValue("@Title", title);
-                    cmd.Parameters.AddWithValue("@OpenDate", openDate);
-                    cmd.Parameters.AddWithValue("@DueDate", dueDate);
-                    cmd.Parameters.AddWithValue("@MaxPoints", maxPoints);
-                    cmd.Parameters.AddWithValue("@Instructions", instructions);
-                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@Title", title);
+                        cmd.Parameters.AddWithValue("@OpenDate", openDate);
+                        cmd.Parameters.AddWithValue("@DueDate", dueDate);
+                        cmd.Parameters.AddWithValue("@MaxPoints", maxPoints);
+                        cmd.Parameters.AddWithValue("@Instructions", instructions);
+                        cmd.Parameters.AddWithValue("@ID", assignmentId);
 
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 ScriptManager.RegisterStartupScript(this, GetType(), "CloseEditAssignment", "closeModal('editAssignmentModal');", true);
@@ -1368,24 +1672,28 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "SELECT AssignmentName, OpenDate, CloseDate, MaxPoints, Instructions FROM dbo.Assignments WHERE AssignmentID = @ID";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@ID", assignmentId);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                if (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    lblDetailAssignmentTitle.Text = dr["AssignmentName"].ToString();
-                    lblDetailOpenDate.Text = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]).ToString("MMM dd, yyyy hh:mm tt") : "N/A";
-                    lblDetailDueDate.Text = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]).ToString("MMM dd, yyyy hh:mm tt") : "N/A";
-                    lblDetailMaxPoints.Text = dr["MaxPoints"].ToString();
-                    lblDetailInstructions.Text = string.IsNullOrEmpty(dr["Instructions"].ToString()) ? "No specific instructions provided." : dr["Instructions"].ToString();
-
-                    if (dr["CloseDate"] != DBNull.Value)
+                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        DateTime closeDate = Convert.ToDateTime(dr["CloseDate"]);
-                        if (DateTime.Now > closeDate)
+                        if (dr.Read())
                         {
-                            isClosed = true;
+                            lblDetailAssignmentTitle.Text = dr["AssignmentName"].ToString();
+                            lblDetailOpenDate.Text = dr["OpenDate"] != DBNull.Value ? Convert.ToDateTime(dr["OpenDate"]).ToString("MMM dd, yyyy hh:mm tt") : "N/A";
+                            lblDetailDueDate.Text = dr["CloseDate"] != DBNull.Value ? Convert.ToDateTime(dr["CloseDate"]).ToString("MMM dd, yyyy hh:mm tt") : "N/A";
+                            lblDetailMaxPoints.Text = dr["MaxPoints"].ToString();
+                            lblDetailInstructions.Text = string.IsNullOrEmpty(dr["Instructions"].ToString()) ? "No specific instructions provided." : dr["Instructions"].ToString();
+
+                            if (dr["CloseDate"] != DBNull.Value)
+                            {
+                                DateTime closeDate = Convert.ToDateTime(dr["CloseDate"]);
+                                if (DateTime.Now > closeDate)
+                                {
+                                    isClosed = true;
+                                }
+                            }
                         }
                     }
                 }
@@ -1410,48 +1718,50 @@ namespace lms.seihaglobalacademy.com
                                              WHERE AssignmentID = @AssignmentID AND StudentName = @StudentName 
                                              ORDER BY SubmissionID DESC";
 
-                    SqlCommand subCmd = new SqlCommand(studentSubSql, conn);
-                    subCmd.Parameters.AddWithValue("@AssignmentID", assignmentId);
-                    subCmd.Parameters.AddWithValue("@StudentName", "Student User");
-
-                    conn.Open();
-                    SqlDataReader subDr = subCmd.ExecuteReader();
-
-                    if (subDr.Read())
+                    using (SqlCommand subCmd = new SqlCommand(studentSubSql, conn))
                     {
-                        hasSubmitted = true;
-                        object gradeVal = subDr["Grade"];
-                        object feedbackVal = subDr["Feedback"];
+                        subCmd.Parameters.AddWithValue("@AssignmentID", assignmentId);
+                        subCmd.Parameters.AddWithValue("@StudentName", "Student User");
 
-                        if (gradeVal != DBNull.Value && !string.IsNullOrEmpty(gradeVal.ToString()))
+                        conn.Open();
+                        using (SqlDataReader subDr = subCmd.ExecuteReader())
                         {
-                            isGraded = true;
-                            lblStudentGradeDisplay.Text = $"Grade: {gradeVal} / {lblDetailMaxPoints.Text}";
-                        }
-                        else
-                        {
-                            lblStudentGradeDisplay.Text = "Status: Pending Grading";
-                        }
+                            if (subDr.Read())
+                            {
+                                hasSubmitted = true;
+                                object gradeVal = subDr["Grade"];
+                                object feedbackVal = subDr["Feedback"];
 
-                        if (feedbackVal != DBNull.Value && !string.IsNullOrEmpty(feedbackVal.ToString()))
-                        {
-                            lblStudentFeedbackDisplay.Text = feedbackVal.ToString();
+                                if (gradeVal != DBNull.Value && !string.IsNullOrEmpty(gradeVal.ToString()))
+                                {
+                                    isGraded = true;
+                                    lblStudentGradeDisplay.Text = $"Grade: {gradeVal} / {lblDetailMaxPoints.Text}";
+                                }
+                                else
+                                {
+                                    lblStudentGradeDisplay.Text = "Status: Pending Grading";
+                                }
+
+                                if (feedbackVal != DBNull.Value && !string.IsNullOrEmpty(feedbackVal.ToString()))
+                                {
+                                    lblStudentFeedbackDisplay.Text = feedbackVal.ToString();
+                                }
+                                else
+                                {
+                                    lblStudentFeedbackDisplay.Text = "No feedback provided yet.";
+                                }
+                            }
+                            else
+                            {
+                                lblStudentGradeDisplay.Text = isClosed ? "Status: Closed (No Submission)" : "Status: Not Submitted";
+                                lblStudentFeedbackDisplay.Text = isClosed
+                                    ? "The deadline for this assignment has passed."
+                                    : "Submit your work below to receive a grade and feedback.";
+                            }
                         }
-                        else
-                        {
-                            lblStudentFeedbackDisplay.Text = "No feedback provided yet.";
-                        }
-                    }
-                    else
-                    {
-                        lblStudentGradeDisplay.Text = isClosed ? "Status: Closed (No Submission)" : "Status: Not Submitted";
-                        lblStudentFeedbackDisplay.Text = isClosed
-                            ? "The deadline for this assignment has passed."
-                            : "Submit your work below to receive a grade and feedback.";
                     }
                 }
 
-                // Lock form if assignment is closed OR already graded
                 if (isClosed || isGraded)
                 {
                     txtSubmissionNotes.Enabled = false;
@@ -1492,22 +1802,26 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "SELECT SubmissionID, StudentName, FORMAT(SubmittedDate, 'MMM dd, yyyy hh:mm tt') AS SubmittedDateFormatted, FilePath, SubmissionText, Grade, Feedback FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID ORDER BY SubmissionID DESC";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@ID", assignmentId);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    list.Add(new
+                    cmd.Parameters.AddWithValue("@ID", assignmentId);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        SubmissionID = Convert.ToInt32(dr["SubmissionID"]),
-                        StudentName = dr["StudentName"].ToString(),
-                        SubmittedDate = dr["SubmittedDateFormatted"].ToString(),
-                        FilePath = dr["FilePath"].ToString(),
-                        SubmissionText = dr["SubmissionText"].ToString(),
-                        Grade = dr["Grade"] != DBNull.Value ? dr["Grade"].ToString() : "",
-                        Feedback = dr["Feedback"] != DBNull.Value ? dr["Feedback"].ToString() : ""
-                    });
+                        while (dr.Read())
+                        {
+                            list.Add(new
+                            {
+                                SubmissionID = Convert.ToInt32(dr["SubmissionID"]),
+                                StudentName = dr["StudentName"].ToString(),
+                                SubmittedDate = dr["SubmittedDateFormatted"].ToString(),
+                                FilePath = dr["FilePath"].ToString(),
+                                SubmissionText = dr["SubmissionText"].ToString(),
+                                Grade = dr["Grade"] != DBNull.Value ? dr["Grade"].ToString() : "",
+                                Feedback = dr["Feedback"] != DBNull.Value ? dr["Feedback"].ToString() : ""
+                            });
+                        }
+                    }
                 }
             }
             rptSubmissions.DataSource = list;
@@ -1531,12 +1845,14 @@ namespace lms.seihaglobalacademy.com
                     using (SqlConnection conn = new SqlConnection(connStr))
                     {
                         string sql = "UPDATE dbo.AssignmentSubmissions SET Grade = @Grade, Feedback = @Feedback WHERE SubmissionID = @ID";
-                        SqlCommand cmd = new SqlCommand(sql, conn);
-                        cmd.Parameters.AddWithValue("@Grade", grade);
-                        cmd.Parameters.AddWithValue("@Feedback", txtFeedback != null ? txtFeedback.Text.Trim() : "");
-                        cmd.Parameters.AddWithValue("@ID", submissionId);
-                        conn.Open();
-                        cmd.ExecuteNonQuery();
+                        using (SqlCommand cmd = new SqlCommand(sql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@Grade", grade);
+                            cmd.Parameters.AddWithValue("@Feedback", txtFeedback != null ? txtFeedback.Text.Trim() : "");
+                            cmd.Parameters.AddWithValue("@ID", submissionId);
+                            conn.Open();
+                            cmd.ExecuteNonQuery();
+                        }
                     }
 
                     BindSubmissions(activeAssignmentId);
@@ -1554,27 +1870,34 @@ namespace lms.seihaglobalacademy.com
                     conn.Open();
 
                     string getFileSql = "SELECT FilePath FROM dbo.AssignmentSubmissions WHERE SubmissionID = @ID";
-                    SqlCommand getFileCmd = new SqlCommand(getFileSql, conn);
-                    getFileCmd.Parameters.AddWithValue("@ID", submissionId);
-                    object filePathObj = getFileCmd.ExecuteScalar();
+                    object filePathObj;
+                    using (SqlCommand getFileCmd = new SqlCommand(getFileSql, conn))
+                    {
+                        getFileCmd.Parameters.AddWithValue("@ID", submissionId);
+                        filePathObj = getFileCmd.ExecuteScalar();
+                    }
 
                     if (filePathObj != null && filePathObj != DBNull.Value)
                     {
                         string relativePath = filePathObj.ToString();
                         if (!string.IsNullOrEmpty(relativePath))
                         {
-                            string fullPath = Server.MapPath(relativePath);
-                            if (File.Exists(fullPath))
+                            string baseDir = Server.MapPath("~/Uploads/Submissions/");
+                            string fullPath = Path.GetFullPath(Server.MapPath(relativePath));
+
+                            if (fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
                             {
-                                try { File.Delete(fullPath); } catch { /* Ignore file lock exceptions */ }
+                                try { File.Delete(fullPath); } catch (Exception ex) { System.Diagnostics.Trace.TraceError("File delete error: " + ex.Message); }
                             }
                         }
                     }
 
                     string delSql = "DELETE FROM dbo.AssignmentSubmissions WHERE SubmissionID = @ID";
-                    SqlCommand delCmd = new SqlCommand(delSql, conn);
-                    delCmd.Parameters.AddWithValue("@ID", submissionId);
-                    delCmd.ExecuteNonQuery();
+                    using (SqlCommand delCmd = new SqlCommand(delSql, conn))
+                    {
+                        delCmd.Parameters.AddWithValue("@ID", submissionId);
+                        delCmd.ExecuteNonQuery();
+                    }
                 }
 
                 BindSubmissions(activeAssignmentId);
@@ -1586,40 +1909,41 @@ namespace lms.seihaglobalacademy.com
         {
             int assignmentId = Convert.ToInt32(hfActiveAssignmentID.Value);
 
-            // Backend Checks: Block if deadline passed or already graded
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
 
-                // 1. Check CloseDate
                 string checkSql = "SELECT CloseDate FROM dbo.Assignments WHERE AssignmentID = @ID";
-                SqlCommand checkCmd = new SqlCommand(checkSql, conn);
-                checkCmd.Parameters.AddWithValue("@ID", assignmentId);
-                object closeDateObj = checkCmd.ExecuteScalar();
-
-                if (closeDateObj != null && closeDateObj != DBNull.Value)
+                using (SqlCommand checkCmd = new SqlCommand(checkSql, conn))
                 {
-                    DateTime closeDate = Convert.ToDateTime(closeDateObj);
-                    if (DateTime.Now > closeDate)
+                    checkCmd.Parameters.AddWithValue("@ID", assignmentId);
+                    object closeDateObj = checkCmd.ExecuteScalar();
+
+                    if (closeDateObj != null && closeDateObj != DBNull.Value)
                     {
-                        ScriptManager.RegisterStartupScript(this, GetType(), "ClosedError", "alert('This assignment is closed. Submissions are no longer accepted.');", true);
-                        OpenAssignmentDetailView(assignmentId);
-                        return;
+                        DateTime closeDate = Convert.ToDateTime(closeDateObj);
+                        if (DateTime.Now > closeDate)
+                        {
+                            ScriptManager.RegisterStartupScript(this, GetType(), "ClosedError", "alert('This assignment is closed. Submissions are no longer accepted.');", true);
+                            OpenAssignmentDetailView(assignmentId);
+                            return;
+                        }
                     }
                 }
 
-                // 2. Check if already graded
                 string gradeCheckSql = "SELECT TOP 1 Grade FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID AND StudentName = @StudentName ORDER BY SubmissionID DESC";
-                SqlCommand gradeCmd = new SqlCommand(gradeCheckSql, conn);
-                gradeCmd.Parameters.AddWithValue("@ID", assignmentId);
-                gradeCmd.Parameters.AddWithValue("@StudentName", "Student User");
-                object gradeObj = gradeCmd.ExecuteScalar();
-
-                if (gradeObj != null && gradeObj != DBNull.Value && !string.IsNullOrEmpty(gradeObj.ToString()))
+                using (SqlCommand gradeCmd = new SqlCommand(gradeCheckSql, conn))
                 {
-                    ScriptManager.RegisterStartupScript(this, GetType(), "GradedError", "alert('This assignment has already been graded and cannot be resubmitted.');", true);
-                    OpenAssignmentDetailView(assignmentId);
-                    return;
+                    gradeCmd.Parameters.AddWithValue("@ID", assignmentId);
+                    gradeCmd.Parameters.AddWithValue("@StudentName", "Student User");
+                    object gradeObj = gradeCmd.ExecuteScalar();
+
+                    if (gradeObj != null && gradeObj != DBNull.Value && !string.IsNullOrEmpty(gradeObj.ToString()))
+                    {
+                        ScriptManager.RegisterStartupScript(this, GetType(), "GradedError", "alert('This assignment has already been graded and cannot be resubmitted.');", true);
+                        OpenAssignmentDetailView(assignmentId);
+                        return;
+                    }
                 }
             }
 
@@ -1637,7 +1961,6 @@ namespace lms.seihaglobalacademy.com
                     return;
                 }
 
-                // Enforce 100MB max limit check (100 * 1024 * 1024 bytes)
                 if (fileSubmissionUpload.PostedFile.ContentLength > 104857600)
                 {
                     ScriptManager.RegisterStartupScript(this, GetType(), "SizeError",
@@ -1648,7 +1971,11 @@ namespace lms.seihaglobalacademy.com
                 string folder = Server.MapPath("~/Uploads/Submissions/");
                 if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
 
-                string uniqueFile = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + Path.GetFileName(fileSubmissionUpload.FileName);
+                string originalFileName = Path.GetFileName(fileSubmissionUpload.FileName);
+                string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
+                string fileExt = Path.GetExtension(originalFileName);
+
+                string uniqueFile = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExt;
                 fileSubmissionUpload.SaveAs(Path.Combine(folder, uniqueFile));
                 filePath = "~/Uploads/Submissions/" + uniqueFile;
             }
@@ -1656,13 +1983,15 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "INSERT INTO dbo.AssignmentSubmissions (AssignmentID, StudentName, SubmissionText, FilePath) VALUES (@AID, @Student, @Text, @File)";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@AID", assignmentId);
-                cmd.Parameters.AddWithValue("@Student", "Student User");
-                cmd.Parameters.AddWithValue("@Text", txtSubmissionNotes.Text.Trim());
-                cmd.Parameters.AddWithValue("@File", filePath);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@AID", assignmentId);
+                    cmd.Parameters.AddWithValue("@Student", "Student User");
+                    cmd.Parameters.AddWithValue("@Text", txtSubmissionNotes.Text.Trim());
+                    cmd.Parameters.AddWithValue("@File", filePath);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             txtSubmissionNotes.Text = "";
@@ -1695,27 +2024,25 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     string sql = @"INSERT INTO dbo.Assignments 
-                                   (CourseID, AssignmentName, CourseName, OpenDate, EndDateTime, CloseDate, MaxPoints, Instructions, ManualGrading, Completed)
+                                   (CourseID, AssignmentName, CourseName, OpenDate, CloseDate, MaxPoints, Instructions, ManualGrading, Completed)
                                    VALUES 
-                                   (@CourseID, @AssignmentName, @CourseName, @OpenDate, @CloseDate, @CloseDate, @MaxPoints, @Instructions, @ManualGrading, @Completed)";
+                                   (@CourseID, @AssignmentName, @CourseName, @OpenDate, @CloseDate, @MaxPoints, @Instructions, @ManualGrading, @Completed)";
 
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                    cmd.Parameters.AddWithValue("@AssignmentName", txtAssignmentTitle.Text.Trim());
-                    cmd.Parameters.AddWithValue("@CourseName", lblCourseTitle.Text);
-                    cmd.Parameters.AddWithValue("@OpenDate", openDt);
-                    cmd.Parameters.AddWithValue("@CloseDate", closeDt);
-                    cmd.Parameters.AddWithValue("@MaxPoints", maxPts);
-                    cmd.Parameters.AddWithValue("@Instructions", txtAssignmentInstructions.Text.Trim());
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                        cmd.Parameters.AddWithValue("@AssignmentName", txtAssignmentTitle.Text.Trim());
+                        cmd.Parameters.AddWithValue("@CourseName", lblCourseTitle.Text);
+                        cmd.Parameters.AddWithValue("@OpenDate", openDt);
+                        cmd.Parameters.AddWithValue("@CloseDate", closeDt);
+                        cmd.Parameters.AddWithValue("@MaxPoints", maxPts);
+                        cmd.Parameters.AddWithValue("@Instructions", txtAssignmentInstructions.Text.Trim());
+                        cmd.Parameters.AddWithValue("@ManualGrading", false);
+                        cmd.Parameters.AddWithValue("@Completed", false);
 
-                    bool isManualGrading = false;
-                    cmd.Parameters.AddWithValue("@ManualGrading", isManualGrading);
-
-                    bool isCompleted = false;
-                    cmd.Parameters.AddWithValue("@Completed", isCompleted);
-
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 txtAssignmentTitle.Text = "";
@@ -1753,24 +2080,28 @@ namespace lms.seihaglobalacademy.com
             INNER JOIN dbo.CourseEnrollments e ON s.StudentID = e.StudentID
             WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Active'";
 
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                conn.Open();
-                SqlDataReader dr = cmd.ExecuteReader();
-                while (dr.Read())
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
                 {
-                    double assignAvg = Convert.ToDouble(dr["AssignmentAvg"]);
-                    double quizAvg = Convert.ToDouble(dr["QuizAvg"]);
-                    double overall = Math.Round((assignAvg * 0.5) + (quizAvg * 0.5), 1);
-
-                    list.Add(new GradebookEntryModel
+                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    conn.Open();
+                    using (SqlDataReader dr = cmd.ExecuteReader())
                     {
-                        StudentID = Convert.ToInt32(dr["StudentID"]),
-                        StudentName = dr["StudentName"].ToString(),
-                        AssignmentAverage = Math.Round(assignAvg, 1),
-                        QuizAverage = Math.Round(quizAvg, 1),
-                        OverallGrade = overall
-                    });
+                        while (dr.Read())
+                        {
+                            double assignAvg = Convert.ToDouble(dr["AssignmentAvg"]);
+                            double quizAvg = Convert.ToDouble(dr["QuizAvg"]);
+                            double overall = Math.Round((assignAvg * 0.5) + (quizAvg * 0.5), 1);
+
+                            list.Add(new GradebookEntryModel
+                            {
+                                StudentID = Convert.ToInt32(dr["StudentID"]),
+                                StudentName = dr["StudentName"].ToString(),
+                                AssignmentAverage = Math.Round(assignAvg, 1),
+                                QuizAverage = Math.Round(quizAvg, 1),
+                                OverallGrade = overall
+                            });
+                        }
+                    }
                 }
             }
 
@@ -1793,7 +2124,8 @@ namespace lms.seihaglobalacademy.com
             {
                 if (row.RowType == DataControlRowType.DataRow)
                 {
-                    sb.AppendLine($"{row.Cells[0].Text},{row.Cells[1].Text},{row.Cells[2].Text},{row.Cells[3].Text}");
+                    string studentName = row.Cells[0].Text.Replace("\"", "\"\"");
+                    sb.AppendLine($"\"{studentName}\",{row.Cells[1].Text},{row.Cells[2].Text},{row.Cells[3].Text}");
                 }
             }
 
@@ -1811,48 +2143,57 @@ namespace lms.seihaglobalacademy.com
             {
                 conn.Open();
 
-                // 1. Pending Enrollment Requests
                 string pendingSql = @"
                     SELECT e.EnrollmentID, s.StudentName, e.RequestedDate 
                     FROM dbo.CourseEnrollments e
                     INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
                     WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Pending'";
-                SqlCommand pendingCmd = new SqlCommand(pendingSql, conn);
-                pendingCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                SqlDataAdapter da1 = new SqlDataAdapter(pendingCmd);
-                DataTable dtPending = new DataTable();
-                da1.Fill(dtPending);
-                gvPendingEnrollments.DataSource = dtPending;
-                gvPendingEnrollments.DataBind();
+                using (SqlCommand pendingCmd = new SqlCommand(pendingSql, conn))
+                {
+                    pendingCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    using (SqlDataAdapter da1 = new SqlDataAdapter(pendingCmd))
+                    {
+                        DataTable dtPending = new DataTable();
+                        da1.Fill(dtPending);
+                        gvPendingEnrollments.DataSource = dtPending;
+                        gvPendingEnrollments.DataBind();
+                    }
+                }
 
-                // 2. Active Enrolled Roster
                 string activeSql = @"
                     SELECT s.StudentName, e.ApprovedDate 
                     FROM dbo.CourseEnrollments e
                     INNER JOIN dbo.Students s ON e.StudentID = s.StudentID
                     WHERE e.CourseID = @CourseID AND e.EnrollmentStatus = 'Active'";
-                SqlCommand activeCmd = new SqlCommand(activeSql, conn);
-                activeCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                SqlDataAdapter da2 = new SqlDataAdapter(activeCmd);
-                DataTable dtActive = new DataTable();
-                da2.Fill(dtActive);
-                gvActiveStudents.DataSource = dtActive;
-                gvActiveStudents.DataBind();
+                using (SqlCommand activeCmd = new SqlCommand(activeSql, conn))
+                {
+                    activeCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    using (SqlDataAdapter da2 = new SqlDataAdapter(activeCmd))
+                    {
+                        DataTable dtActive = new DataTable();
+                        da2.Fill(dtActive);
+                        gvActiveStudents.DataSource = dtActive;
+                        gvActiveStudents.DataBind();
+                    }
+                }
 
-                // 3. Dropdown for direct addition
                 string ddlSql = @"
                     SELECT StudentID, StudentName FROM dbo.Students 
                     WHERE StudentID NOT IN (
                         SELECT StudentID FROM dbo.CourseEnrollments 
                         WHERE CourseID = @CourseID AND EnrollmentStatus = 'Active'
                     )";
-                SqlCommand ddlCmd = new SqlCommand(ddlSql, conn);
-                ddlCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                SqlDataReader dr = ddlCmd.ExecuteReader();
-                ddlAvailableStudents.DataSource = dr;
-                ddlAvailableStudents.DataTextField = "StudentName";
-                ddlAvailableStudents.DataValueField = "StudentID";
-                ddlAvailableStudents.DataBind();
+                using (SqlCommand ddlCmd = new SqlCommand(ddlSql, conn))
+                {
+                    ddlCmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                    using (SqlDataReader dr = ddlCmd.ExecuteReader())
+                    {
+                        ddlAvailableStudents.DataSource = dr;
+                        ddlAvailableStudents.DataTextField = "StudentName";
+                        ddlAvailableStudents.DataValueField = "StudentID";
+                        ddlAvailableStudents.DataBind();
+                    }
+                }
             }
         }
 
@@ -1866,11 +2207,13 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 string sql = "UPDATE dbo.CourseEnrollments SET EnrollmentStatus = @Status, ApprovedDate = GETDATE() WHERE EnrollmentID = @ID";
-                SqlCommand cmd = new SqlCommand(sql, conn);
-                cmd.Parameters.AddWithValue("@Status", newStatus);
-                cmd.Parameters.AddWithValue("@ID", enrollmentId);
-                conn.Open();
-                cmd.ExecuteNonQuery();
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@Status", newStatus);
+                    cmd.Parameters.AddWithValue("@ID", enrollmentId);
+                    conn.Open();
+                    cmd.ExecuteNonQuery();
+                }
             }
 
             BindUserManagement();
@@ -1891,11 +2234,13 @@ namespace lms.seihaglobalacademy.com
                         ELSE
                             INSERT INTO dbo.CourseEnrollments (CourseID, StudentID, EnrollmentStatus, ApprovedDate) VALUES (@CourseID, @StudentID, 'Active', GETDATE());";
 
-                    SqlCommand cmd = new SqlCommand(sql, conn);
-                    cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
-                    cmd.Parameters.AddWithValue("@StudentID", studentId);
-                    conn.Open();
-                    cmd.ExecuteNonQuery();
+                    using (SqlCommand cmd = new SqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                        cmd.Parameters.AddWithValue("@StudentID", studentId);
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
                 }
 
                 BindUserManagement();
@@ -1916,14 +2261,5 @@ namespace lms.seihaglobalacademy.com
             pnlTeacherQuizPreview.Visible = false;
             pnlQuizList.Visible = true;
         }
-    }
-
-    public class GradebookEntryModel
-    {
-        public int StudentID { get; set; }
-        public string StudentName { get; set; }
-        public double QuizAverage { get; set; }
-        public double AssignmentAverage { get; set; }
-        public double OverallGrade { get; set; }
     }
 }

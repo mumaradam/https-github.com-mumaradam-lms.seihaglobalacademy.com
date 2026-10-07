@@ -15,6 +15,15 @@ namespace lms.seihaglobalacademy.com
     {
 
         /// <summary>
+        /// phTeacherBanner control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.PlaceHolder phTeacherBanner;
+
+        /// <summary>
         /// pnlModeBanner control.
         /// </summary>
         /// <remarks>
@@ -69,24 +78,6 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.LinkButton btnNavAnnouncements;
 
         /// <summary>
-        /// liQuizzes control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.HtmlControls.HtmlGenericControl liQuizzes;
-
-        /// <summary>
-        /// btnNavQuizzes control.
-        /// </summary>
-        /// <remarks>
-        /// Auto-generated field.
-        /// To modify move field declaration from designer file to code-behind file.
-        /// </remarks>
-        protected global::System.Web.UI.WebControls.LinkButton btnNavQuizzes;
-
-        /// <summary>
         /// liModules control.
         /// </summary>
         /// <remarks>
@@ -103,6 +94,24 @@ namespace lms.seihaglobalacademy.com
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.LinkButton btnNavModules;
+
+        /// <summary>
+        /// liQuizzes control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.HtmlControls.HtmlGenericControl liQuizzes;
+
+        /// <summary>
+        /// btnNavQuizzes control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.LinkButton btnNavQuizzes;
 
         /// <summary>
         /// liAssignments control.
@@ -249,6 +258,15 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.Label lblTeacherPreviewTitle;
 
         /// <summary>
+        /// lblTeacherPreviewInstructions control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblTeacherPreviewInstructions;
+
+        /// <summary>
         /// btnBackFromPreview control.
         /// </summary>
         /// <remarks>
@@ -283,6 +301,15 @@ namespace lms.seihaglobalacademy.com
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.Label lblActiveQuizTitle;
+
+        /// <summary>
+        /// lblActiveQuizInstructions control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblActiveQuizInstructions;
 
         /// <summary>
         /// hfQuizTimeLimitMinutes control.
@@ -780,13 +807,13 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.TextBox txtAnnouncementTitle;
 
         /// <summary>
-        /// txtAnnouncementBody control.
+        /// hfAnnouncementBody control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtAnnouncementBody;
+        protected global::System.Web.UI.WebControls.HiddenField hfAnnouncementBody;
 
         /// <summary>
         /// btnPostAnnouncement control.
@@ -816,13 +843,13 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.TextBox txtEditAnnouncementTitle;
 
         /// <summary>
-        /// txtEditAnnouncementBody control.
+        /// hfEditAnnouncementBody control.
         /// </summary>
         /// <remarks>
         /// Auto-generated field.
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
-        protected global::System.Web.UI.WebControls.TextBox txtEditAnnouncementBody;
+        protected global::System.Web.UI.WebControls.HiddenField hfEditAnnouncementBody;
 
         /// <summary>
         /// btnUpdateAnnouncement control.
@@ -1021,6 +1048,15 @@ namespace lms.seihaglobalacademy.com
         /// To modify move field declaration from designer file to code-behind file.
         /// </remarks>
         protected global::System.Web.UI.WebControls.TextBox txtFormTimeLimit;
+
+        /// <summary>
+        /// txtFormInstructions control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.TextBox txtFormInstructions;
 
         /// <summary>
         /// hfQuizJsonData control.

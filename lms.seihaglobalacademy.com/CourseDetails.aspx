@@ -1,9 +1,54 @@
-﻿<%@ Page Title="Course Details" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CourseDetails.aspx.cs" Inherits="lms.seihaglobalacademy.com.CourseDetails" %>
+<%@ Page Title="Course Details" Language="C#" MasterPageFile="~/Site.Master" AutoEventWireup="true" CodeBehind="CourseDetails.aspx.cs" Inherits="lms.seihaglobalacademy.com.CourseDetails" ResponseEncoding="utf-8" ValidateRequest="false" %>
 
 <asp:Content ID="Content1" ContentPlaceHolderID="HeadContent" runat="server">
     <!-- Google Material Icons CDN -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    
+    <!-- Quill Rich Text Editor CSS -->
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
+
     <style type="text/css">
+
+
+        /* DARK MODE TEXT CONTRAST FIXES FOR LESSONS & MODULES */
+        .dark .feed-card,
+        .dark-mode .feed-card,
+        [data-theme='dark'] .feed-card,
+        body[class*='dark'] .feed-card,
+        .dark .module-card-item,
+        .dark-mode .module-card-item,
+        [data-theme='dark'] .module-card-item,
+        body[class*='dark'] .module-card-item {
+            background-color: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        /* Fix text color inside lesson accordion rows */
+        .dark .feed-card div,
+        .dark-mode .feed-card div,
+        [data-theme='dark'] .feed-card div,
+        body[class*='dark'] .feed-card div {
+            color: #f8fafc !important;
+        }
+
+        /* Fix secondary text (subtitles, locked status notes, descriptions) */
+        .dark .feed-card div[style*="color: #6b7280"],
+        .dark-mode .feed-card div[style*="color: #6b7280"],
+        [data-theme='dark'] .feed-card div[style*="color: #6b7280"],
+        body[class*='dark'] .feed-card div[style*="color: #6b7280"] {
+            color: #94a3b8 !important;
+        }
+
+        /* Fix locked item card background in Dark Mode */
+        .dark .feed-card[style*="background: #f3f4f6"],
+        .dark-mode .feed-card[style*="background: #f3f4f6"],
+        [data-theme='dark'] .feed-card[style*="background: #f3f4f6"],
+        body[class*='dark'] .feed-card[style*="background: #f3f4f6"] {
+            background-color: #0f172a !important;
+            border-color: #334155 !important;
+        }
+
         /* Mode Indicator Banner */
         .mode-banner-student {
             background-color: #fef3c7;
@@ -172,6 +217,25 @@
             position: relative;
         }
 
+        /* Quill Rich Text Editor Container Tweaks */
+        .ql-container.ql-snow {
+            border-bottom-left-radius: 6px;
+            border-bottom-right-radius: 6px;
+            font-family: inherit;
+        }
+        .ql-toolbar.ql-snow {
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            background: #f8fafc;
+        }
+        .announcement-body-content p {
+            margin: 0 0 8px 0;
+        }
+        .announcement-body-content ul, .announcement-body-content ol {
+            padding-left: 20px;
+            margin: 6px 0;
+        }
+
         /* DARK MODE OVERRIDES FOR ALL MODALS */
         .dark .lms-modal-card,
         .dark-mode .lms-modal-card,
@@ -202,11 +266,13 @@
 
 <asp:Content ID="Content2" ContentPlaceHolderID="MainContent" runat="server">
     
-    <!-- Mode Indicator Banner -->
-    <asp:Panel ID="pnlModeBanner" runat="server" CssClass="mode-banner-teacher">
-        <i class="material-icons-outlined" style="font-size: 20px;">info</i>
-        <asp:Label ID="lblModeStatus" runat="server" Text="TEACHER MODE — Full administrative access active."></asp:Label>
-    </asp:Panel>
+    <!-- Mode Indicator Banner (Controlled by C#) -->
+    <asp:PlaceHolder ID="phTeacherBanner" runat="server">
+        <asp:Panel ID="pnlModeBanner" runat="server" CssClass="mode-banner-teacher">
+            <i class="material-icons-outlined" style="font-size: 20px;">info</i>
+            <asp:Label ID="lblModeStatus" runat="server" Text="TEACHER MODE &mdash; Full administrative access active."></asp:Label>
+        </asp:Panel>
+    </asp:PlaceHolder>
 
     <div id="divMainWrapper" runat="server" class="course-layout-wrapper">
         <!-- Left Sub-Navigation Panel -->
@@ -220,14 +286,16 @@
                         <i class="material-icons-outlined">campaign</i> Announcements
                     </asp:LinkButton>
                 </li>
-                <li id="liQuizzes" runat="server">
-                    <asp:LinkButton ID="btnNavQuizzes" runat="server" OnClick="btnNav_Click" CommandArgument="Quizzes">
-                        <i class="material-icons-outlined">assignment_turned_in</i> Tests & Quizzes
-                    </asp:LinkButton>
-                </li>
+                <!-- Modules & Units -->
                 <li id="liModules" runat="server">
                     <asp:LinkButton ID="btnNavModules" runat="server" OnClick="btnNav_Click" CommandArgument="Modules">
                         <i class="material-icons-outlined">view_module</i> Modules & Units
+                    </asp:LinkButton>
+                </li>
+                <!-- Tests & Quizzes -->
+                <li id="liQuizzes" runat="server">
+                    <asp:LinkButton ID="btnNavQuizzes" runat="server" OnClick="btnNav_Click" CommandArgument="Quizzes">
+                        <i class="material-icons-outlined">assignment_turned_in</i> Tests & Quizzes
                     </asp:LinkButton>
                 </li>
                 <li id="liAssignments" runat="server">
@@ -267,8 +335,8 @@
                         <div class="feed-card" style="position: relative;">
                             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                                 <div>
-                                    <div class="feed-card-title">📌 <%# Eval("Title") %></div>
-                                    <div class="feed-card-meta">Posted by <%# Eval("Author") %> • <%# Eval("PostDate") %></div>
+                                    <div class="feed-card-title">&#128204; <%# Eval("Title") %></div>
+                                    <div class="feed-card-meta">Posted by <%# Eval("Author") %> &bull; <%# Eval("PostDate") %></div>
                                 </div>
                                 <asp:PlaceHolder ID="phTeacherAnnouncementActions" runat="server">
                                     <div class="teacher-only-control" style="display: flex; gap: 8px;">
@@ -281,7 +349,9 @@
                                     </div>
                                 </asp:PlaceHolder>
                             </div>
-                            <p style="font-size: 13.5px; color: var(--text-light); margin-top: 10px; line-height: 1.5;"><%# Eval("Body") %></p>
+                            <div style="font-size: 13.5px; color: var(--text-light); margin-top: 10px; line-height: 1.6;" class="announcement-body-content">
+                                <%# Eval("Body") %>
+                            </div>
                         </div>
                     </ItemTemplate>
                 </asp:Repeater>
@@ -334,14 +404,28 @@
                     <div class="feed-card" style="border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h2 style="margin: 0 0 4px 0;"><asp:Label ID="lblTeacherPreviewTitle" runat="server"></asp:Label></h2>
+                            <div style="color: var(--text-muted); font-size: 13px; margin-bottom: 6px;">
+                                <asp:Label ID="lblTeacherPreviewInstructions" runat="server" Text="Please complete all questions below and click Submit."></asp:Label>
+                            </div>
                             <span class="badge-status" style="background: #e0e7ff; color: #3730a3;">Teacher Answer Key Preview</span>
                         </div>
                         <asp:Button ID="btnBackFromPreview" runat="server" Text="Back to Quizzes" CssClass="btn-primary-action" OnClick="btnBackToQuizzes_Click" Style="background: #6b7280;" />
                     </div>
 
-                    <asp:Repeater ID="rptTeacherPreviewQuestions" runat="server">
+                    <asp:Repeater ID="rptTeacherPreviewQuestions" runat="server" OnItemDataBound="rptTeacherPreviewQuestions_ItemDataBound">
                         <ItemTemplate>
                             <div class="feed-card" style="border-left: 4px solid #4f46e5;">
+                                <asp:PlaceHolder ID="phTeacherAudio" runat="server" Visible="false">
+                                    <div style="background:#1e293b;border:1px solid #334155;border-radius:8px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;">
+                                        <i class="material-icons-outlined" style="color:#38bdf8;font-size:22px;">headphones</i>
+                                        <asp:Literal ID="litTeacherAudio" runat="server"></asp:Literal>
+                                    </div>
+                                </asp:PlaceHolder>
+                                <asp:PlaceHolder ID="phTeacherImage" runat="server" Visible="false">
+                                    <div style="margin-bottom:12px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;text-align:center;background:#f8fafc;padding:8px;">
+                                        <asp:Image ID="imgTeacherQuestion" runat="server" Style="max-width:100%;max-height:280px;object-fit:contain;" AlternateText="Question image" />
+                                    </div>
+                                </asp:PlaceHolder>
                                 <div style="font-weight: 600; font-size: 15px; margin-bottom: 8px;">
                                     <%# Container.ItemIndex + 1 %>. <%# Eval("QuestionText") %>
                                 </div>
@@ -352,7 +436,7 @@
                                     <div>D. <%# Eval("OptionD") %></div>
                                 </div>
                                 <div style="margin-top: 10px; font-size: 13px; font-weight: 600; color: #059669;">
-                                    ✔ Correct Answer Key: Option <%# Eval("CorrectAnswer") %>
+                                    &#10004; Correct Answer Key: Option <%# Eval("CorrectAnswer") %>
                                 </div>
                             </div>
                         </ItemTemplate>
@@ -364,7 +448,9 @@
                     <div class="feed-card" style="border-top: none; border-radius: 0 0 8px 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
                         <div>
                             <h2 style="margin: 0 0 8px 0;"><asp:Label ID="lblActiveQuizTitle" runat="server"></asp:Label></h2>
-                            <div style="color: var(--text-muted); font-size: 13px;">Please complete all questions below and click Submit.</div>
+                            <div style="color: var(--text-muted); font-size: 13px;">
+                                <asp:Label ID="lblActiveQuizInstructions" runat="server" Text="Please complete all questions below and click Submit."></asp:Label>
+                            </div>
                         </div>
                         <div style="background: #1e293b; color: #f8fafc; padding: 10px 16px; border-radius: 8px; text-align: center; border: 1px solid #334155;">
                             <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600;">Time Remaining</div>
@@ -377,6 +463,22 @@
                     <asp:Repeater ID="rptFormQuestions" runat="server" OnItemDataBound="rptFormQuestions_ItemDataBound">
                         <ItemTemplate>
                             <div class="feed-card">
+                                <asp:PlaceHolder ID="phQuizAudio" runat="server" Visible="false">
+                                    <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
+                                        <i class="material-icons-outlined" style="color: #38bdf8; font-size: 24px;">headphones</i>
+                                        <div style="flex: 1;">
+                                            <div style="font-size: 11px; text-transform: uppercase; color: #94a3b8; font-weight: 600; margin-bottom: 6px;">Listening Passage &mdash; Play the audio before answering</div>
+                                            <asp:Literal ID="litQuizAudio" runat="server"></asp:Literal>
+                                        </div>
+                                    </div>
+                                </asp:PlaceHolder>
+
+                                <asp:PlaceHolder ID="phQuizImage" runat="server" Visible="false">
+                                    <div style="margin-bottom: 14px; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; text-align: center; background: #f8fafc;">
+                                        <asp:Image ID="imgQuizQuestion" runat="server" Style="max-width: 100%; max-height: 320px; object-fit: contain; display: block; margin: 0 auto;" AlternateText="Question image" />
+                                    </div>
+                                </asp:PlaceHolder>
+
                                 <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px;">
                                     <%# Container.ItemIndex + 1 %>. <%# Eval("QuestionText") %> <span style="color: #ef4444;">*</span>
                                 </div>
@@ -430,7 +532,7 @@
                 <div class="workspace-header">
                     <div class="workspace-title">Modules & Units</div>
                     <div style="display: flex; gap: 10px;">
-                        <asp:Button ID="btnBackToModulesGrid" runat="server" Text="← Back to All Units" CssClass="btn-primary-action" OnClick="btnBackToModulesGrid_Click" Visible="false" Style="background: #6b7280;" />
+                        <asp:Button ID="btnBackToModulesGrid" runat="server" Text="&larr; Back to All Units" CssClass="btn-primary-action" OnClick="btnBackToModulesGrid_Click" Visible="false" Style="background: #6b7280;" />
                         <asp:PlaceHolder ID="phNewModuleBtn" runat="server">
                             <asp:LinkButton ID="btnOpenModuleModal" runat="server" CssClass="btn-primary-action teacher-only-control" OnClientClick="openModal('moduleModal'); return false;">
                                 <i class="material-icons-outlined" style="font-size: 18px;">add</i> New Module
@@ -445,8 +547,6 @@
                         <asp:Repeater ID="rptModules" runat="server" OnItemCommand="rptModules_ItemCommand" OnItemDataBound="rptModules_ItemDataBound">
                             <ItemTemplate>
                                 <div class="module-card-item">
-                                    
-                                    <!-- Floating Edit / Delete Actions (Teacher Only) -->
                                     <asp:PlaceHolder ID="phTeacherModuleActions" runat="server">
                                         <div class="module-card-actions teacher-only-control">
                                             <asp:LinkButton ID="btnEditModule" runat="server" CommandName="EditModule" CommandArgument='<%# Eval("ModuleID") %>' ToolTip="Edit Module">
@@ -458,17 +558,15 @@
                                         </div>
                                     </asp:PlaceHolder>
 
-                                    <!-- Main Module Card Content -->
                                     <asp:LinkButton ID="btnSelectModule" runat="server" CommandName="SelectModule" CommandArgument='<%# Eval("ModuleID") %>' Style="text-decoration: none; color: inherit; display: block;">
                                         <div style="height: 100px; background-color: #2563eb; padding: 16px; box-sizing: border-box; display: flex; align-items: flex-end;">
                                             <h3 style="color: #ffffff; margin: 0; font-size: 18px; font-weight: 700;"><%# Eval("UnitTitle") %></h3>
                                         </div>
                                         <div style="padding: 14px 16px;">
-                                            <div style="font-size: 13px; color: #6b7280;"><%# Eval("LessonCount") %> Lessons • <%# Eval("FocusArea") %></div>
-                                            <div style="font-size: 12px; color: #2563eb; margin-top: 10px; font-weight: 600;">Click to view content →</div>
+                                            <div style="font-size: 13px; color: #6b7280;"><%# Eval("LessonCount") %> Lessons &bull; <%# Eval("FocusArea") %></div>
+                                            <div style="font-size: 12px; color: #2563eb; margin-top: 10px; font-weight: 600;">Click to view content &rarr;</div>
                                         </div>
                                     </asp:LinkButton>
-
                                 </div>
                             </ItemTemplate>
                         </asp:Repeater>
@@ -495,21 +593,20 @@
                         <asp:Repeater ID="rptLessons" runat="server" OnItemCommand="rptLessons_ItemCommand" OnItemDataBound="rptLessons_ItemDataBound">
                             <ItemTemplate>
                                 <div class="feed-card" style='<%# (bool)Eval("IsUnlocked") ? "margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; background: #ffffff; border: 1px solid #e5e7eb; padding: 14px 16px; border-radius: 8px;" : "margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; background: #f3f4f6; border: 1px solid #e5e7eb; padding: 14px 16px; border-radius: 8px; opacity: 0.6;" %>'>
-                                    
                                     <div style="display: flex; align-items: center; gap: 14px;">
                                         <i class="material-icons-outlined" style='<%# (bool)Eval("IsUnlocked") ? "font-size: 24px; color: #2563eb;" : "font-size: 24px; color: #9ca3af;" %>'>
                                             <%# (bool)Eval("IsUnlocked") ? GetContentTypeIcon(Eval("ContentType").ToString()) : "lock" %>
                                         </i>
                                         <div>
-                                            <div style='<%# (bool)Eval("IsUnlocked") ? "font-weight: 600; font-size: 15px; color: #111827;" : "font-weight: 600; font-size: 15px; color: #6b7280;" %>'>
-                                                <%# Eval("LessonTitle") %>
-                                            </div>
-                                            <div style="font-size: 12.5px; color: #6b7280; margin-top: 2px;">
+                                            <div class="lesson-title-text" style="font-weight: 600; font-size: 15px;">
+                                                    <%# Eval("LessonTitle") %>
+                                                </div>
+                                                <div class="lesson-sub-text" style="font-size: 12.5px; margin-top: 2px;">
                                                 <%# (bool)Eval("IsUnlocked") 
                                                     ? (Eval("ContentDetails").ToString().StartsWith("~/Uploads/") 
                                                         ? "<a href='" + ResolveUrl(Eval("ContentDetails").ToString()) + "' target='_blank' style='color:#2563eb; text-decoration:underline;'>Download Attached File</a>" 
                                                         : Eval("ContentDetails"))
-                                                    : "<span style='color: #ef4444;'>Locked — Complete the previous item to unlock</span>" %>
+                                                    : "<span style='color: #ef4444;'>Locked &mdash; Complete the previous item to unlock</span>" %>
                                             </div>
                                         </div>
                                     </div>
@@ -545,7 +642,6 @@
                                             </div>
                                         </asp:PlaceHolder>
                                     </div>
-
                                 </div>
                             </ItemTemplate>
                         </asp:Repeater>
@@ -553,7 +649,7 @@
                 </asp:Panel>
             </asp:Panel>
 
-            <!-- SECTION 4: ENHANCED ASSIGNMENTS PANEL -->
+            <!-- SECTION 4: ASSIGNMENTS PANEL -->
             <asp:Panel ID="pnlAssignments" runat="server" Visible="false">
                 <div class="workspace-header">
                     <div class="workspace-title">Assignments</div>
@@ -580,7 +676,6 @@
                                     View Details
                                 </asp:LinkButton>
 
-                                <!-- Teacher Actions: Edit & Delete -->
                                 <asp:PlaceHolder ID="phTeacherAssignmentActions" runat="server">
                                     <div class="teacher-only-control" style="display: flex; gap: 6px; margin-left: 4px;">
                                         <asp:LinkButton ID="btnEditAssignment" runat="server" CommandName="EditAssignment" CommandArgument='<%# Eval("AssignmentID") %>' Style="color: #60a5fa; text-decoration: none;" ToolTip="Edit Assignment">
@@ -599,7 +694,7 @@
                 <!-- ASSIGNMENT DETAIL VIEW PANEL -->
                 <asp:Panel ID="pnlAssignmentDetail" runat="server" Visible="false" Style="max-width: 760px; margin: 0 auto;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <asp:Button ID="btnBackToAssignments" runat="server" Text="← Back to Assignments" CssClass="btn-primary-action" OnClick="btnBackToAssignments_Click" Style="background: #6b7280;" />
+                        <asp:Button ID="btnBackToAssignments" runat="server" Text="&larr; Back to Assignments" CssClass="btn-primary-action" OnClick="btnBackToAssignments_Click" Style="background: #6b7280;" />
                         <asp:HiddenField ID="hfActiveAssignmentID" runat="server" />
                     </div>
 
@@ -616,9 +711,7 @@
                         </div>
                     </div>
 
-                    <!-- STUDENT SUBMISSION FORM & GRADE RESULT CARD -->
                     <asp:Panel ID="pnlStudentSubmission" runat="server">
-                        <!-- STUDENT GRADE & FEEDBACK DISPLAY -->
                         <asp:Panel ID="pnlStudentFeedbackCard" runat="server" CssClass="feed-card" Style="margin-bottom: 20px; border-left: 4px solid #059669; background: #f0fdf4;">
                             <h3 style="margin: 0 0 10px 0; color: #166534; font-size: 16px; display: flex; align-items: center; gap: 6px;">
                                 <i class="material-icons-outlined" style="font-size: 20px;">verified</i> Grade & Teacher Feedback
@@ -631,7 +724,6 @@
                             </div>
                         </asp:Panel>
 
-                        <!-- STUDENT SUBMISSION FORM -->
                         <div class="feed-card">
                             <h3 style="margin-top: 0;">Submit Your Work</h3>
                             <div class="form-group" style="margin-top: 12px;">
@@ -646,7 +738,6 @@
                         </div>
                     </asp:Panel>
 
-                    <!-- TEACHER SUBMISSIONS VIEW & MANUAL GRADING TABLE WITH VIDEO PLAYER -->
                     <asp:Panel ID="pnlTeacherSubmissions" runat="server" CssClass="feed-card" Visible="false">
                         <h3 style="margin-top: 0; margin-bottom: 12px;">Submitted Student Work</h3>
                         <div class="lms-table-container">
@@ -729,7 +820,7 @@
                 </asp:GridView>
             </asp:Panel>
 
-            <!-- SECTION 6: USER MANAGEMENT & ENROLLMENTS PANEL -->
+            <!-- SECTION 6: USER MANAGEMENT PANEL -->
             <asp:Panel ID="pnlUserManagement" runat="server" Visible="false">
                 <div class="workspace-header">
                     <div class="workspace-title">User Management & Enrollments</div>
@@ -738,7 +829,6 @@
                     </asp:LinkButton>
                 </div>
 
-                <!-- Pending Approval Requests Table -->
                 <h4 style="margin: 16px 0 8px 0; font-size: 15px;">Pending Approval Requests</h4>
                 <asp:GridView ID="gvPendingEnrollments" runat="server" AutoGenerateColumns="False" CssClass="lms-table" GridLines="None" OnRowCommand="gvPendingEnrollments_RowCommand">
                     <HeaderStyle BackColor="#f9fafb" ForeColor="#374151" Font-Bold="true" />
@@ -757,7 +847,6 @@
                     </EmptyDataTemplate>
                 </asp:GridView>
 
-                <!-- Active Enrolled Roster Table -->
                 <h4 style="margin: 24px 0 8px 0; font-size: 15px;">Active Roster</h4>
                 <asp:GridView ID="gvActiveStudents" runat="server" AutoGenerateColumns="False" CssClass="lms-table" GridLines="None">
                     <HeaderStyle BackColor="#f9fafb" ForeColor="#374151" Font-Bold="true" />
@@ -779,7 +868,7 @@
         </div>
     </div>
 
-    <!-- EDIT MODULE MODAL (TEACHER SIDE) -->
+    <!-- MODALS -->
     <div id="editModuleModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -804,7 +893,6 @@
         </div>
     </div>
 
-    <!-- DIRECT ENROLLMENT MODAL -->
     <div id="addStudentModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -824,9 +912,9 @@
         </div>
     </div>
 
-    <!-- CREATE ANNOUNCEMENT MODAL -->
+    <!-- Post Announcement Modal with Quill Rich Text Editor -->
     <div id="announcementModal" class="lms-modal-overlay">
-        <div class="lms-modal-card">
+        <div class="lms-modal-card" style="max-width: 650px;">
             <div class="lms-modal-header">
                 <h3>Post Announcement</h3>
                 <button type="button" class="modal-close-btn" onclick="closeModal('announcementModal');">&times;</button>
@@ -838,19 +926,20 @@
                 </div>
                 <div class="form-group">
                     <label>Message <span class="required-star">*</span></label>
-                    <asp:TextBox ID="txtAnnouncementBody" runat="server" TextMode="MultiLine" Rows="4" CssClass="form-control" placeholder="Write your announcement here..."></asp:TextBox>
+                    <div id="quillNewAnnouncement" style="height: 180px; background: #fff;"></div>
+                    <asp:HiddenField ID="hfAnnouncementBody" runat="server" ClientIDMode="Static" />
                 </div>
             </div>
             <div class="lms-modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeModal('announcementModal');">Cancel</button>
-                <asp:Button ID="btnPostAnnouncement" runat="server" Text="Post Announcement" CssClass="btn-submit" OnClick="btnPostAnnouncement_Click" />
+                <asp:Button ID="btnPostAnnouncement" runat="server" Text="Post Announcement" CssClass="btn-submit" OnClientClick="return syncQuillNew();" OnClick="btnPostAnnouncement_Click" />
             </div>
         </div>
     </div>
 
-    <!-- EDIT ANNOUNCEMENT MODAL -->
+    <!-- Edit Announcement Modal with Quill Rich Text Editor -->
     <div id="editAnnouncementModal" class="lms-modal-overlay">
-        <div class="lms-modal-card">
+        <div class="lms-modal-card" style="max-width: 650px;">
             <div class="lms-modal-header">
                 <h3>Edit Announcement</h3>
                 <button type="button" class="modal-close-btn" onclick="closeModal('editAnnouncementModal');">&times;</button>
@@ -863,17 +952,17 @@
                 </div>
                 <div class="form-group">
                     <label>Message <span class="required-star">*</span></label>
-                    <asp:TextBox ID="txtEditAnnouncementBody" runat="server" TextMode="MultiLine" Rows="4" CssClass="form-control"></asp:TextBox>
+                    <div id="quillEditAnnouncement" style="height: 180px; background: #fff;"></div>
+                    <asp:HiddenField ID="hfEditAnnouncementBody" runat="server" ClientIDMode="Static" />
                 </div>
             </div>
             <div class="lms-modal-footer">
                 <button type="button" class="btn-cancel" onclick="closeModal('editAnnouncementModal');">Cancel</button>
-                <asp:Button ID="btnUpdateAnnouncement" runat="server" Text="Update Post" CssClass="btn-submit" OnClick="btnUpdateAnnouncement_Click" />
+                <asp:Button ID="btnUpdateAnnouncement" runat="server" Text="Update Post" CssClass="btn-submit" OnClientClick="return syncQuillEdit();" OnClick="btnUpdateAnnouncement_Click" />
             </div>
         </div>
     </div>
 
-    <!-- CREATE MODULE MODAL -->
     <div id="moduleModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -901,7 +990,6 @@
         </div>
     </div>
 
-    <!-- ADD LESSON / CONTENT MODAL -->
     <div id="addLessonModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -941,7 +1029,6 @@
         </div>
     </div>
 
-    <!-- EDIT LESSON / CONTENT MODAL -->
     <div id="editLessonModal" class="lms-modal-overlay">
         <div class="lms-modal-card">
             <div class="lms-modal-header">
@@ -981,7 +1068,6 @@
         </div>
     </div>
 
-    <!-- DYNAMIC GOOGLE FORM STYLE QUIZ MODAL (CREATE / EDIT) -->
     <div id="quizFormModal" class="lms-modal-overlay">
         <div class="lms-modal-card" style="max-width: 680px; max-height: 85vh; overflow-y: auto;">
             <div class="lms-modal-header">
@@ -1011,6 +1097,11 @@
                     <asp:TextBox ID="txtFormTimeLimit" runat="server" ClientIDMode="Static" CssClass="form-control" placeholder="15"></asp:TextBox>
                 </div>
 
+                <div class="form-group">
+                    <label>Instructions / Directions</label>
+                    <asp:TextBox ID="txtFormInstructions" runat="server" ClientIDMode="Static" TextMode="MultiLine" Rows="2" CssClass="form-control" placeholder="e.g. Please complete all questions below and click Submit."></asp:TextBox>
+                </div>
+
                 <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 20px 0;" />
 
                 <div id="questionsContainer"></div>
@@ -1028,7 +1119,6 @@
         </div>
     </div>
 
-    <!-- ENHANCED CREATE ASSIGNMENT MODAL -->
     <div id="assignmentModal" class="lms-modal-overlay">
         <div class="lms-modal-card" style="max-width: 520px;">
             <div class="lms-modal-header">
@@ -1069,7 +1159,6 @@
         </div>
     </div>
 
-    <!-- EDIT ASSIGNMENT MODAL -->
     <div id="editAssignmentModal" class="lms-modal-overlay">
         <div class="lms-modal-card" style="max-width: 520px;">
             <div class="lms-modal-header">
@@ -1111,6 +1200,9 @@
         </div>
     </div>
 
+    <!-- Quill Rich Text Editor Script CDN -->
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
     <script type="text/javascript">
         function openModal(id = "") {
             var modal = document.getElementById(id);
@@ -1121,6 +1213,50 @@
             var modal = document.getElementById(id);
             if (modal) modal.classList.remove("show");
         }
+
+        /* QUILL RICH TEXT EDITOR INITIALIZATION */
+        var quillToolbarOptions = [
+            [{ 'header': [1, 2, 3, false] }],
+            ['bold', 'italic', 'underline', 'strike'],
+            [{ 'color': [] }, { 'background': [] }],          // Font colors & highlight colors
+            [{ 'list': 'ordered' }, { 'list': 'bullet' }],     // Ordered and Bulleted lists
+            [{ 'align': [] }],
+            ['clean']                                         // Clear formatting button
+        ];
+
+        var quillNew = new Quill('#quillNewAnnouncement', {
+            theme: 'snow',
+            modules: { toolbar: quillToolbarOptions },
+            placeholder: 'Write your announcement message here...'
+        });
+
+        var quillEdit = new Quill('#quillEditAnnouncement', {
+            theme: 'snow',
+            modules: { toolbar: quillToolbarOptions }
+        });
+
+        function syncQuillNew() {
+            var hiddenInput = document.getElementById('hfAnnouncementBody');
+            if (hiddenInput && quillNew) {
+                hiddenInput.value = encodeURIComponent(quillNew.root.innerHTML);
+            }
+            return true;
+        }
+
+        function syncQuillEdit() {
+            var hiddenInput = document.getElementById('hfEditAnnouncementBody');
+            if (hiddenInput && quillEdit) {
+                hiddenInput.value = encodeURIComponent(quillEdit.root.innerHTML);
+            }
+            return true;
+        }
+
+        function loadQuillEditContent(htmlContent) {
+            if (quillEdit) {
+                quillEdit.root.innerHTML = decodeURIComponent(htmlContent);
+            }
+        }
+
         let questionCounter = 0;
         
         /** @type {any} */
@@ -1170,6 +1306,7 @@
             var txtFormOpenDate = document.getElementById('txtFormOpenDate');
             var txtFormCloseDate = document.getElementById('txtFormCloseDate');
             var txtFormTimeLimit = document.getElementById('txtFormTimeLimit');
+            var txtFormInstructions = document.getElementById('txtFormInstructions');
             var headerTitle = document.getElementById('quizModalHeaderTitle');
 
             if (hfEditQuizID) Object(hfEditQuizID).value = '';
@@ -1177,6 +1314,7 @@
             if (txtFormOpenDate) Object(txtFormOpenDate).value = '';
             if (txtFormCloseDate) Object(txtFormCloseDate).value = '';
             if (txtFormTimeLimit) Object(txtFormTimeLimit).value = '';
+            if (txtFormInstructions) Object(txtFormInstructions).value = '';
             if (headerTitle) headerTitle.innerText = 'Create Google Form-style Quiz';
 
             const container = document.getElementById('questionsContainer');
@@ -1199,7 +1337,25 @@
 
             if (jsonVal) {
                 try {
-                    const questions = JSON.parse(jsonVal);
+                    const parsedData = JSON.parse(jsonVal);
+                    
+                    // If stored as object with instructions metadata or array
+                    let questions = [];
+                    let instructionsText = '';
+
+                    if (Array.isArray(parsedData)) {
+                        questions = parsedData;
+                        if (questions.length > 0 && questions[0].Instructions) {
+                            instructionsText = questions[0].Instructions;
+                        }
+                    } else if (typeof parsedData === 'object' && parsedData !== null) {
+                        questions = parsedData.Questions || [];
+                        instructionsText = parsedData.Instructions || '';
+                    }
+
+                    var txtInstructions = document.getElementById('txtFormInstructions');
+                    if (txtInstructions) Object(txtInstructions).value = instructionsText;
+
                     questions.forEach(function (q = null) {
                         addQuestionCard(q);
                     });
@@ -1228,14 +1384,53 @@
             const optC = data && Object(data).OptionC ? Object(data).OptionC : '';
             const optD = data && Object(data).OptionD ? Object(data).OptionD : '';
             const correct = data && Object(data).CorrectAnswer ? Object(data).CorrectAnswer : 'A';
+            const imgPath = data && Object(data).ImagePath ? Object(data).ImagePath : '';
+            const audioPath = data && Object(data).AudioPath ? Object(data).AudioPath : '';
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
                     <strong>Question ${questionCounter}</strong>
                     <button type="button" onclick="removeQuestionCard(${questionCounter})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: 600;">Remove</button>
                 </div>
+
+                <!-- TOEIC Media Attachment Toolbar -->
+                <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
+                    <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
+                        <i class="material-icons-outlined" style="font-size: 15px; color: #2563eb;">attachment</i>
+                        TOEIC Media Attachments (Optional)
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                        <div>
+                            <label style="font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                <i class="material-icons-outlined" style="font-size: 16px; color: #0284c7;">image</i> Photograph / Diagram
+                            </label>
+                            <input type="file" accept="image/*" class="form-control q-img-file" style="font-size: 12px; padding: 4px 8px;" onchange="handleQuestionImageUpload(this, ${questionCounter})" />
+                            <input type="hidden" class="q-img-data" value="${imgPath}" />
+                            
+                            <div class="q-img-preview-box" id="imgPreviewBox_${questionCounter}" style="margin-top: 6px; ${imgPath ? '' : 'display:none;'} position: relative; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff; max-height: 140px; text-align: center;">
+                                <img src="${imgPath ? (imgPath.startsWith('~') ? imgPath.replace('~', '') : imgPath) : ''}" id="imgPreview_${questionCounter}" style="max-height: 130px; max-width: 100%; object-fit: contain; display: inline-block;" />
+                                <button type="button" onclick="clearQuestionImage(${questionCounter})" title="Remove Image" style="position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.9); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; line-height: 22px; text-align: center;">&times;</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label style="font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
+                                <i class="material-icons-outlined" style="font-size: 16px; color: #8b5cf6;">headphones</i> Listening Audio Passage
+                            </label>
+                            <input type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" class="form-control q-audio-file" style="font-size: 12px; padding: 4px 8px;" onchange="handleQuestionAudioUpload(this, ${questionCounter})" />
+                            <input type="hidden" class="q-audio-data" value="${audioPath}" />
+                            
+                            <div class="q-audio-preview-box" id="audioPreviewBox_${questionCounter}" style="margin-top: 6px; ${audioPath ? '' : 'display:none;'} display: flex; align-items: center; gap: 6px;">
+                                <audio controls id="audioPreview_${questionCounter}" src="${audioPath ? (audioPath.startsWith('~') ? audioPath.replace('~', '') : audioPath) : ''}" style="width: 100%; height: 32px;"></audio>
+                                <button type="button" onclick="clearQuestionAudio(${questionCounter})" title="Remove Audio" style="background: rgba(239,68,68,0.9); color: #fff; border: none; border-radius: 4px; padding: 4px 6px; cursor: pointer; font-size: 12px;">&times;</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-group" style="margin-bottom: 10px;">
-                    <input type="text" class="form-control q-text" placeholder="Question prompt..." value="${qText}" />
+                    <input type="text" class="form-control q-text" placeholder="Question prompt (e.g. Look at the photograph and choose the best statement)..." value="${qText}" />
                 </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
                     <input type="text" class="form-control opt-a" placeholder="Option A" value="${optA}" />
@@ -1256,6 +1451,74 @@
             container.appendChild(card);
         }
 
+        function handleQuestionImageUpload(input, qId) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataUrl = e.target.result;
+                    const card = document.getElementById('qCard_' + qId);
+                    if (card) {
+                        const hiddenInput = card.querySelector('.q-img-data');
+                        if (hiddenInput) hiddenInput.value = dataUrl;
+                        const previewBox = document.getElementById('imgPreviewBox_' + qId);
+                        const previewImg = document.getElementById('imgPreview_' + qId);
+                        if (previewImg) previewImg.src = dataUrl;
+                        if (previewBox) previewBox.style.display = 'block';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearQuestionImage(qId) {
+            const card = document.getElementById('qCard_' + qId);
+            if (card) {
+                const hiddenInput = card.querySelector('.q-img-data');
+                if (hiddenInput) hiddenInput.value = '';
+                const fileInput = card.querySelector('.q-img-file');
+                if (fileInput) fileInput.value = '';
+                const previewBox = document.getElementById('imgPreviewBox_' + qId);
+                const previewImg = document.getElementById('imgPreview_' + qId);
+                if (previewImg) previewImg.src = '';
+                if (previewBox) previewBox.style.display = 'none';
+            }
+        }
+
+        function handleQuestionAudioUpload(input, qId) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const dataUrl = e.target.result;
+                    const card = document.getElementById('qCard_' + qId);
+                    if (card) {
+                        const hiddenInput = card.querySelector('.q-audio-data');
+                        if (hiddenInput) hiddenInput.value = dataUrl;
+                        const previewBox = document.getElementById('audioPreviewBox_' + qId);
+                        const previewAudio = document.getElementById('audioPreview_' + qId);
+                        if (previewAudio) previewAudio.src = dataUrl;
+                        if (previewBox) previewBox.style.display = 'flex';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function clearQuestionAudio(qId) {
+            const card = document.getElementById('qCard_' + qId);
+            if (card) {
+                const hiddenInput = card.querySelector('.q-audio-data');
+                if (hiddenInput) hiddenInput.value = '';
+                const fileInput = card.querySelector('.q-audio-file');
+                if (fileInput) fileInput.value = '';
+                const previewBox = document.getElementById('audioPreviewBox_' + qId);
+                const previewAudio = document.getElementById('audioPreview_' + qId);
+                if (previewAudio) previewAudio.src = '';
+                if (previewBox) previewBox.style.display = 'none';
+            }
+        }
+
         /** @param {number} id */
         function removeQuestionCard(id = 0) {
             const card = document.getElementById('qCard_' + id);
@@ -1264,9 +1527,10 @@
 
         function prepareQuizJson() {
             const cards = document.querySelectorAll('.question-builder-card');
+            var txtInstructions = document.getElementById('txtFormInstructions');
+            var instructionsVal = txtInstructions ? Object(txtInstructions).value.trim() : '';
 
-            var questions = [Object({ QuestionText: '', OptionA: '', OptionB: '', OptionC: '', OptionD: '', CorrectAnswer: '' })];
-            questions.pop();
+            var questions = [];
 
             cards.forEach(function (card) {
                 const qInput = card.querySelector('.q-text');
@@ -1275,6 +1539,8 @@
                 const optCInput = card.querySelector('.opt-c');
                 const optDInput = card.querySelector('.opt-d');
                 const correctSelect = card.querySelector('.correct-opt');
+                const imgDataInput = card.querySelector('.q-img-data');
+                const audioDataInput = card.querySelector('.q-audio-data');
 
                 const text = qInput ? Object(qInput).value.trim() : '';
                 const optA = optAInput ? Object(optAInput).value.trim() : '';
@@ -1282,15 +1548,20 @@
                 const optC = optCInput ? Object(optCInput).value.trim() : '';
                 const optD = optDInput ? Object(optDInput).value.trim() : '';
                 const correct = correctSelect ? Object(correctSelect).value : 'A';
+                const imgPath = imgDataInput ? Object(imgDataInput).value : '';
+                const audioPath = audioDataInput ? Object(audioDataInput).value : '';
 
                 if (text && optA) {
                     questions.push({
                         QuestionText: text,
                         OptionA: optA,
-                        OptionB: optB || "Option B",
-                        OptionC: optC || "Option C",
-                        OptionD: optD || "Option D",
-                        CorrectAnswer: correct
+                        OptionB: optB,
+                        OptionC: optC,
+                        OptionD: optD,
+                        CorrectAnswer: correct,
+                        ImagePath: imgPath,
+                        AudioPath: audioPath,
+                        Instructions: instructionsVal
                     });
                 }
             });
