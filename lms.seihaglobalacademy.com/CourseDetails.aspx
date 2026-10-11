@@ -8,7 +8,21 @@
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet" />
 
     <style type="text/css">
+        /* QUILL ALIGNMENT & CONTENT FORMATTING FIXES */
+        .announcement-body-content .ql-align-center,
+        .ql-align-center {
+            text-align: center !important;
+        }
 
+        .announcement-body-content .ql-align-right,
+        .ql-align-right {
+            text-align: right !important;
+        }
+
+        .announcement-body-content .ql-align-justify,
+        .ql-align-justify {
+            text-align: justify !important;
+        }
 
         /* DARK MODE TEXT CONTRAST FIXES FOR LESSONS & MODULES */
         .dark .feed-card,
@@ -218,6 +232,16 @@
         }
 
         /* Quill Rich Text Editor Container Tweaks */
+        .ql-editor {
+            color: #1f2937 !important;
+            font-size: 14px;
+        }
+
+        /* Fix placeholder text styling inside Quill */
+        .ql-editor.ql-blank::before {
+            color: #9ca3af !important;
+            font-style: normal;
+        }
         .ql-container.ql-snow {
             border-bottom-left-radius: 6px;
             border-bottom-right-radius: 6px;
@@ -463,6 +487,23 @@
                     <asp:Repeater ID="rptFormQuestions" runat="server" OnItemDataBound="rptFormQuestions_ItemDataBound">
                         <ItemTemplate>
                             <div class="feed-card">
+                                <div style="font-size: 11px; text-transform: uppercase; font-weight: 700; color: #4f46e5; margin-bottom: 4px;">
+                                        <%# Eval("QuestionType") %>
+                                    </div>
+                                    <div style="font-weight: 600; font-size: 15px; margin-bottom: 12px;">
+                                        <%# Container.ItemIndex + 1 %>. <%# Eval("QuestionText") %> <span style="color: #ef4444;">*</span>
+                                    </div>
+
+                                    <!-- Multiple Choice & True/False -->
+                                    <asp:RadioButtonList ID="RadioButtonList1" runat="server" CssClass="form-options-list" Visible="false" Style="margin-left: 8px; font-size: 13.5px; line-height: 1.8;">
+                                    </asp:RadioButtonList>
+
+                                    <!-- Identification, Fill in Blank, Enumeration -->
+                                    <asp:TextBox ID="txtShortAnswer" runat="server" CssClass="form-control" Visible="false" placeholder="Type your answer here..."></asp:TextBox>
+
+                                    <!-- Essay -->
+                                    <asp:TextBox ID="txtEssayAnswer" runat="server" TextMode="MultiLine" Rows="4" CssClass="form-control" Visible="false" placeholder="Write your response here..."></asp:TextBox>
+                                </div>
                                 <asp:PlaceHolder ID="phQuizAudio" runat="server" Visible="false">
                                     <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; display: flex; align-items: center; gap: 12px;">
                                         <i class="material-icons-outlined" style="color: #38bdf8; font-size: 24px;">headphones</i>
@@ -676,7 +717,7 @@
                                     View Details
                                 </asp:LinkButton>
 
-                                <asp:PlaceHolder ID="phTeacherAssignmentActions" runat="server">
+                                <asp:PlaceHolder ID="phTeacherAssignmentActions" runat="server" Visible='<%# !IsStudentView() %>'>
                                     <div class="teacher-only-control" style="display: flex; gap: 6px; margin-left: 4px;">
                                         <asp:LinkButton ID="btnEditAssignment" runat="server" CommandName="EditAssignment" CommandArgument='<%# Eval("AssignmentID") %>' Style="color: #60a5fa; text-decoration: none;" ToolTip="Edit Assignment">
                                             <i class="material-icons-outlined" style="font-size: 18px;">edit</i>
@@ -1339,7 +1380,6 @@
                 try {
                     const parsedData = JSON.parse(jsonVal);
                     
-                    // If stored as object with instructions metadata or array
                     let questions = [];
                     let instructionsText = '';
 
@@ -1378,14 +1418,18 @@
             card.className = 'feed-card question-builder-card';
             card.id = 'qCard_' + questionCounter;
 
-            const qText = data && Object(data).QuestionText ? Object(data).QuestionText : '';
-            const optA = data && Object(data).OptionA ? Object(data).OptionA : '';
-            const optB = data && Object(data).OptionB ? Object(data).OptionB : '';
-            const optC = data && Object(data).OptionC ? Object(data).OptionC : '';
-            const optD = data && Object(data).OptionD ? Object(data).OptionD : '';
-            const correct = data && Object(data).CorrectAnswer ? Object(data).CorrectAnswer : 'A';
-            const imgPath = data && Object(data).ImagePath ? Object(data).ImagePath : '';
-            const audioPath = data && Object(data).AudioPath ? Object(data).AudioPath : '';
+            const qType = data && data.QuestionType ? data.QuestionType : 'Multiple Choice';
+            const qText = data && data.QuestionText ? data.QuestionText : '';
+            const optA = data && data.OptionA ? data.OptionA : '';
+            const optB = data && data.OptionB ? data.OptionB : '';
+            const optC = data && data.OptionC ? data.OptionC : '';
+            const optD = data && data.OptionD ? data.OptionD : '';
+            const correct = data && data.CorrectAnswer ? data.CorrectAnswer : 'A';
+            const textAns = data && data.CorrectTextAnswer ? data.CorrectTextAnswer : '';
+            const enumAns = data && data.EnumerationAnswers ? data.EnumerationAnswers : '';
+            const matchJson = data && data.MatchingPairsJson ? data.MatchingPairsJson : '';
+            const imgPath = data && data.ImagePath ? data.ImagePath : '';
+            const audioPath = data && data.AudioPath ? data.AudioPath : '';
 
             card.innerHTML = `
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
@@ -1393,172 +1437,154 @@
                     <button type="button" onclick="removeQuestionCard(${questionCounter})" style="background: none; border: none; color: #ef4444; cursor: pointer; font-weight: 600;">Remove</button>
                 </div>
 
-                <!-- TOEIC Media Attachment Toolbar -->
+                <div class="form-group" style="margin-bottom: 10px;">
+                    <label style="font-size: 12px; font-weight: 600;">Question Type:</label>
+                    <select class="form-control q-type" onchange="toggleQuestionTypeUI(${questionCounter})">
+                        <option value="Multiple Choice" ${qType === 'Multiple Choice' ? 'selected' : ''}>Multiple Choice</option>
+                        <option value="TrueOrFalse" ${qType === 'TrueOrFalse' ? 'selected' : ''}>True or False</option>
+                        <option value="Identification" ${qType === 'Identification' ? 'selected' : ''}>Identification</option>
+                        <option value="FillInBlank" ${qType === 'FillInBlank' ? 'selected' : ''}>Fill in the Blank</option>
+                        <option value="Enumeration" ${qType === 'Enumeration' ? 'selected' : ''}>Enumeration</option>
+                        <option value="Matching" ${qType === 'Matching' ? 'selected' : ''}>Matching Type</option>
+                        <option value="Essay" ${qType === 'Essay' ? 'selected' : ''}>Essay</option>
+                    </select>
+                </div>
+
+                <!-- TOEIC Media Attachments -->
                 <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 10px 12px; margin-bottom: 12px;">
-                    <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px; display: flex; align-items: center; gap: 6px;">
-                        <i class="material-icons-outlined" style="font-size: 15px; color: #2563eb;">attachment</i>
-                        TOEIC Media Attachments (Optional)
+                    <div style="font-size: 11px; text-transform: uppercase; color: #64748b; font-weight: 700; margin-bottom: 8px;">
+                        Media Attachments (Optional)
                     </div>
-                    
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                         <div>
-                            <label style="font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                                <i class="material-icons-outlined" style="font-size: 16px; color: #0284c7;">image</i> Photograph / Diagram
-                            </label>
-                            <input type="file" accept="image/*" class="form-control q-img-file" style="font-size: 12px; padding: 4px 8px;" onchange="handleQuestionImageUpload(this, ${questionCounter})" />
+                            <label style="font-size: 12px;">Photograph / Diagram</label>
+                            <input type="file" accept="image/*" class="form-control q-img-file" onchange="handleQuestionImageUpload(this, ${questionCounter})" />
                             <input type="hidden" class="q-img-data" value="${imgPath}" />
-                            
-                            <div class="q-img-preview-box" id="imgPreviewBox_${questionCounter}" style="margin-top: 6px; ${imgPath ? '' : 'display:none;'} position: relative; border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; background: #fff; max-height: 140px; text-align: center;">
-                                <img src="${imgPath ? (imgPath.startsWith('~') ? imgPath.replace('~', '') : imgPath) : ''}" id="imgPreview_${questionCounter}" style="max-height: 130px; max-width: 100%; object-fit: contain; display: inline-block;" />
-                                <button type="button" onclick="clearQuestionImage(${questionCounter})" title="Remove Image" style="position: absolute; top: 4px; right: 4px; background: rgba(239,68,68,0.9); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 14px; line-height: 22px; text-align: center;">&times;</button>
-                            </div>
                         </div>
-
                         <div>
-                            <label style="font-size: 12px; font-weight: 600; color: #475569; display: flex; align-items: center; gap: 4px; margin-bottom: 4px;">
-                                <i class="material-icons-outlined" style="font-size: 16px; color: #8b5cf6;">headphones</i> Listening Audio Passage
-                            </label>
-                            <input type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a" class="form-control q-audio-file" style="font-size: 12px; padding: 4px 8px;" onchange="handleQuestionAudioUpload(this, ${questionCounter})" />
+                            <label style="font-size: 12px;">Audio Passage</label>
+                            <input type="file" accept="audio/*" class="form-control q-audio-file" onchange="handleQuestionAudioUpload(this, ${questionCounter})" />
                             <input type="hidden" class="q-audio-data" value="${audioPath}" />
-                            
-                            <div class="q-audio-preview-box" id="audioPreviewBox_${questionCounter}" style="margin-top: 6px; ${audioPath ? '' : 'display:none;'} display: flex; align-items: center; gap: 6px;">
-                                <audio controls id="audioPreview_${questionCounter}" src="${audioPath ? (audioPath.startsWith('~') ? audioPath.replace('~', '') : audioPath) : ''}" style="width: 100%; height: 32px;"></audio>
-                                <button type="button" onclick="clearQuestionAudio(${questionCounter})" title="Remove Audio" style="background: rgba(239,68,68,0.9); color: #fff; border: none; border-radius: 4px; padding: 4px 6px; cursor: pointer; font-size: 12px;">&times;</button>
-                            </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="form-group" style="margin-bottom: 10px;">
-                    <input type="text" class="form-control q-text" placeholder="Question prompt (e.g. Look at the photograph and choose the best statement)..." value="${qText}" />
+                    <input type="text" class="form-control q-text" placeholder="Question prompt..." value="${qText}" />
                 </div>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                    <input type="text" class="form-control opt-a" placeholder="Option A" value="${optA}" />
-                    <input type="text" class="form-control opt-b" placeholder="Option B" value="${optB}" />
-                    <input type="text" class="form-control opt-c" placeholder="Option C" value="${optC}" />
-                    <input type="text" class="form-control opt-d" placeholder="Option D" value="${optD}" />
-                </div>
-                <div style="font-size: 13px;">
-                    <label><strong>Correct Choice:</strong></label>
-                    <select class="form-control correct-opt" style="width: 120px; display: inline-block; margin-left: 8px;">
-                        <option value="A" ${correct === 'A' ? 'selected' : ''}>Option A</option>
-                        <option value="B" ${correct === 'B' ? 'selected' : ''}>Option B</option>
-                        <option value="C" ${correct === 'C' ? 'selected' : ''}>Option C</option>
-                        <option value="D" ${correct === 'D' ? 'selected' : ''}>Option D</option>
-                    </select>
+
+                <!-- Dynamic Inputs Section -->
+                <div id="qTypeSection_${questionCounter}">
+                    <!-- Multiple Choice -->
+                    <div class="sec-mc" style="display: ${qType === 'Multiple Choice' ? 'block' : 'none'};">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
+                            <input type="text" class="form-control opt-a" placeholder="Option A" value="${optA}" />
+                            <input type="text" class="form-control opt-b" placeholder="Option B" value="${optB}" />
+                            <input type="text" class="form-control opt-c" placeholder="Option C" value="${optC}" />
+                            <input type="text" class="form-control opt-d" placeholder="Option D" value="${optD}" />
+                        </div>
+                        <div>
+                            <label><strong>Correct Choice:</strong></label>
+                            <select class="form-control correct-opt" style="width: 120px; display: inline-block;">
+                                <option value="A" ${correct === 'A' ? 'selected' : ''}>Option A</option>
+                                <option value="B" ${correct === 'B' ? 'selected' : ''}>Option B</option>
+                                <option value="C" ${correct === 'C' ? 'selected' : ''}>Option C</option>
+                                <option value="D" ${correct === 'D' ? 'selected' : ''}>Option D</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- True or False -->
+                    <div class="sec-tf" style="display: ${qType === 'TrueOrFalse' ? 'block' : 'none'};">
+                        <label><strong>Correct Answer:</strong></label>
+                        <select class="form-control correct-tf" style="width: 120px; display: inline-block;">
+                            <option value="True" ${correct === 'True' ? 'selected' : ''}>True</option>
+                            <option value="False" ${correct === 'False' ? 'selected' : ''}>False</option>
+                        </select>
+                    </div>
+
+                    <!-- Identification & Fill in Blank -->
+                    <div class="sec-text" style="display: ${(qType === 'Identification' || qType === 'FillInBlank') ? 'block' : 'none'};">
+                        <input type="text" class="form-control correct-text-ans" placeholder="Expected Correct Phrase / Keyword..." value="${textAns}" />
+                    </div>
+
+                    <!-- Enumeration -->
+                    <div class="sec-enum" style="display: ${qType === 'Enumeration' ? 'block' : 'none'};">
+                        <input type="text" class="form-control enum-ans" placeholder="Acceptable answers separated by commas (e.g. Red, Blue, Yellow)" value="${enumAns}" />
+                    </div>
+
+                    <!-- Matching Type -->
+                    <div class="sec-matching" style="display: ${qType === 'Matching' ? 'block' : 'none'};">
+                        <textarea class="form-control match-json" rows="3" placeholder='JSON Key-Value Pairs, e.g. {"Dog":"Animal", "Rose":"Flower"}'>${matchJson}</textarea>
+                    </div>
+
+                    <!-- Essay -->
+                    <div class="sec-essay" style="display: ${qType === 'Essay' ? 'block' : 'none'};">
+                        <p style="font-size: 12px; color: #6b7280; margin: 0;">Student will be provided a long text input. This question requires manual teacher grading.</p>
+                    </div>
                 </div>
             `;
             container.appendChild(card);
         }
 
-        function handleQuestionImageUpload(input, qId) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const dataUrl = e.target.result;
-                    const card = document.getElementById('qCard_' + qId);
-                    if (card) {
-                        const hiddenInput = card.querySelector('.q-img-data');
-                        if (hiddenInput) hiddenInput.value = dataUrl;
-                        const previewBox = document.getElementById('imgPreviewBox_' + qId);
-                        const previewImg = document.getElementById('imgPreview_' + qId);
-                        if (previewImg) previewImg.src = dataUrl;
-                        if (previewBox) previewBox.style.display = 'block';
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function clearQuestionImage(qId) {
+        function toggleQuestionTypeUI(qId) {
             const card = document.getElementById('qCard_' + qId);
-            if (card) {
-                const hiddenInput = card.querySelector('.q-img-data');
-                if (hiddenInput) hiddenInput.value = '';
-                const fileInput = card.querySelector('.q-img-file');
-                if (fileInput) fileInput.value = '';
-                const previewBox = document.getElementById('imgPreviewBox_' + qId);
-                const previewImg = document.getElementById('imgPreview_' + qId);
-                if (previewImg) previewImg.src = '';
-                if (previewBox) previewBox.style.display = 'none';
-            }
-        }
+            if (!card) return;
 
-        function handleQuestionAudioUpload(input, qId) {
-            if (input.files && input.files[0]) {
-                const file = input.files[0];
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    const dataUrl = e.target.result;
-                    const card = document.getElementById('qCard_' + qId);
-                    if (card) {
-                        const hiddenInput = card.querySelector('.q-audio-data');
-                        if (hiddenInput) hiddenInput.value = dataUrl;
-                        const previewBox = document.getElementById('audioPreviewBox_' + qId);
-                        const previewAudio = document.getElementById('audioPreview_' + qId);
-                        if (previewAudio) previewAudio.src = dataUrl;
-                        if (previewBox) previewBox.style.display = 'flex';
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-        }
+            const qType = card.querySelector('.q-type').value;
 
-        function clearQuestionAudio(qId) {
-            const card = document.getElementById('qCard_' + qId);
-            if (card) {
-                const hiddenInput = card.querySelector('.q-audio-data');
-                if (hiddenInput) hiddenInput.value = '';
-                const fileInput = card.querySelector('.q-audio-file');
-                if (fileInput) fileInput.value = '';
-                const previewBox = document.getElementById('audioPreviewBox_' + qId);
-                const previewAudio = document.getElementById('audioPreview_' + qId);
-                if (previewAudio) previewAudio.src = '';
-                if (previewBox) previewBox.style.display = 'none';
-            }
-        }
-
-        /** @param {number} id */
-        function removeQuestionCard(id = 0) {
-            const card = document.getElementById('qCard_' + id);
-            if (card) card.remove();
+            card.querySelector('.sec-mc').style.display = (qType === 'Multiple Choice') ? 'block' : 'none';
+            card.querySelector('.sec-tf').style.display = (qType === 'TrueOrFalse') ? 'block' : 'none';
+            card.querySelector('.sec-text').style.display = (qType === 'Identification' || qType === 'FillInBlank') ? 'block' : 'none';
+            card.querySelector('.sec-enum').style.display = (qType === 'Enumeration') ? 'block' : 'none';
+            card.querySelector('.sec-matching').style.display = (qType === 'Matching') ? 'block' : 'none';
+            card.querySelector('.sec-essay').style.display = (qType === 'Essay') ? 'block' : 'none';
         }
 
         function prepareQuizJson() {
             const cards = document.querySelectorAll('.question-builder-card');
-            var txtInstructions = document.getElementById('txtFormInstructions');
-            var instructionsVal = txtInstructions ? Object(txtInstructions).value.trim() : '';
+            const txtInstructions = document.getElementById('txtFormInstructions');
+            const instructionsVal = txtInstructions ? txtInstructions.value.trim() : '';
 
             var questions = [];
 
             cards.forEach(function (card) {
+                const typeSelect = card.querySelector('.q-type');
                 const qInput = card.querySelector('.q-text');
-                const optAInput = card.querySelector('.opt-a');
-                const optBInput = card.querySelector('.opt-b');
-                const optCInput = card.querySelector('.opt-c');
-                const optDInput = card.querySelector('.opt-d');
-                const correctSelect = card.querySelector('.correct-opt');
-                const imgDataInput = card.querySelector('.q-img-data');
-                const audioDataInput = card.querySelector('.q-audio-data');
 
-                const text = qInput ? Object(qInput).value.trim() : '';
-                const optA = optAInput ? Object(optAInput).value.trim() : '';
-                const optB = optBInput ? Object(optBInput).value.trim() : '';
-                const optC = optCInput ? Object(optCInput).value.trim() : '';
-                const optD = optDInput ? Object(optDInput).value.trim() : '';
-                const correct = correctSelect ? Object(correctSelect).value : 'A';
-                const imgPath = imgDataInput ? Object(imgDataInput).value : '';
-                const audioPath = audioDataInput ? Object(audioDataInput).value : '';
+                const qType = typeSelect ? typeSelect.value : 'Multiple Choice';
+                const text = qInput ? qInput.value.trim() : '';
 
-                if (text && optA) {
+                const optA = card.querySelector('.opt-a') ? card.querySelector('.opt-a').value.trim() : '';
+                const optB = card.querySelector('.opt-b') ? card.querySelector('.opt-b').value.trim() : '';
+                const optC = card.querySelector('.opt-c') ? card.querySelector('.opt-c').value.trim() : '';
+                const optD = card.querySelector('.opt-d') ? card.querySelector('.opt-d').value.trim() : '';
+
+                let correct = 'A';
+                if (qType === 'Multiple Choice') {
+                    correct = card.querySelector('.correct-opt') ? card.querySelector('.correct-opt').value : 'A';
+                } else if (qType === 'TrueOrFalse') {
+                    correct = card.querySelector('.correct-tf') ? card.querySelector('.correct-tf').value : 'True';
+                }
+
+                const textAns = card.querySelector('.correct-text-ans') ? card.querySelector('.correct-text-ans').value.trim() : '';
+                const enumAns = card.querySelector('.enum-ans') ? card.querySelector('.enum-ans').value.trim() : '';
+                const matchJson = card.querySelector('.match-json') ? card.querySelector('.match-json').value.trim() : '';
+                const imgPath = card.querySelector('.q-img-data') ? card.querySelector('.q-img-data').value : '';
+                const audioPath = card.querySelector('.q-audio-data') ? card.querySelector('.q-audio-data').value : '';
+
+                if (text) {
                     questions.push({
+                        QuestionType: qType,
                         QuestionText: text,
                         OptionA: optA,
                         OptionB: optB,
                         OptionC: optC,
                         OptionD: optD,
                         CorrectAnswer: correct,
+                        CorrectTextAnswer: textAns,
+                        EnumerationAnswers: enumAns,
+                        MatchingPairsJson: matchJson,
                         ImagePath: imgPath,
                         AudioPath: audioPath,
                         Instructions: instructionsVal
@@ -1573,7 +1599,7 @@
 
             var hfQuizJson = document.getElementById('hfQuizJsonData');
             if (hfQuizJson) {
-                Object(hfQuizJson).value = JSON.stringify(questions);
+                hfQuizJson.value = JSON.stringify(questions);
             }
             return true;
         }

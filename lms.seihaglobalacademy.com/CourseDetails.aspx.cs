@@ -51,6 +51,133 @@ namespace lms.seihaglobalacademy.com
             return Session["LMS_StudentPreviewMode"] != null && (bool)Session["LMS_StudentPreviewMode"];
         }
 
+        #region FILE UPLOADS, PATH & AUDIT LOGGING HELPERS
+
+        private string SanitizeFolderName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "General";
+
+            char[] invalidChars = Path.GetInvalidFileNameChars();
+            foreach (char c in invalidChars)
+            {
+                name = name.Replace(c.ToString(), "");
+            }
+
+            return name.Trim().Replace(" ", "_");
+        }
+
+        private string GetTargetUploadDirectory(string moduleTitle, string subFolder)
+        {
+            string courseFolder = "Course_" + (CurrentCourseID > 0 ? CurrentCourseID.ToString() : "Default");
+            if (!string.IsNullOrEmpty(lblCourseTitle.Text) && lblCourseTitle.Text != "Sample Course")
+            {
+                courseFolder = SanitizeFolderName(lblCourseTitle.Text);
+            }
+
+            string sanitizedModule = string.IsNullOrEmpty(moduleTitle) ? "General" : SanitizeFolderName(moduleTitle);
+
+            string relativePath = $"~/Uploads/Courses/{courseFolder}/Modules/{sanitizedModule}/{subFolder}/";
+            string physicalPath = Server.MapPath(relativePath);
+
+            if (!Directory.Exists(physicalPath))
+            {
+                Directory.CreateDirectory(physicalPath);
+            }
+
+            return relativePath;
+        }
+
+        private string GetModuleTitleById(int moduleId)
+        {
+            if (moduleId <= 0) return "General";
+
+            using (SqlConnection conn = new SqlConnection(connStr))
+            {
+                string sql = "SELECT UnitTitle FROM dbo.Modules WHERE ModuleID = @ModuleID";
+                using (SqlCommand cmd = new SqlCommand(sql, conn))
+                {
+                    cmd.Parameters.AddWithValue("@ModuleID", moduleId);
+                    conn.Open();
+                    object result = cmd.ExecuteScalar();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        return result.ToString();
+                    }
+                }
+            }
+            return "General";
+        }
+
+        public string GetFileUrl(string storedPath)
+        {
+            if (string.IsNullOrEmpty(storedPath)) return "#";
+
+            try
+            {
+                string mappedPath = Server.MapPath(storedPath);
+                if (File.Exists(mappedPath))
+                {
+                    return ResolveUrl(storedPath);
+                }
+
+                string fileName = Path.GetFileName(storedPath);
+                string legacyPath = $"~/Uploads/Lessons/{fileName}";
+                if (File.Exists(Server.MapPath(legacyPath)))
+                {
+                    return ResolveUrl(legacyPath);
+                }
+
+                string legacySubPath = $"~/Uploads/Submissions/{fileName}";
+                if (File.Exists(Server.MapPath(legacySubPath)))
+                {
+                    return ResolveUrl(legacySubPath);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("GetFileUrl Resolution Exception: " + ex.Message);
+            }
+
+            return ResolveUrl(storedPath);
+        }
+
+        private void LogFileAudit(string filePath, string actionType, string category)
+        {
+            if (string.IsNullOrEmpty(filePath)) return;
+
+            int userId = Session["UserID"] != null ? Convert.ToInt32(Session["UserID"]) : 0;
+            string userName = IsStudentView() ? "Student User" : (Session["UserName"] != null ? Session["UserName"].ToString() : "Teacher / Admin");
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connStr))
+                {
+                    string checkSql = "IF OBJECT_ID('dbo.FileAuditLogs', 'U') IS NOT NULL " +
+                                      "INSERT INTO dbo.FileAuditLogs (FilePath, ActionType, Category, CourseID, UserID, PerformedBy, ActionDate) " +
+                                      "VALUES (@FilePath, @ActionType, @Category, @CourseID, @UserID, @PerformedBy, GETDATE())";
+
+                    using (SqlCommand cmd = new SqlCommand(checkSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@FilePath", filePath);
+                        cmd.Parameters.AddWithValue("@ActionType", actionType);
+                        cmd.Parameters.AddWithValue("@Category", category);
+                        cmd.Parameters.AddWithValue("@CourseID", CurrentCourseID);
+                        cmd.Parameters.AddWithValue("@UserID", userId);
+                        cmd.Parameters.AddWithValue("@PerformedBy", userName);
+
+                        conn.Open();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Trace.TraceError("File Audit Log Error: " + ex.Message);
+            }
+        }
+
+        #endregion
+
         private void InitializeCourseContext()
         {
             if (CurrentCourseID > 0)
@@ -368,7 +495,7 @@ namespace lms.seihaglobalacademy.com
         }
 
         // ==========================================
-        // 2. QUIZZES & TOEIC ATTACHMENTS
+        // 2. QUIZZES & 7 EXAM STYLES SUPPORT
         // ==========================================
         private List<GoogleFormQuizModel> GetQuizzesFromDb()
         {
@@ -413,8 +540,12 @@ namespace lms.seihaglobalacademy.com
 
                 if (!quizzes.Any()) return quizzes;
 
-                string qSql = @"SELECT q.QuizID, q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectAnswer, 
-                                ISNULL(q.ImagePath,'') AS ImagePath, ISNULL(q.AudioPath,'') AS AudioPath 
+                string qSql = @"SELECT q.QuizID, ISNULL(q.QuestionType, 'Multiple Choice') AS QuestionType, 
+                                       q.QuestionText, q.OptionA, q.OptionB, q.OptionC, q.OptionD, q.CorrectAnswer, 
+                                       ISNULL(q.CorrectTextAnswer,'') AS CorrectTextAnswer, 
+                                       ISNULL(q.EnumerationAnswers,'') AS EnumerationAnswers, 
+                                       ISNULL(q.MatchingPairsJson,'') AS MatchingPairsJson, 
+                                       ISNULL(q.ImagePath,'') AS ImagePath, ISNULL(q.AudioPath,'') AS AudioPath 
                                 FROM dbo.Questions q
                                 INNER JOIN dbo.Quizzes qz ON q.QuizID = qz.QuizID
                                 WHERE qz.CourseID = @CourseID";
@@ -432,12 +563,16 @@ namespace lms.seihaglobalacademy.com
                             {
                                 quizMap[qId].Questions.Add(new QuestionModel
                                 {
+                                    QuestionType = qDr["QuestionType"].ToString(),
                                     QuestionText = qDr["QuestionText"].ToString(),
                                     OptionA = qDr["OptionA"].ToString(),
                                     OptionB = qDr["OptionB"].ToString(),
                                     OptionC = qDr["OptionC"].ToString(),
                                     OptionD = qDr["OptionD"].ToString(),
                                     CorrectAnswer = qDr["CorrectAnswer"].ToString(),
+                                    CorrectTextAnswer = qDr["CorrectTextAnswer"].ToString(),
+                                    EnumerationAnswers = qDr["EnumerationAnswers"].ToString(),
+                                    MatchingPairsJson = qDr["MatchingPairsJson"].ToString(),
                                     ImagePath = qDr["ImagePath"].ToString(),
                                     AudioPath = qDr["AudioPath"].ToString()
                                 });
@@ -561,7 +696,10 @@ namespace lms.seihaglobalacademy.com
                     }
 
                     var qList = new List<QuestionModel>();
-                    string qSql = "SELECT QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, ISNULL(ImagePath,'') AS ImagePath, ISNULL(AudioPath,'') AS AudioPath FROM dbo.Questions WHERE QuizID = @QuizID";
+                    string qSql = @"SELECT ISNULL(QuestionType, 'Multiple Choice') AS QuestionType, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, 
+                                           ISNULL(CorrectTextAnswer,'') AS CorrectTextAnswer, ISNULL(EnumerationAnswers,'') AS EnumerationAnswers, ISNULL(MatchingPairsJson,'') AS MatchingPairsJson,
+                                           ISNULL(ImagePath,'') AS ImagePath, ISNULL(AudioPath,'') AS AudioPath 
+                                    FROM dbo.Questions WHERE QuizID = @QuizID";
                     using (SqlCommand qCmd = new SqlCommand(qSql, conn))
                     {
                         qCmd.Parameters.AddWithValue("@QuizID", quizId);
@@ -572,12 +710,16 @@ namespace lms.seihaglobalacademy.com
                             {
                                 qList.Add(new QuestionModel
                                 {
+                                    QuestionType = qDr["QuestionType"].ToString(),
                                     QuestionText = qDr["QuestionText"].ToString(),
                                     OptionA = qDr["OptionA"].ToString(),
                                     OptionB = qDr["OptionB"].ToString(),
                                     OptionC = qDr["OptionC"].ToString(),
                                     OptionD = qDr["OptionD"].ToString(),
                                     CorrectAnswer = qDr["CorrectAnswer"].ToString(),
+                                    CorrectTextAnswer = qDr["CorrectTextAnswer"].ToString(),
+                                    EnumerationAnswers = qDr["EnumerationAnswers"].ToString(),
+                                    MatchingPairsJson = qDr["MatchingPairsJson"].ToString(),
                                     ImagePath = qDr["ImagePath"].ToString(),
                                     AudioPath = qDr["AudioPath"].ToString(),
                                     Instructions = txtFormInstructions.Text.Trim()
@@ -649,9 +791,8 @@ namespace lms.seihaglobalacademy.com
                 JavaScriptSerializer serializer = new JavaScriptSerializer { MaxJsonLength = 104857600 };
                 List<QuestionModel> questions = serializer.Deserialize<List<QuestionModel>>(jsonPayload);
 
-                string uploadFolder = Server.MapPath("~/Uploads/QuizMedia/");
-                if (!Directory.Exists(uploadFolder))
-                    Directory.CreateDirectory(uploadFolder);
+                string relativeUploadDir = GetTargetUploadDirectory("QuizMedia", "Quizzes");
+                string uploadFolder = Server.MapPath(relativeUploadDir);
 
                 for (int qi = 0; qi < questions.Count; qi++)
                 {
@@ -674,7 +815,9 @@ namespace lms.seihaglobalacademy.com
                             string savePath = Path.Combine(uploadFolder, fileName);
                             byte[] bytes = Convert.FromBase64String(base64Data);
                             File.WriteAllBytes(savePath, bytes);
-                            q.ImagePath = "~/Uploads/QuizMedia/" + fileName;
+
+                            q.ImagePath = relativeUploadDir + fileName;
+                            LogFileAudit(q.ImagePath, "UPLOADED", "QuizMedia");
                         }
                         catch (Exception ex)
                         {
@@ -699,7 +842,9 @@ namespace lms.seihaglobalacademy.com
                             string savePath = Path.Combine(uploadFolder, fileName);
                             byte[] bytes = Convert.FromBase64String(base64Data);
                             File.WriteAllBytes(savePath, bytes);
-                            q.AudioPath = "~/Uploads/QuizMedia/" + fileName;
+
+                            q.AudioPath = relativeUploadDir + fileName;
+                            LogFileAudit(q.AudioPath, "UPLOADED", "QuizMedia");
                         }
                         catch (Exception ex)
                         {
@@ -757,17 +902,24 @@ namespace lms.seihaglobalacademy.com
 
                     foreach (var q in questions)
                     {
-                        string insertQSql = @"INSERT INTO dbo.Questions (QuizID, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, ImagePath, AudioPath) 
-                                              VALUES (@QuizID, @QuestionText, @OptionA, @OptionB, @OptionC, @OptionD, @CorrectAnswer, @ImagePath, @AudioPath)";
+                        string insertQSql = @"INSERT INTO dbo.Questions 
+                            (QuizID, QuestionType, QuestionText, OptionA, OptionB, OptionC, OptionD, CorrectAnswer, CorrectTextAnswer, EnumerationAnswers, MatchingPairsJson, ImagePath, AudioPath) 
+                            VALUES 
+                            (@QuizID, @QuestionType, @QuestionText, @OptionA, @OptionB, @OptionC, @OptionD, @CorrectAnswer, @CorrectTextAnswer, @EnumerationAnswers, @MatchingPairsJson, @ImagePath, @AudioPath)";
+
                         using (SqlCommand qCmd = new SqlCommand(insertQSql, conn))
                         {
                             qCmd.Parameters.AddWithValue("@QuizID", quizId);
+                            qCmd.Parameters.AddWithValue("@QuestionType", q.QuestionType ?? "Multiple Choice");
                             qCmd.Parameters.AddWithValue("@QuestionText", q.QuestionText);
-                            qCmd.Parameters.AddWithValue("@OptionA", q.OptionA);
-                            qCmd.Parameters.AddWithValue("@OptionB", q.OptionB);
-                            qCmd.Parameters.AddWithValue("@OptionC", q.OptionC);
-                            qCmd.Parameters.AddWithValue("@OptionD", q.OptionD);
-                            qCmd.Parameters.AddWithValue("@CorrectAnswer", q.CorrectAnswer);
+                            qCmd.Parameters.AddWithValue("@OptionA", q.OptionA ?? "");
+                            qCmd.Parameters.AddWithValue("@OptionB", q.OptionB ?? "");
+                            qCmd.Parameters.AddWithValue("@OptionC", q.OptionC ?? "");
+                            qCmd.Parameters.AddWithValue("@OptionD", q.OptionD ?? "");
+                            qCmd.Parameters.AddWithValue("@CorrectAnswer", q.CorrectAnswer ?? "");
+                            qCmd.Parameters.AddWithValue("@CorrectTextAnswer", q.CorrectTextAnswer ?? "");
+                            qCmd.Parameters.AddWithValue("@EnumerationAnswers", q.EnumerationAnswers ?? "");
+                            qCmd.Parameters.AddWithValue("@MatchingPairsJson", q.MatchingPairsJson ?? "");
                             qCmd.Parameters.AddWithValue("@ImagePath", string.IsNullOrEmpty(q.ImagePath) ? (object)DBNull.Value : q.ImagePath);
                             qCmd.Parameters.AddWithValue("@AudioPath", string.IsNullOrEmpty(q.AudioPath) ? (object)DBNull.Value : q.AudioPath);
                             qCmd.ExecuteNonQuery();
@@ -794,37 +946,49 @@ namespace lms.seihaglobalacademy.com
             {
                 var q = (QuestionModel)e.Item.DataItem;
                 var rblOptions = (RadioButtonList)e.Item.FindControl("rblOptions");
+                var txtShortAnswer = (TextBox)e.Item.FindControl("txtShortAnswer");
+                var txtEssayAnswer = (TextBox)e.Item.FindControl("txtEssayAnswer");
 
-                if (rblOptions != null && q != null)
+                if (q == null) return;
+
+                string type = string.IsNullOrEmpty(q.QuestionType) ? "Multiple Choice" : q.QuestionType;
+
+                if (type == "Multiple Choice")
                 {
-                    rblOptions.Items.Clear();
-
-                    if (!string.IsNullOrWhiteSpace(q.OptionA))
+                    if (rblOptions != null)
                     {
-                        rblOptions.Items.Add(new ListItem(" A: " + q.OptionA, "A"));
+                        rblOptions.Visible = true;
+                        rblOptions.Items.Clear();
+                        if (!string.IsNullOrWhiteSpace(q.OptionA)) rblOptions.Items.Add(new ListItem(" A: " + q.OptionA, "A"));
+                        if (!string.IsNullOrWhiteSpace(q.OptionB)) rblOptions.Items.Add(new ListItem(" B: " + q.OptionB, "B"));
+                        if (!string.IsNullOrWhiteSpace(q.OptionC) && !q.OptionC.Equals("Option C", StringComparison.OrdinalIgnoreCase)) rblOptions.Items.Add(new ListItem(" C: " + q.OptionC, "C"));
+                        if (!string.IsNullOrWhiteSpace(q.OptionD) && !q.OptionD.Equals("Option D", StringComparison.OrdinalIgnoreCase)) rblOptions.Items.Add(new ListItem(" D: " + q.OptionD, "D"));
                     }
-
-                    if (!string.IsNullOrWhiteSpace(q.OptionB))
+                }
+                else if (type == "TrueOrFalse")
+                {
+                    if (rblOptions != null)
                     {
-                        rblOptions.Items.Add(new ListItem(" B: " + q.OptionB, "B"));
+                        rblOptions.Visible = true;
+                        rblOptions.Items.Clear();
+                        rblOptions.Items.Add(new ListItem(" True", "True"));
+                        rblOptions.Items.Add(new ListItem(" False", "False"));
                     }
-
-                    if (!string.IsNullOrWhiteSpace(q.OptionC) && !q.OptionC.Equals("Option C", StringComparison.OrdinalIgnoreCase))
-                    {
-                        rblOptions.Items.Add(new ListItem(" C: " + q.OptionC, "C"));
-                    }
-
-                    if (!string.IsNullOrWhiteSpace(q.OptionD) && !q.OptionD.Equals("Option D", StringComparison.OrdinalIgnoreCase))
-                    {
-                        rblOptions.Items.Add(new ListItem(" D: " + q.OptionD, "D"));
-                    }
+                }
+                else if (type == "Identification" || type == "FillInBlank" || type == "Enumeration" || type == "Matching")
+                {
+                    if (txtShortAnswer != null) txtShortAnswer.Visible = true;
+                }
+                else if (type == "Essay")
+                {
+                    if (txtEssayAnswer != null) txtEssayAnswer.Visible = true;
                 }
 
                 var phAudio = (PlaceHolder)e.Item.FindControl("phQuizAudio");
                 var litAudio = (Literal)e.Item.FindControl("litQuizAudio");
-                if (phAudio != null && q != null && !string.IsNullOrEmpty(q.AudioPath))
+                if (phAudio != null && !string.IsNullOrEmpty(q.AudioPath))
                 {
-                    string audioSrc = ResolveUrl(q.AudioPath);
+                    string audioSrc = GetFileUrl(q.AudioPath);
                     phAudio.Visible = true;
                     if (litAudio != null)
                         litAudio.Text = string.Format("<audio controls style=\"width:100%;\"><source src=\"{0}\" />Your browser does not support the audio element.</audio>", audioSrc);
@@ -832,11 +996,11 @@ namespace lms.seihaglobalacademy.com
 
                 var phImage = (PlaceHolder)e.Item.FindControl("phQuizImage");
                 var imgCtrl = (Image)e.Item.FindControl("imgQuizQuestion");
-                if (phImage != null && q != null && !string.IsNullOrEmpty(q.ImagePath))
+                if (phImage != null && !string.IsNullOrEmpty(q.ImagePath))
                 {
                     phImage.Visible = true;
                     if (imgCtrl != null)
-                        imgCtrl.ImageUrl = q.ImagePath;
+                        imgCtrl.ImageUrl = GetFileUrl(q.ImagePath);
                 }
             }
         }
@@ -852,7 +1016,7 @@ namespace lms.seihaglobalacademy.com
                 var litAudio = (Literal)e.Item.FindControl("litTeacherAudio");
                 if (phAudio != null && !string.IsNullOrEmpty(q.AudioPath))
                 {
-                    string audioSrc = ResolveUrl(q.AudioPath);
+                    string audioSrc = GetFileUrl(q.AudioPath);
                     phAudio.Visible = true;
                     if (litAudio != null)
                         litAudio.Text = string.Format("<audio controls style=\"flex:1;height:36px;\"><source src=\"{0}\" />Your browser does not support the audio element.</audio>", audioSrc);
@@ -864,7 +1028,7 @@ namespace lms.seihaglobalacademy.com
                 {
                     phImage.Visible = true;
                     if (imgCtrl != null)
-                        imgCtrl.ImageUrl = q.ImagePath;
+                        imgCtrl.ImageUrl = GetFileUrl(q.ImagePath);
                 }
             }
         }
@@ -884,29 +1048,66 @@ namespace lms.seihaglobalacademy.com
             for (int i = 0; i < rptFormQuestions.Items.Count; i++)
             {
                 var item = rptFormQuestions.Items[i];
-                var rblOptions = (RadioButtonList)item.FindControl("rblOptions");
+                var q = activeQuiz.Questions[i];
 
-                string selected = rblOptions != null ? rblOptions.SelectedValue : "";
-                if (string.IsNullOrEmpty(selected) && rblOptions != null)
+                string type = string.IsNullOrEmpty(q.QuestionType) ? "Multiple Choice" : q.QuestionType;
+                string selected = "";
+                string correctKey = q.CorrectAnswer;
+                bool isCorrect = false;
+
+                if (type == "Multiple Choice" || type == "TrueOrFalse")
                 {
-                    string postedKey = rblOptions.UniqueID;
-                    if (!string.IsNullOrEmpty(postedKey) && Request.Form[postedKey] != null)
+                    var rbl = (RadioButtonList)item.FindControl("rblOptions");
+                    selected = rbl != null ? rbl.SelectedValue : "";
+                    if (string.IsNullOrEmpty(selected) && rbl != null)
                     {
-                        selected = Request.Form[postedKey];
+                        string postedKey = rbl.UniqueID;
+                        if (!string.IsNullOrEmpty(postedKey) && Request.Form[postedKey] != null)
+                        {
+                            selected = Request.Form[postedKey];
+                        }
                     }
+                    isCorrect = selected.Equals(correctKey, StringComparison.OrdinalIgnoreCase);
+                }
+                else if (type == "Identification" || type == "FillInBlank")
+                {
+                    var txt = (TextBox)item.FindControl("txtShortAnswer");
+                    selected = txt != null ? txt.Text.Trim() : "";
+                    correctKey = q.CorrectTextAnswer;
+                    isCorrect = selected.Equals(correctKey, StringComparison.OrdinalIgnoreCase);
+                }
+                else if (type == "Enumeration")
+                {
+                    var txt = (TextBox)item.FindControl("txtShortAnswer");
+                    selected = txt != null ? txt.Text.Trim() : "";
+                    correctKey = q.EnumerationAnswers;
+
+                    var allowedAnswers = (correctKey ?? "").Split(',').Select(a => a.Trim().ToLower()).ToList();
+                    isCorrect = allowedAnswers.Contains(selected.ToLower());
+                }
+                else if (type == "Matching")
+                {
+                    var txt = (TextBox)item.FindControl("txtShortAnswer");
+                    selected = txt != null ? txt.Text.Trim() : "";
+                    correctKey = q.MatchingPairsJson;
+                    isCorrect = false; // Flagged for teacher inspection or structured JSON matching
+                }
+                else if (type == "Essay")
+                {
+                    var txt = (TextBox)item.FindControl("txtEssayAnswer");
+                    selected = txt != null ? txt.Text.Trim() : "";
+                    correctKey = "Requires Manual Teacher Grading";
+                    isCorrect = false;
                 }
 
                 if (string.IsNullOrEmpty(selected)) selected = "Not Answered";
-
-                string correct = activeQuiz.Questions[i].CorrectAnswer;
-                bool isCorrect = (selected == correct);
                 if (isCorrect) correctCount++;
 
                 resultList.Add(new QuestionResultModel
                 {
-                    QuestionText = activeQuiz.Questions[i].QuestionText,
+                    QuestionText = q.QuestionText,
                     SelectedAnswer = selected,
-                    CorrectAnswer = correct,
+                    CorrectAnswer = correctKey,
                     IsCorrect = isCorrect
                 });
             }
@@ -1243,6 +1444,18 @@ namespace lms.seihaglobalacademy.com
                 using (SqlConnection conn = new SqlConnection(connStr))
                 {
                     conn.Open();
+
+                    string getPathSql = "SELECT ContentDetails FROM dbo.Lessons WHERE LessonID = @LessonID";
+                    using (SqlCommand getCmd = new SqlCommand(getPathSql, conn))
+                    {
+                        getCmd.Parameters.AddWithValue("@LessonID", lessonId);
+                        object pathObj = getCmd.ExecuteScalar();
+                        if (pathObj != null && pathObj.ToString().StartsWith("~/Uploads/"))
+                        {
+                            LogFileAudit(pathObj.ToString(), "DELETED", "Lesson");
+                        }
+                    }
+
                     string deleteSql = "DELETE FROM dbo.Lessons WHERE LessonID = @LessonID";
                     using (SqlCommand cmd = new SqlCommand(deleteSql, conn))
                     {
@@ -1317,20 +1530,19 @@ namespace lms.seihaglobalacademy.com
                     {
                         string originalFileName = Path.GetFileName(fileEditContentUpload.FileName);
                         string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
-                        string fileExtension = Path.GetExtension(originalFileName); // Preserves exact extension (e.g. .jfif, .jpg, .pdf)
+                        string fileExtension = Path.GetExtension(originalFileName);
 
                         string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExtension;
 
-                        string uploadFolder = Server.MapPath("~/Uploads/Lessons/");
-                        if (!Directory.Exists(uploadFolder))
-                        {
-                            Directory.CreateDirectory(uploadFolder);
-                        }
+                        string moduleTitle = GetModuleTitleById(moduleId);
+                        string relativeUploadDir = GetTargetUploadDirectory(moduleTitle, "Lessons");
+                        string uploadFolder = Server.MapPath(relativeUploadDir);
 
                         string savePath = Path.Combine(uploadFolder, uniqueFileName);
                         fileEditContentUpload.SaveAs(savePath);
 
-                        contentDetails = "~/Uploads/Lessons/" + uniqueFileName;
+                        contentDetails = relativeUploadDir + uniqueFileName;
+                        LogFileAudit(contentDetails, "UPLOADED", "Lesson");
                     }
                     catch (Exception ex)
                     {
@@ -1421,20 +1633,19 @@ namespace lms.seihaglobalacademy.com
                     {
                         string originalFileName = Path.GetFileName(fileContentUpload.FileName);
                         string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
-                        string fileExtension = Path.GetExtension(originalFileName); // Preserves exact extension (e.g. .jfif, .jpg, .pdf)
+                        string fileExtension = Path.GetExtension(originalFileName);
 
                         string uniqueFileName = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExtension;
 
-                        string uploadFolder = Server.MapPath("~/Uploads/Lessons/");
-                        if (!Directory.Exists(uploadFolder))
-                        {
-                            Directory.CreateDirectory(uploadFolder);
-                        }
+                        string moduleTitle = GetModuleTitleById(moduleId);
+                        string relativeUploadDir = GetTargetUploadDirectory(moduleTitle, "Lessons");
+                        string uploadFolder = Server.MapPath(relativeUploadDir);
 
                         string savePath = Path.Combine(uploadFolder, uniqueFileName);
                         fileContentUpload.SaveAs(savePath);
 
-                        contentDetails = "~/Uploads/Lessons/" + uniqueFileName;
+                        contentDetails = relativeUploadDir + uniqueFileName;
+                        LogFileAudit(contentDetails, "UPLOADED", "Lesson");
                     }
                     catch (Exception ex)
                     {
@@ -1648,6 +1859,24 @@ namespace lms.seihaglobalacademy.com
             using (SqlConnection conn = new SqlConnection(connStr))
             {
                 conn.Open();
+
+                string getSubFilesSql = "SELECT FilePath FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID";
+                using (SqlCommand getCmd = new SqlCommand(getSubFilesSql, conn))
+                {
+                    getCmd.Parameters.AddWithValue("@ID", assignmentId);
+                    using (SqlDataReader sDr = getCmd.ExecuteReader())
+                    {
+                        while (sDr.Read())
+                        {
+                            string fPath = sDr["FilePath"].ToString();
+                            if (!string.IsNullOrEmpty(fPath))
+                            {
+                                LogFileAudit(fPath, "DELETED", "Submission");
+                            }
+                        }
+                    }
+                }
+
                 using (SqlCommand cmdSub = new SqlCommand("DELETE FROM dbo.AssignmentSubmissions WHERE AssignmentID = @ID", conn))
                 {
                     cmdSub.Parameters.AddWithValue("@ID", assignmentId);
@@ -1882,13 +2111,7 @@ namespace lms.seihaglobalacademy.com
                         string relativePath = filePathObj.ToString();
                         if (!string.IsNullOrEmpty(relativePath))
                         {
-                            string baseDir = Server.MapPath("~/Uploads/Submissions/");
-                            string fullPath = Path.GetFullPath(Server.MapPath(relativePath));
-
-                            if (fullPath.StartsWith(baseDir, StringComparison.OrdinalIgnoreCase) && File.Exists(fullPath))
-                            {
-                                try { File.Delete(fullPath); } catch (Exception ex) { System.Diagnostics.Trace.TraceError("File delete error: " + ex.Message); }
-                            }
+                            LogFileAudit(relativePath, "DELETED", "Submission");
                         }
                     }
 
@@ -1968,8 +2191,8 @@ namespace lms.seihaglobalacademy.com
                     return;
                 }
 
-                string folder = Server.MapPath("~/Uploads/Submissions/");
-                if (!Directory.Exists(folder)) Directory.CreateDirectory(folder);
+                string relativeUploadDir = GetTargetUploadDirectory("Assignments", "Submissions");
+                string folder = Server.MapPath(relativeUploadDir);
 
                 string originalFileName = Path.GetFileName(fileSubmissionUpload.FileName);
                 string fileNameWithoutExt = Path.GetFileNameWithoutExtension(originalFileName);
@@ -1977,7 +2200,9 @@ namespace lms.seihaglobalacademy.com
 
                 string uniqueFile = Guid.NewGuid().ToString("N").Substring(0, 8) + "_" + fileNameWithoutExt + fileExt;
                 fileSubmissionUpload.SaveAs(Path.Combine(folder, uniqueFile));
-                filePath = "~/Uploads/Submissions/" + uniqueFile;
+
+                filePath = relativeUploadDir + uniqueFile;
+                LogFileAudit(filePath, "UPLOADED", "Submission");
             }
 
             using (SqlConnection conn = new SqlConnection(connStr))
