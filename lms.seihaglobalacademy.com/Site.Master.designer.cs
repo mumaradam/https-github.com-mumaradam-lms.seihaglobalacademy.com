@@ -42,6 +42,24 @@ namespace lms.seihaglobalacademy.com
         protected global::System.Web.UI.WebControls.LinkButton lnkLogout;
 
         /// <summary>
+        /// lblAvatarBadge control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblAvatarBadge;
+
+        /// <summary>
+        /// lblDisplayName control.
+        /// </summary>
+        /// <remarks>
+        /// Auto-generated field.
+        /// To modify move field declaration from designer file to code-behind file.
+        /// </remarks>
+        protected global::System.Web.UI.WebControls.Label lblDisplayName;
+
+        /// <summary>
         /// pnlStudentPreviewBanner control.
         /// </summary>
         /// <remarks>

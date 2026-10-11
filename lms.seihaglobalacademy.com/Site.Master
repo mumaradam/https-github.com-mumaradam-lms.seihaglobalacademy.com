@@ -77,8 +77,10 @@
 
             <!-- Profile Presentation Section -->
             <div class="account-profile-section">
-                <div class="avatar-badge">TA</div>
-                <h3 class="user-display-name">TROWA ADRIAN</h3>
+                <%--<div class="avatar-badge">TA</div>
+                <h3 class="user-display-name">TROWA ADRIAN</h3>--%>
+                <asp:Label ID="lblAvatarBadge" runat="server" class="avatar-badge"></asp:Label>
+                <asp:Label ID="lblDisplayName" runat="server" class="user-display-name"></asp:Label>
             </div>
 
             <!-- Quick Access Navigation List -->

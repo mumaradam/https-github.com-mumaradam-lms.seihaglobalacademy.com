@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Data;
+using System.Data.Entity.Infrastructure;
 using System.Security.Claims;
 using System.Security.Principal;
 using System.Web;
 using System.Web.Security;
 using System.Web.UI;
 using System.Web.UI.WebControls;
-
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 
 namespace lms.seihaglobalacademy.com
 {
@@ -15,6 +20,7 @@ namespace lms.seihaglobalacademy.com
         private const string AntiXsrfTokenKey = "__AntiXsrfToken";
         private const string AntiXsrfUserNameKey = "__AntiXsrfUserName";
         private string _antiXsrfTokenValue;
+        private static DataTable dtQuery;
 
         // Session key for National Geographic-style Student Preview Mode
         public const string StudentPreviewSessionKey = "LMS_StudentPreviewMode";
@@ -75,7 +81,9 @@ namespace lms.seihaglobalacademy.com
             if (!IsPostBack)
             {
                 CheckStudentPreviewState();
+                getUserInfo();
             }
+            
         }
 
         public void CheckStudentPreviewState()
@@ -120,6 +128,24 @@ namespace lms.seihaglobalacademy.com
 
             // Redirect safely to entry point index landing layout
             Response.Redirect("~/Default.aspx");
+        }
+        protected void getUserInfo()
+        {
+            string username = Session["Username"] as string;
+            string userrole = Session["Role"] as string;
+
+            //query to get the user info from the database
+            string strQuery = "Select UPPER(LEFT(FirstName, 1) + LEFT(LastName, 1)) AS Badge, LTRIM(RTRIM(FirstName + ISNULL(' ' + (LEFT(MiddleName, 1) + '.'), '') + ISNULL(' ' + [LastName], ''))) AS FullName from SGA_LMS.dbo.users where Username = '" + username + "' and Role = '" + userrole + "'";
+
+            dtQuery = DataAccess.Query(strQuery);
+            if (dtQuery.Rows.Count > 0)
+            {
+                string badge = dtQuery.Rows[0]["Badge"].ToString();
+                string fullname = dtQuery.Rows[0]["FullName"].ToString();
+                lblAvatarBadge.Text = badge;
+                lblDisplayName.Text = fullname;
+                //Page.ClientScript.RegisterStartupScript(this.GetType(), "alert", "alert('" + badge + "');", true);
+            }
         }
     }
 }

@@ -11,12 +11,15 @@
             <button type="button" class="profile-menu-burger-btn">
                 <i class="material-icons-outlined">menu</i>
             </button>
-            <span class="profile-breadcrumbs">TROWA ADRIAN &gt; Files</span>
+            <asp:Label ID="lblProBreadCrumbs" runat="server" class="profile-breadcrumbs"></asp:Label>
+            <%--<span class="profile-breadcrumbs">TROWA ADRIAN &gt; Files</span>--%>
         </div>
         <div class="profile-top-bar-right">
             <div class="user-identity-pill">
-                <span class="identity-badge">TJ</span>
-                <span class="identity-name">TROWA ADRIAN JAYME</span>
+                <%--<span class="identity-badge">TJ</span>--%>
+                <asp:Label ID="lblIdentBadge" runat="server" class="identity-badge"></asp:Label>
+                <%--<span class="identity-name">TROWA ADRIAN JAYME</span>--%>
+                <asp:Label ID="lblIdentName" runat="server" class="identity-name"></asp:Label>
             </div>
         </div>
     </div>

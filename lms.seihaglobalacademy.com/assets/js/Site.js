@@ -1,7 +1,7 @@
 ﻿// Username -> Password
 function showPasswordStep() {
 
-    const username = document.getElementById("input28").value.trim();
+    const username = document.getElementById("txtUsername").value.trim();
 
     if (username === "") {
         alert("Please enter your username.");
@@ -11,7 +11,7 @@ function showPasswordStep() {
     document.getElementById("stepUsername").style.display = "none";
     document.getElementById("stepPassword").style.display = "block";
 
-    document.getElementById("input55").focus();
+    document.getElementById("txtPassword").focus();
 }
 
 // Password -> Username
@@ -20,13 +20,13 @@ function showUsernameStep() {
     document.getElementById("stepPassword").style.display = "none";
     document.getElementById("stepUsername").style.display = "block";
 
-    document.getElementById("input28").focus();
+    document.getElementById("txtUsername").focus();
 }
 
 // Show / Hide Password
 function initializePasswordToggle() {
 
-    const passwordInput = document.getElementById("input55");
+    const passwordInput = document.getElementById("txtPassword");
     const showIcon = document.querySelector(".button-show");
     const hideIcon = document.querySelector(".button-hide");
     const toggle = document.querySelector(".password-toggle");
@@ -55,7 +55,7 @@ function initializePasswordToggle() {
 // Enter key on Username
 function initializeUsernameEnter() {
 
-    const usernameInput = document.getElementById("input28");
+    const usernameInput = document.getElementById("txtUsername");
 
     if (!usernameInput) return;
 
@@ -70,22 +70,22 @@ function initializeUsernameEnter() {
 }
 
 // Enter key on Password
+// Enter key on Password
 function initializePasswordEnter() {
-
-    const passwordInput = document.getElementById("input55");
+    const passwordInput = document.getElementById("txtPassword");
 
     if (!passwordInput) return;
 
     passwordInput.addEventListener("keydown", function (e) {
-
         if (e.key === "Enter") {
-            e.preventDefault();
+            e.preventDefault(); // Stop standard form submission/page reload
 
-            document
-                .querySelector("#stepPassword button[type='submit']")
-                .click();
+            // Find the ASP.NET LinkButton by its ClientIDMode="Static" ID
+            const verifyBtn = document.getElementById("btnVerify");
+            if (verifyBtn) {
+                verifyBtn.click(); // Triggers the C# OnClick="btnVerify_Click" event
+            }
         }
-
     });
 }
 

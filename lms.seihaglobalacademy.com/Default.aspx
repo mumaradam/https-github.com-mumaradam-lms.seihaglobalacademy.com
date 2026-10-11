@@ -52,8 +52,9 @@
                                                                 <label>Username&nbsp;</label>
                                                             </div>
                                                             <div class="sign-in-form-input" style="margin-bottom: 20px;">
-                                                                <span class="sign-in-form-input-name-identifier sign-in-form-control sign-in-form-input-field input-fix">
-                                                                    <input type="text" placeholder="" name="identifier" id="input28" value="" aria-label="" autocomplete="username" aria-describedby="describe-username" required=""></span>
+                                                                <%--<span class="sign-in-form-input-name-identifier sign-in-form-control sign-in-form-input-field input-fix">
+                                                                    <input type="text" placeholder="" name="identifier" id="input28" value="" aria-label="" autocomplete="username" aria-describedby="describe-username" required=""></span>--%>
+                                                                <asp:TextBox ID="txtUsername" runat="server" ClientIDMode="Static" class="sign-in-form-input-name-identifier sign-in-form-control sign-in-form-input-field input-fix" placeholder="" required></asp:TextBox>
                                                             </div>
                                                         </div>
                                                         <div class="sign-in-form-button-bar">
@@ -80,18 +81,18 @@
                                                                 </div>
                                                                 <div class="sign-in-form-input" style="margin-bottom: 20px;">
                                                                     <span  class="sign-in-form-input-name-credentials.passcode sign-in-form-control sign-in-form-input-field input-fix">
-                                                                        <input type="password" placeholder="" name="credentials.passcode" id="input55" value="" aria-label="" autocomplete="off" class="password-with-toggle" required="">
+                                                                        <%--<input type="password" placeholder="" name="credentials.passcode" id="input55" value="" aria-label="" autocomplete="off" class="password-with-toggle" required="">--%>
+                                                                         <asp:TextBox ID="txtPassword" runat="server" ClientIDMode="Static" type="password" class="password-with-toggle" autocomplete="off" placeholder="" required=""></asp:TextBox>
                                                                         <span class="password-toggle">
                                                                             <span class="eyeicon visibility-16 button-show"></span>
                                                                             <span class="eyeicon visibility-off-16 button-hide"></span>
                                                                         </span>
                                                                     </span>
+                                                                   
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                         <div id="loginError" runat="server" visible="false" class="login-error">
-                                                            Your Username and Password is invalid!
-                                                         </div>
+                                                         
                                                         <div class="sign-in-form-button-bar">
                                                             <button type="submit" class="button button-primary">
                                                                 <span class="button-arrow">
@@ -99,8 +100,12 @@
                                                                         <path d="M5 12h14M13 6l6 6-6 6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path>
                                                                     </svg>
                                                                 </span>
-                                                                <span class="button-text">Verify</span>
+                                                                <%--<span class="button-text">Verify</span>--%>
+                                                                <asp:LinkButton ID="btnVerify" runat="server" ClientIDMode="Static" class="button-text" OnClick="btnVerify_Click">Verify</asp:LinkButton>
                                                             </button>
+                                                        </div>
+                                                        <div id="loginError" runat="server" visible="false" class="login-error text-center">
+                                                           Your Username and Password is invalid!
                                                         </div>
                                                         <div class="siw-main-footer">
                                                             <div class="auth-footer">
