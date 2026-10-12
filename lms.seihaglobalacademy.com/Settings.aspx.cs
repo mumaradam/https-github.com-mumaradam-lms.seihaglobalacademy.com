@@ -24,11 +24,11 @@ namespace lms.seihaglobalacademy.com
         }
         protected void getUserInfo()
         {
-            string username = Session["Username"] as string;
+            string userID = Session["UserID"] as string;
             string userrole = Session["Role"] as string;
 
             //query to get the user info from the database
-            string strQuery = "Select UPPER(LEFT(FirstName, 1) + LEFT(LastName, 1)) AS Badge, LTRIM(RTRIM(FirstName + ISNULL(' ' + (LEFT(MiddleName, 1) + '.'), '') + ISNULL(' ' + [LastName], ''))) AS FullName from SGA_LMS.dbo.users where Username = '" + username + "' and Role = '" + userrole + "'";
+            string strQuery = "Select UPPER(LEFT(FirstName, 1) + LEFT(LastName, 1)) AS Badge, LTRIM(RTRIM(FirstName + ISNULL(' ' + (LEFT(MiddleName, 1) + '.'), '') + ISNULL(' ' + [LastName], ''))) AS FullName from SGA_LMS.dbo.users where UserId = '" + userID + "' and Role = '" + userrole + "'";
 
             dtQuery = DataAccess.Query(strQuery);
             if (dtQuery.Rows.Count > 0)

@@ -11,12 +11,15 @@
             <button type="button" class="profile-menu-burger-btn">
                 <i class="material-icons-outlined">menu</i>
             </button>
-            <span class="profile-breadcrumbs">TROWA ADRIAN &gt; Notification Settings</span>
+            <%--<span class="profile-breadcrumbs">TROWA ADRIAN &gt; Notification Settings</span>--%>
+            <asp:Label ID="lblProBreadCrumbs" runat="server" class="profile-breadcrumbs"></asp:Label>
         </div>
         <div class="profile-top-bar-right">
             <div class="user-identity-pill">
-                <span class="identity-badge">TJ</span>
-                <span class="identity-name">TROWA ADRIAN JAYME</span>
+                <%--<span class="identity-badge">TJ</span>--%>
+                <asp:Label ID="lblIdentBadge" runat="server" class="identity-badge"></asp:Label>
+                <%--<span class="identity-name">TROWA ADRIAN JAYME</span>--%>
+                <asp:Label ID="lblIdentName" runat="server" class="identity-name"></asp:Label>
             </div>
         </div>
     </div>
@@ -69,7 +72,7 @@
                             <th class="col-activity-title">Course Activities</th>
                             <th class="col-channel">
                                 <span class="channel-title">Email</span>
-                                <span class="channel-subtitle">trowa.adrian@gmail.com</span>
+                                <asp:Label ID="lblUserEmail" runat="server" class="channel-subtitle"></asp:Label>
                             </th>
                             <th class="col-channel">
                                 <span class="channel-title">Push Notification</span>

@@ -11,7 +11,8 @@
         <button type="button" class="profile-menu-burger-btn">
             <i class="material-icons-outlined">menu</i>
         </button>
-        <span class="profile-breadcrumbs">TROWA ADRIAN's Profile</span>
+        <%--<span class="profile-breadcrumbs">TROWA ADRIAN's Profile</span>--%>
+        <asp:Label ID="lblProfileName" runat="server" class="profile-breadcrumbs"></asp:Label>
     </div>
 
     <!-- Main Dynamic Dual-Column Workspace Layout -->
@@ -48,7 +49,8 @@
                 <div class="profile-details-column">
                     <!-- Title Row containing name and action button -->
                     <div class="profile-title-row">
-                        <h1 class="profile-display-fullname">JOHN CENA </h1>
+                        <%--<h1 class="profile-display-fullname">JOHN CENA </h1>--%>
+                        <asp:Label ID="lblDisplayFullName" runat="server" class="profile-display-fullname"></asp:Label>
                         <a href="Settings.aspx" class="edit-profile-btn">
                             <i class="material-icons-outlined">edit</i>Edit Profile
                         </a>
